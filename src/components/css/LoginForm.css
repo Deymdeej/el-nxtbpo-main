@@ -1,0 +1,226 @@
+.sign-in {
+  background-color: #08342b;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  
+}
+
+.sign-in .overlap-group-wrapper {
+  background-color: #08342b;
+  height: 1024px;
+  width: 1440px;
+}
+
+.sign-in .overlap-group {
+  background-color: #ffffff;
+  height: 545px;
+  left: 296px;
+  position: relative;
+  top: 245px;
+  width: 849px;
+}
+.sign-in .text-wrapper {
+  color: #000000;
+  font-family: "Poppins-SemiBold", Helvetica;
+  font-size: 40px;
+  font-weight: 600;
+  left: 100px;
+  letter-spacing: 0;
+  line-height: normal;
+  position: absolute;
+  text-align: center;
+  top: 100px;
+  white-space: nowrap;
+  width: 147px;
+}
+
+.sign-in .div {
+  color: #0f0f0f;
+  font-family: "Poppins-Regular", Helvetica;
+  font-size: 13px;
+  font-weight: 400;
+  left: 100px;
+  letter-spacing: 0;
+  line-height: normal;
+  position: absolute;
+  text-align: center;
+  top: 145px;
+  white-space: nowrap;
+  width: 223px;
+}
+.sign-in .div-2 {
+  color: #0f0f0f;
+  font-family: "Poppins-Regular", Helvetica;
+  font-size: 12px;
+  font-weight: 400;
+  left: 68px;
+  letter-spacing: 0;
+  line-height: normal;
+  position: absolute;
+  text-align: center;
+  bottom: 110px;
+  white-space: nowrap;
+  width: 223px;
+}
+.sign-in .div-3 {
+  color: #000000;
+  font-family: "Poppins-Regular", Helvetica;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: normal;
+  position: absolute;
+  text-align: center;
+  bottom: 110px;
+  left:165px;
+  white-space: nowrap;
+  width: 223px;
+}
+.sign-in .text-wrapper-2 {
+  color: #585858;
+  font-family: "Poppins-Regular", Helvetica;
+  font-size: 13px;
+  font-weight: 400;
+  left: 90px;
+  letter-spacing: 0;
+  line-height: normal;
+  position: absolute;
+  text-align: center;
+  top: 180px;
+  white-space: nowrap;
+  width: 62px;
+}
+
+.sign-in .text-wrapper-3 {
+  color: #585858;
+  font-family: "Poppins-Regular", Helvetica;
+  font-size: 13px;
+  font-weight: 400;
+  left: 91px;
+  letter-spacing: 0;
+  line-height: normal;
+  position: absolute;
+  text-align: center;
+  top: 250px;
+  white-space: nowrap;
+  width: 58px;
+}
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  top: 322px; /* Adjust to match your layout */
+  left: 92px; /* Adjust to match your layout */
+}
+
+.container {
+  display: flex;
+  align-items: center;
+}
+
+.container input {
+  margin-right: 6px; /* Space between checkbox and label */
+}
+.sign-in .text-wrapper-4 {
+  color: #585858;
+  font-family: "Poppins-Regular", Helvetica;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.text-wrapper-5.active, .text-wrapper-6.active {
+  font-weight: bold;
+  color: #000;
+}
+.text-wrapper-7 {
+  position: relative; /* Or relative, depending on your layout */
+  top: 355px; /* Adjust this value to move the button down */
+  left: 91px; /* Adjust this value to align with your layout */
+  padding: 10px 15px;
+  width: 247px;
+  border: none;
+  outline: none;
+  background-color: #151515;
+  color: #eee;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease-out;
+}
+.text-wrapper-7:hover {
+  transform: translateY(-3px);
+}
+
+.button-span {
+  color: #aaa;
+}
+
+.sign-in .overlap-2 {
+  height: 40px;
+  left: 114px;
+  position: absolute;
+  top: 421px;
+  width: 198px; 
+  text-align: center;
+}
+
+.sign-in .group {
+  height: 41px;
+  left: 7px;
+  position: absolute;
+  top: 7px;
+  width: 109px;
+}
+
+.sign-in .usernamefield {
+  font-family: "Poppins-SemiBold", Helvetica;
+  font-size: 12px;
+  border: 1px solid;
+  border-color: #585858;
+  border-radius: 5px;
+  height: 32px;
+  left: 90px;
+  position: absolute;
+  top: 200px;
+  width: 247px;
+  padding: 0 10px;
+}
+.sign-in .passwordfield {
+  font-family: "Poppins-SemiBold", Helvetica;
+  font-size: 12px;
+  border: 1px solid #585858;  /* Simplified border property */
+  border-radius: 5px;
+  height: 32px;
+  position: absolute;
+  top: 270px;
+  left: 90px;
+  width: 247px;
+  padding: 0 35px 0 10px;  /* Added padding on the right for the eye icon */
+}
+.eye-icon {
+  position: absolute;
+  top: 286px;
+  left: 310px; /* Align the icon to the right inside the container */
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #585858; /* Match the color scheme */
+}
+
+.eye-icon:hover {
+  color: #000000; /* Change color on hover for better interaction */
+}
+
+.eye-icon-image {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.sign-in .img {
+  height: 545px;
+  left: 425px;
+  position: absolute;
+  top: 0;
+  width: 424px;
+}
