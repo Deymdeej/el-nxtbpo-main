@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebase"; // Firebase setup
-import { collection, addDoc, getDocs } from "firebase/firestore"; // Firestore methods
+import { db, auth } from "../firebase"; // Firebase setup including auth
+import { collection, addDoc, getDocs, doc, getDoc } from "firebase/firestore"; // Firestore methods
 import { toast } from "react-toastify"; // For feedback
 import { Modal, Button } from "react-bootstrap"; // Import Modal from React Bootstrap
 import "./css/AdminCoursePage.css"; // For custom styling
@@ -20,6 +20,7 @@ function ITAdminDashboard() {
   const [showCourseDetailsModal, setShowCourseDetailsModal] = useState(false); // Course details modal
   const [selectedCourse, setSelectedCourse] = useState(null); // Store the selected course
   const [section, setSection] = useState("general"); // Dropdown state for selecting section inside modal
+  const [createdBy, setCreatedBy] = useState(""); // Store the createdBy full name
 
   // Fetch existing courses from the database
   useEffect(() => {
@@ -43,6 +44,19 @@ function ITAdminDashboard() {
       // Automatically set the first course's ID as a default prerequisite
       if (generalCourses.length > 0) {
         setFirstCourseId(generalCourses[0].id); // Set first course ID
+      }
+
+      // Fetch the logged-in user's full name from Firestore
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userDocRef = doc(db, "Users", currentUser.uid); // Assuming user details are stored in a "Users" collection
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setCreatedBy(userData.fullName || "Unknown User"); // Fetch and set the user's full name
+        } else {
+          setCreatedBy("Unknown User");
+        }
       }
     };
 
@@ -109,31 +123,44 @@ function ITAdminDashboard() {
       // Store course in the selected section (General or IT Department)
       const collectionPath = section === "general" ? "GeneralCourses" : "ITCourses";
 
-      await addDoc(collection(db, collectionPath), {
+      // Add the new course to Firestore
+      const docRef = await addDoc(collection(db, collectionPath), {
         courseTitle,
         courseDescription,
         videoLink: disableVideoLink ? "" : videoLink, // Disable video link if checkbox is checked
         questions,
         prerequisites: coursePrerequisites, // Save prerequisites as part of the course
+        createdBy, // Add the createdBy field (full name)
+        createdAt: new Date(), // Store the created timestamp
       });
 
+      // Create the new course object
+      const newCourse = {
+        id: docRef.id, // Get the newly created document ID
+        courseTitle,
+        courseDescription,
+        videoLink: disableVideoLink ? "" : videoLink,
+        questions,
+        prerequisites: coursePrerequisites,
+        createdBy, // Add createdBy (full name) to the course object
+        createdAt: new Date(), // Store createdAt timestamp
+      };
+
+      // Add the new course to the state without re-fetching
+      setCourses((prevCourses) => [...prevCourses, newCourse]);
+
+      // Reset the form fields
       setCourseTitle("");
       setCourseDescription("");
       setVideoLink("");
       setQuestions([{ question: "", choices: ["", "", "", ""], correctAnswer: "" }]);
       setPrerequisites([]); // Reset prerequisites after submission
       setDisableVideoLink(false); // Reset video link checkbox
+
       toast.success("Course added successfully!");
 
-      // Fetch courses again after adding a new course
-      const courseSnapshot = await getDocs(collection(db, collectionPath));
-      const courseList = courseSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCourses(courseList);
-
-      setShowModal(false); // Close modal after adding course
+      // Close modal after adding course
+      setShowModal(false);
     } catch (error) {
       toast.error("Error adding course: " + error.message);
     }
@@ -189,7 +216,6 @@ function ITAdminDashboard() {
           <Modal.Title>Add New Course</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-
           {/* Dropdown for selecting General or IT Department */}
           <div className="form-group">
             <label>Select Section</label>
@@ -318,6 +344,7 @@ function ITAdminDashboard() {
           </Modal.Header>
           <Modal.Body>
             <p><strong>Video Link:</strong> {selectedCourse.videoLink}</p>
+            <p><strong>Created By:</strong> {selectedCourse.createdBy}</p> {/* Display createdBy */}
             <h5>Questions</h5>
             <ul>
               {selectedCourse.questions.map((q, index) => (

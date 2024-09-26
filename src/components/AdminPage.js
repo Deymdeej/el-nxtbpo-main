@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';  // This ensures the styles for the toast are applied
+import 'react-toastify/dist/ReactToastify.css'; // This ensures the styles for the toast are applied
 import { db, auth } from "../firebase"; // Import Firestore and Firebase auth
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore"; // Firestore methods
 import { useNavigate } from "react-router-dom";
 
 function AdminPage() {
   const [loading, setLoading] = useState(true);
-  const [totalCourses, setTotalCourses] = useState(0); // State for total courses
+  const [totalCourses, setTotalCourses] = useState(0); // State for combined total courses
   const [courses, setCourses] = useState([]); // Store fetched courses for preview
   const [users, setUsers] = useState([]); // Store users list for master list
   const navigate = useNavigate();
@@ -16,11 +16,29 @@ function AdminPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch courses from Firestore
-        const coursesSnapshot = await getDocs(collection(db, "Courses"));
-        setTotalCourses(coursesSnapshot.size); // Set total courses based on snapshot size
-        const courseList = coursesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setCourses(courseList); // Store courses for preview
+        // Fetch courses from GeneralCourses collection
+        const generalCoursesSnapshot = await getDocs(collection(db, "GeneralCourses"));
+        const totalGeneralCourses = generalCoursesSnapshot.size;
+
+        // Fetch courses from ITCourses collection
+        const itCoursesSnapshot = await getDocs(collection(db, "ITCourses"));
+        const totalITCourses = itCoursesSnapshot.size;
+
+        // Fetch courses from HRCourses collection
+        const hrCoursesSnapshot = await getDocs(collection(db, "HRCourses"));
+        const totalHRCourses = hrCoursesSnapshot.size;
+
+        // Combine all courses for display in preview
+        const combinedCourses = [
+          ...generalCoursesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+          ...itCoursesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+          ...hrCoursesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        ];
+        setCourses(combinedCourses);
+
+        // Calculate and set total courses
+        const total = totalGeneralCourses + totalITCourses + totalHRCourses;
+        setTotalCourses(total); // Set combined total courses
 
         // Fetch users from Firestore
         const usersSnapshot = await getDocs(collection(db, "Users"));
@@ -75,8 +93,8 @@ function AdminPage() {
 
       {/* Total Courses Section */}
       <div>
-        <h4>Total Courses</h4>
-        <p>{totalCourses}</p> {/* Display total number of courses */}
+        <h4>Total Courses Available</h4>
+        <p>{totalCourses}</p> {/* Display combined total number of courses */}
       </div>
 
       {/* Master List of Users */}

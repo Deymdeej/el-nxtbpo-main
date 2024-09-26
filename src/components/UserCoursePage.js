@@ -1,27 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { db, auth } from "../firebase"; // Add Firebase auth
-import { collection, getDocs, doc, setDoc, getDoc } from "firebase/firestore"; // Firestore methods
+import { collection, getDocs, doc, setDoc, getDoc, query, where } from "firebase/firestore"; // Firestore methods
 import { toast } from "react-toastify";
 import ProgressBar from "react-bootstrap/ProgressBar"; // Import progress bar
 import { Button } from "react-bootstrap"; // Import Button from react-bootstrap
 import { jsPDF } from "jspdf"; // Import jsPDF for certification
 
-function UserCoursePage() {
-  const [courses, setCourses] = useState([]);
+function ITUserDashboard() {
+  const [courses, setCourses] = useState([]); // Hold both General and IT courses
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [userAnswers, setUserAnswers] = useState([]);
   const [progress, setProgress] = useState(0);
   const [attempts, setAttempts] = useState(0); // Track attempts
   const [hasPassed, setHasPassed] = useState(false);
   const [userId, setUserId] = useState(null); // Store userId
-  const [userFirstName, setUserFirstName] = useState("User"); // Store user's first name
-  const [userLastName, setUserLastName] = useState(""); // Store user's last name
+  const [fullName, setFullName] = useState("User"); // Store user's full name
   const [completedCourses, setCompletedCourses] = useState([]); // Store the IDs of completed courses
   const [retryTimeout, setRetryTimeout] = useState(0); // Store the countdown for retry
   const [showReattempt, setShowReattempt] = useState(false); // Control reattempt visibility
   const [reattemptCountdown, setReattemptCountdown] = useState(3); // Countdown for reattempt button
   const [showCorrectAnswers, setShowCorrectAnswers] = useState(false); // To show correct answers
   const [correctAnswers, setCorrectAnswers] = useState([]); // Store the correct answers
+  const [certifiedUsers, setCertifiedUsers] = useState([]); // Hold certified users
 
   // Fetch the currently logged-in user's ID, name, and completed courses
   useEffect(() => {
@@ -36,8 +36,7 @@ function UserCoursePage() {
 
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          setUserFirstName(userData.firstName || "User");
-          setUserLastName(userData.lastName || "");
+          setFullName(userData.fullName || "User");
         }
 
         fetchCompletedCourses(currentUser.uid); // Fetch the completed courses
@@ -58,19 +57,41 @@ function UserCoursePage() {
     setCompletedCourses(completed); // Set the list of completed course IDs
   };
 
-  // Fetch existing courses from the database
+  // Fetch existing courses from both GeneralCourses and ITCourses collections
   useEffect(() => {
     const fetchCourses = async () => {
-      const courseSnapshot = await getDocs(collection(db, "Courses"));
-      const courseList = courseSnapshot.docs.map((doc) => ({
+      const generalCoursesSnapshot = await getDocs(collection(db, "GeneralCourses")); // Fetch General courses
+      const itCoursesSnapshot = await getDocs(collection(db, "ITCourses")); // Fetch IT-specific courses
+
+      const generalCourses = generalCoursesSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setCourses(courseList);
+
+      const itCourses = itCoursesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Combine General and IT courses in one state for display
+      setCourses([...generalCourses, ...itCourses]);
     };
 
     fetchCourses();
   }, []);
+
+  // Fetch certified users for the selected course
+  const fetchCertifiedUsers = async (courseId) => {
+    const certifiedQuery = query(
+      collection(db, "QuizResults"),
+      where("courseId", "==", courseId),
+      where("passed", "==", true)
+    );
+
+    const certifiedSnapshot = await getDocs(certifiedQuery);
+    const certified = certifiedSnapshot.docs.map((doc) => doc.data());
+    setCertifiedUsers(certified); // Set the list of certified users
+  };
 
   // Handle course selection and check prerequisite
   const handleSelectCourse = (course) => {
@@ -93,6 +114,9 @@ function UserCoursePage() {
     setShowReattempt(false); // Hide reattempt button
     setShowCorrectAnswers(false); // Hide correct answers
     setCorrectAnswers([]); // Reset correct answers
+
+    // Fetch certified users for the selected course
+    fetchCertifiedUsers(course.id);
   };
 
   const handleAnswerChange = (questionIndex, choice) => {
@@ -101,7 +125,7 @@ function UserCoursePage() {
     setUserAnswers(newAnswers);
   };
 
-  const generateCertificate = (firstName, lastName, courseTitle) => {
+  const generateCertificate = (fullName, courseTitle) => {
     const doc = new jsPDF();
 
     doc.setFontSize(22);
@@ -110,7 +134,7 @@ function UserCoursePage() {
     doc.setFontSize(16);
     doc.text(`This certifies that`, 105, 70, null, null, "center");
     doc.setFontSize(20);
-    doc.text(`${firstName} ${lastName}`, 105, 90, null, null, "center");
+    doc.text(fullName, 105, 90, null, null, "center");
 
     doc.setFontSize(16);
     doc.text(`has successfully completed the course`, 105, 110, null, null, "center");
@@ -121,7 +145,7 @@ function UserCoursePage() {
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, 150, null, null, "center");
 
     // Save the PDF
-    doc.save(`${firstName}_${lastName}_Certificate.pdf`);
+    doc.save(`${fullName}_Certificate.pdf`);
   };
 
   const handleSubmitQuiz = async () => {
@@ -153,16 +177,18 @@ function UserCoursePage() {
     const percentage = (userScore / totalQuestions) * 100;
 
     if (percentage >= 80) {
-      toast.success(`Congratulations ${userFirstName} ${userLastName}! You passed with ${percentage}%`); // Include the first and last name in success message
+      toast.success(`Congratulations ${fullName}! You passed with ${percentage}%`);
       setHasPassed(true);
       setProgress(100);
       setShowCorrectAnswers(true); // Show correct answers after passing
 
-      // Save the quiz result to Firestore
+      // Save the quiz result to Firestore in the required format
       const resultData = {
-        userId,
-        firstName: userFirstName,
-        lastName: userLastName,
+        department: "IT", // Or fetch this value dynamically if available
+        email: auth.currentUser.email, // Getting the email from Firebase auth
+        fullName: fullName, // Full name of the user
+        role: "user", // This could be dynamic based on the user's role
+        userId: userId, // Storing the user ID
         courseId: selectedCourse.id,
         courseTitle: selectedCourse.courseTitle,
         score: percentage,
@@ -178,7 +204,7 @@ function UserCoursePage() {
         await setDoc(doc(db, "Users", userId), { certified: true }, { merge: true });
 
         // Generate the certificate
-        generateCertificate(userFirstName, userLastName, selectedCourse.courseTitle);
+        generateCertificate(fullName, selectedCourse.courseTitle);
       } catch (error) {
         toast.error("Failed to save quiz results.");
         console.error("Error saving quiz result:", error);
@@ -254,8 +280,8 @@ function UserCoursePage() {
   };
 
   return (
-    <div className="user-course-page container mt-5">
-      <h3>Select a Course</h3>
+    <div className="it-user-dashboard container mt-5">
+      <h3>Select an IT or General Course</h3>
       {courses.length === 0 ? (
         <p>No courses available</p>
       ) : (
@@ -353,7 +379,7 @@ function UserCoursePage() {
 
           {hasPassed && (
             <div className="mt-4">
-              <h4>Congratulations {userFirstName} {userLastName}! You passed!</h4>
+              <h4>Congratulations {fullName}! You passed!</h4>
               <p>You have been certified for this course.</p>
             </div>
           )}
@@ -384,8 +410,21 @@ function UserCoursePage() {
           </div>
         </div>
       )}
+
+      {certifiedUsers.length > 0 && (
+        <div className="certified-users-section mt-5">
+          <h4>Certified Users for {selectedCourse.courseTitle}</h4>
+          <ul>
+            {certifiedUsers.map((user, index) => (
+              <li key={index}>
+                {user.fullName} ({user.email}) - Certified on {new Date(user.timestamp.seconds * 1000).toLocaleDateString()}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
 
-export default UserCoursePage;
+export default ITUserDashboard;

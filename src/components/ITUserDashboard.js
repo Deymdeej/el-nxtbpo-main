@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { db, auth } from "../firebase"; // Add Firebase auth
-import { collection, getDocs, doc, setDoc, getDoc } from "firebase/firestore"; // Firestore methods
+import { collection, getDocs, doc, setDoc, getDoc, query, where } from "firebase/firestore"; // Firestore methods
 import { toast } from "react-toastify";
 import ProgressBar from "react-bootstrap/ProgressBar"; // Import progress bar
 import { Button } from "react-bootstrap"; // Import Button from react-bootstrap
@@ -14,14 +14,14 @@ function ITUserDashboard() {
   const [attempts, setAttempts] = useState(0); // Track attempts
   const [hasPassed, setHasPassed] = useState(false);
   const [userId, setUserId] = useState(null); // Store userId
-  const [userFirstName, setUserFirstName] = useState("User"); // Store user's first name
-  const [userLastName, setUserLastName] = useState(""); // Store user's last name
+  const [fullName, setFullName] = useState("User"); // Store user's full name
   const [completedCourses, setCompletedCourses] = useState([]); // Store the IDs of completed courses
   const [retryTimeout, setRetryTimeout] = useState(0); // Store the countdown for retry
   const [showReattempt, setShowReattempt] = useState(false); // Control reattempt visibility
   const [reattemptCountdown, setReattemptCountdown] = useState(3); // Countdown for reattempt button
   const [showCorrectAnswers, setShowCorrectAnswers] = useState(false); // To show correct answers
   const [correctAnswers, setCorrectAnswers] = useState([]); // Store the correct answers
+  const [certifiedUsers, setCertifiedUsers] = useState([]); // Hold certified users
 
   // Fetch the currently logged-in user's ID, name, and completed courses
   useEffect(() => {
@@ -36,8 +36,7 @@ function ITUserDashboard() {
 
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          setUserFirstName(userData.firstName || "User");
-          setUserLastName(userData.lastName || "");
+          setFullName(userData.fullName || "User");
         }
 
         fetchCompletedCourses(currentUser.uid); // Fetch the completed courses
@@ -81,6 +80,19 @@ function ITUserDashboard() {
     fetchCourses();
   }, []);
 
+  // Fetch certified users for the selected course
+  const fetchCertifiedUsers = async (courseId) => {
+    const certifiedQuery = query(
+      collection(db, "QuizResults"),
+      where("courseId", "==", courseId),
+      where("passed", "==", true)
+    );
+
+    const certifiedSnapshot = await getDocs(certifiedQuery);
+    const certified = certifiedSnapshot.docs.map((doc) => doc.data());
+    setCertifiedUsers(certified); // Set the list of certified users
+  };
+
   // Handle course selection and check prerequisite
   const handleSelectCourse = (course) => {
     if (course.prerequisites && course.prerequisites.length > 0) {
@@ -102,6 +114,9 @@ function ITUserDashboard() {
     setShowReattempt(false); // Hide reattempt button
     setShowCorrectAnswers(false); // Hide correct answers
     setCorrectAnswers([]); // Reset correct answers
+
+    // Fetch certified users for the selected course
+    fetchCertifiedUsers(course.id);
   };
 
   const handleAnswerChange = (questionIndex, choice) => {
@@ -110,7 +125,7 @@ function ITUserDashboard() {
     setUserAnswers(newAnswers);
   };
 
-  const generateCertificate = (firstName, lastName, courseTitle) => {
+  const generateCertificate = (fullName, courseTitle) => {
     const doc = new jsPDF();
 
     doc.setFontSize(22);
@@ -119,7 +134,7 @@ function ITUserDashboard() {
     doc.setFontSize(16);
     doc.text(`This certifies that`, 105, 70, null, null, "center");
     doc.setFontSize(20);
-    doc.text(`${firstName} ${lastName}`, 105, 90, null, null, "center");
+    doc.text(fullName, 105, 90, null, null, "center");
 
     doc.setFontSize(16);
     doc.text(`has successfully completed the course`, 105, 110, null, null, "center");
@@ -130,7 +145,7 @@ function ITUserDashboard() {
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, 150, null, null, "center");
 
     // Save the PDF
-    doc.save(`${firstName}_${lastName}_Certificate.pdf`);
+    doc.save(`${fullName}_Certificate.pdf`);
   };
 
   const handleSubmitQuiz = async () => {
@@ -162,16 +177,18 @@ function ITUserDashboard() {
     const percentage = (userScore / totalQuestions) * 100;
 
     if (percentage >= 80) {
-      toast.success(`Congratulations ${userFirstName} ${userLastName}! You passed with ${percentage}%`); // Include the first and last name in success message
+      toast.success(`Congratulations ${fullName}! You passed with ${percentage}%`);
       setHasPassed(true);
       setProgress(100);
       setShowCorrectAnswers(true); // Show correct answers after passing
 
-      // Save the quiz result to Firestore
+      // Save the quiz result to Firestore in the required format
       const resultData = {
-        userId,
-        firstName: userFirstName,
-        lastName: userLastName,
+        department: "IT", // Or fetch this value dynamically if available
+        email: auth.currentUser.email, // Getting the email from Firebase auth
+        fullName: fullName, // Full name of the user
+        role: "user", // This could be dynamic based on the user's role
+        userId: userId, // Storing the user ID
         courseId: selectedCourse.id,
         courseTitle: selectedCourse.courseTitle,
         score: percentage,
@@ -187,7 +204,7 @@ function ITUserDashboard() {
         await setDoc(doc(db, "Users", userId), { certified: true }, { merge: true });
 
         // Generate the certificate
-        generateCertificate(userFirstName, userLastName, selectedCourse.courseTitle);
+        generateCertificate(fullName, selectedCourse.courseTitle);
       } catch (error) {
         toast.error("Failed to save quiz results.");
         console.error("Error saving quiz result:", error);
@@ -362,7 +379,7 @@ function ITUserDashboard() {
 
           {hasPassed && (
             <div className="mt-4">
-              <h4>Congratulations {userFirstName} {userLastName}! You passed!</h4>
+              <h4>Congratulations {fullName}! You passed!</h4>
               <p>You have been certified for this course.</p>
             </div>
           )}
@@ -391,6 +408,19 @@ function ITUserDashboard() {
           <div className="mt-3">
             <p>Attempts: {attempts}/2</p>
           </div>
+        </div>
+      )}
+
+      {certifiedUsers.length > 0 && (
+        <div className="certified-users-section mt-5">
+          <h4>Certified Users for {selectedCourse.courseTitle}</h4>
+          <ul>
+            {certifiedUsers.map((user, index) => (
+              <li key={index}>
+                {user.fullName} ({user.email}) - Certified on {new Date(user.timestamp.seconds * 1000).toLocaleDateString()}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

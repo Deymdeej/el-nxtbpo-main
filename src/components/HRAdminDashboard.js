@@ -109,7 +109,8 @@ function HRAdminDashboard() {
       // Store course in the selected section (General or HR Department)
       const collectionPath = section === "general" ? "GeneralCourses" : "HRCourses";
 
-      await addDoc(collection(db, collectionPath), {
+      // Add the new course to Firestore
+      const docRef = await addDoc(collection(db, collectionPath), {
         courseTitle,
         courseDescription,
         videoLink: disableVideoLink ? "" : videoLink, // Disable video link if checkbox is checked
@@ -117,23 +118,31 @@ function HRAdminDashboard() {
         prerequisites: coursePrerequisites, // Save prerequisites as part of the course
       });
 
+      // Create the new course object
+      const newCourse = {
+        id: docRef.id, // Get the newly created document ID
+        courseTitle,
+        courseDescription,
+        videoLink: disableVideoLink ? "" : videoLink,
+        questions,
+        prerequisites: coursePrerequisites,
+      };
+
+      // Add the new course to the state without re-fetching
+      setCourses((prevCourses) => [...prevCourses, newCourse]);
+
+      // Reset the form fields
       setCourseTitle("");
       setCourseDescription("");
       setVideoLink("");
       setQuestions([{ question: "", choices: ["", "", "", ""], correctAnswer: "" }]);
       setPrerequisites([]); // Reset prerequisites after submission
       setDisableVideoLink(false); // Reset video link checkbox
+
       toast.success("Course added successfully!");
 
-      // Fetch courses again after adding a new course
-      const courseSnapshot = await getDocs(collection(db, collectionPath));
-      const courseList = courseSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCourses(courseList);
-
-      setShowModal(false); // Close modal after adding course
+      // Close modal after adding course
+      setShowModal(false);
     } catch (error) {
       toast.error("Error adding course: " + error.message);
     }
@@ -189,7 +198,6 @@ function HRAdminDashboard() {
           <Modal.Title>Add New Course</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-
           {/* Dropdown for selecting General or HR Department */}
           <div className="form-group">
             <label>Select Section</label>
