@@ -70,7 +70,7 @@ function AdminPage() {
   // Render the Admin page
   return (
     <div>
-      <button onClick={handleLogout}>Logout</button>
+      <button onClick={haxndleLogout}>Logout</button>
       <h2>Admin Dashboard</h2>
 
       {/* Total Courses Section */}
