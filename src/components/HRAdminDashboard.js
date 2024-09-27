@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebase"; // Firebase setup
-import { collection, addDoc, getDocs } from "firebase/firestore"; // Firestore methods
+import { db, auth } from "../firebase"; // Firebase setup including auth
+import { collection, addDoc, getDocs, doc, getDoc, query, where } from "firebase/firestore"; // Firestore methods
 import { toast } from "react-toastify"; // For feedback
 import { Modal, Button } from "react-bootstrap"; // Import Modal from React Bootstrap
 import "./css/AdminCoursePage.css"; // For custom styling
 
 function HRAdminDashboard() {
   const [courses, setCourses] = useState([]);
+  const [enrollmentCounts, setEnrollmentCounts] = useState({}); // Store number of enrolled users per course
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
   const [videoLink, setVideoLink] = useState("");
@@ -20,10 +21,11 @@ function HRAdminDashboard() {
   const [showCourseDetailsModal, setShowCourseDetailsModal] = useState(false); // Course details modal
   const [selectedCourse, setSelectedCourse] = useState(null); // Store the selected course
   const [section, setSection] = useState("general"); // Dropdown state for selecting section inside modal
+  const [createdBy, setCreatedBy] = useState(""); // Store the createdBy full name
 
-  // Fetch existing courses from the database
+  // Fetch existing courses and enrollment counts from the database
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchCoursesAndEnrollments = async () => {
       const generalCoursesSnapshot = await getDocs(collection(db, "GeneralCourses"));
       const hrCoursesSnapshot = await getDocs(collection(db, "HRCourses"));
 
@@ -38,15 +40,37 @@ function HRAdminDashboard() {
       }));
 
       // Combine General and HR courses in one state for display
-      setCourses([...generalCourses, ...hrCourses]);
+      const allCourses = [...generalCourses, ...hrCourses];
+      setCourses(allCourses);
+
+      // Fetch enrollment counts for each course
+      const enrollmentCounts = {};
+      for (let course of allCourses) {
+        const enrollmentsSnapshot = await getDocs(query(collection(db, "Enrollments"), where("courseId", "==", course.id)));
+        enrollmentCounts[course.id] = enrollmentsSnapshot.size; // Count number of enrolled users
+      }
+      setEnrollmentCounts(enrollmentCounts);
 
       // Automatically set the first course's ID as a default prerequisite
       if (generalCourses.length > 0) {
         setFirstCourseId(generalCourses[0].id); // Set first course ID
       }
+
+      // Fetch the logged-in user's full name from Firestore
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userDocRef = doc(db, "Users", currentUser.uid); // Assuming user details are stored in a "Users" collection
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setCreatedBy(userData.fullName || "Unknown User"); // Fetch and set the user's full name
+        } else {
+          setCreatedBy("Unknown User");
+        }
+      }
     };
 
-    fetchCourses();
+    fetchCoursesAndEnrollments();
   }, []);
 
   const handleAddQuestion = () => {
@@ -93,6 +117,10 @@ function HRAdminDashboard() {
       toast.error("Each question must have a correct answer");
       return false;
     }
+    if (questions.some((q) => !q.choices.includes(q.correctAnswer))) {
+      toast.error("Correct answer must be one of the choices for each question");
+      return false;
+    }
     return true;
   };
 
@@ -100,11 +128,8 @@ function HRAdminDashboard() {
     if (!validateForm()) return; // Run the validation checks before proceeding
 
     try {
-      // Add first course as prerequisite if no prerequisite is selected
-      const coursePrerequisites =
-        prerequisites.length === 0 && firstCourseId
-          ? [firstCourseId] // Set first course as prerequisite if none selected
-          : prerequisites;
+      // Only add prerequisites if they are selected
+      const coursePrerequisites = prerequisites.length > 0 ? prerequisites : [];
 
       // Store course in the selected section (General or HR Department)
       const collectionPath = section === "general" ? "GeneralCourses" : "HRCourses";
@@ -115,7 +140,9 @@ function HRAdminDashboard() {
         courseDescription,
         videoLink: disableVideoLink ? "" : videoLink, // Disable video link if checkbox is checked
         questions,
-        prerequisites: coursePrerequisites, // Save prerequisites as part of the course
+        prerequisites: coursePrerequisites, // Save prerequisites if selected
+        createdBy, // Add the createdBy field (full name)
+        createdAt: new Date(), // Store the created timestamp
       });
 
       // Create the new course object
@@ -126,6 +153,8 @@ function HRAdminDashboard() {
         videoLink: disableVideoLink ? "" : videoLink,
         questions,
         prerequisites: coursePrerequisites,
+        createdBy, // Add createdBy (full name) to the course object
+        createdAt: new Date(), // Store createdAt timestamp
       };
 
       // Add the new course to the state without re-fetching
@@ -185,6 +214,9 @@ function HRAdminDashboard() {
                   <div className="course-icon">📘</div> {/* Add an icon */}
                   <h5 className="course-title">{course.courseTitle}</h5>
                   <p className="course-description">{course.courseDescription}</p> {/* Show course description */}
+                  <p className="course-enrollments">
+                    Enrolled Users: {enrollmentCounts[course.id] || 0} {/* Show number of enrolled users */}
+                  </p>
                 </div>
               ))}
             </div>
@@ -326,6 +358,7 @@ function HRAdminDashboard() {
           </Modal.Header>
           <Modal.Body>
             <p><strong>Video Link:</strong> {selectedCourse.videoLink}</p>
+            <p><strong>Created By:</strong> {selectedCourse.createdBy}</p> {/* Display createdBy */}
             <h5>Questions</h5>
             <ul>
               {selectedCourse.questions.map((q, index) => (

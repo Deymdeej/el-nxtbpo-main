@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { db, auth } from "../firebase"; // Firebase setup including auth
-import { collection, addDoc, getDocs, doc, getDoc } from "firebase/firestore"; // Firestore methods
+import { collection, addDoc, getDocs, doc, getDoc, query, where } from "firebase/firestore"; // Firestore methods
 import { toast } from "react-toastify"; // For feedback
 import { Modal, Button } from "react-bootstrap"; // Import Modal from React Bootstrap
 import "./css/AdminCoursePage.css"; // For custom styling
 
 function ITAdminDashboard() {
   const [courses, setCourses] = useState([]);
+  const [enrollmentCounts, setEnrollmentCounts] = useState({}); // Store number of enrolled users per course
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
   const [videoLink, setVideoLink] = useState("");
@@ -22,9 +23,9 @@ function ITAdminDashboard() {
   const [section, setSection] = useState("general"); // Dropdown state for selecting section inside modal
   const [createdBy, setCreatedBy] = useState(""); // Store the createdBy full name
 
-  // Fetch existing courses from the database
+  // Fetch existing courses and enrollment counts from the database
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchCoursesAndEnrollments = async () => {
       const generalCoursesSnapshot = await getDocs(collection(db, "GeneralCourses"));
       const itCoursesSnapshot = await getDocs(collection(db, "ITCourses"));
 
@@ -39,7 +40,16 @@ function ITAdminDashboard() {
       }));
 
       // Combine General and IT courses in one state for display
-      setCourses([...generalCourses, ...itCourses]);
+      const allCourses = [...generalCourses, ...itCourses];
+      setCourses(allCourses);
+
+      // Fetch enrollment counts for each course
+      const enrollmentCounts = {};
+      for (let course of allCourses) {
+        const enrollmentsSnapshot = await getDocs(query(collection(db, "Enrollments"), where("courseId", "==", course.id)));
+        enrollmentCounts[course.id] = enrollmentsSnapshot.size; // Count number of enrolled users
+      }
+      setEnrollmentCounts(enrollmentCounts);
 
       // Automatically set the first course's ID as a default prerequisite
       if (generalCourses.length > 0) {
@@ -60,7 +70,7 @@ function ITAdminDashboard() {
       }
     };
 
-    fetchCourses();
+    fetchCoursesAndEnrollments();
   }, []);
 
   const handleAddQuestion = () => {
@@ -107,6 +117,10 @@ function ITAdminDashboard() {
       toast.error("Each question must have a correct answer");
       return false;
     }
+    if (questions.some((q) => !q.choices.includes(q.correctAnswer))) {
+      toast.error("Correct answer must be one of the choices for each question");
+      return false;
+    }
     return true;
   };
 
@@ -114,11 +128,13 @@ function ITAdminDashboard() {
     if (!validateForm()) return; // Run the validation checks before proceeding
 
     try {
-      // Add first course as prerequisite if no prerequisite is selected
+      // Add first course as prerequisite if no prerequisite is selected and there is a first course
       const coursePrerequisites =
         prerequisites.length === 0 && firstCourseId
           ? [firstCourseId] // Set first course as prerequisite if none selected
-          : prerequisites;
+          : prerequisites.length > 0
+          ? prerequisites // Use the selected prerequisites
+          : []; // If no prerequisites are selected and no first course exists, leave it empty
 
       // Store course in the selected section (General or IT Department)
       const collectionPath = section === "general" ? "GeneralCourses" : "ITCourses";
@@ -129,7 +145,7 @@ function ITAdminDashboard() {
         courseDescription,
         videoLink: disableVideoLink ? "" : videoLink, // Disable video link if checkbox is checked
         questions,
-        prerequisites: coursePrerequisites, // Save prerequisites as part of the course
+        prerequisites: coursePrerequisites.length > 0 ? coursePrerequisites : [], // Only save prerequisites if they exist
         createdBy, // Add the createdBy field (full name)
         createdAt: new Date(), // Store the created timestamp
       });
@@ -203,6 +219,9 @@ function ITAdminDashboard() {
                   <div className="course-icon">📘</div> {/* Add an icon */}
                   <h5 className="course-title">{course.courseTitle}</h5>
                   <p className="course-description">{course.courseDescription}</p> {/* Show course description */}
+                  <p className="course-enrollments">
+                    Enrolled Users: {enrollmentCounts[course.id] || 0} {/* Show number of enrolled users */}
+                  </p>
                 </div>
               ))}
             </div>

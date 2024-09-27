@@ -1,29 +1,31 @@
 import React, { useEffect, useState } from "react";
-import { db, auth } from "../firebase"; // Add Firebase auth
+import { db, auth } from "../firebase"; // Firebase setup
 import { collection, getDocs, doc, setDoc, getDoc, query, where } from "firebase/firestore"; // Firestore methods
 import { toast } from "react-toastify";
-import ProgressBar from "react-bootstrap/ProgressBar"; // Import progress bar
-import { Button } from "react-bootstrap"; // Import Button from react-bootstrap
-import { jsPDF } from "jspdf"; // Import jsPDF for certification
+import ProgressBar from "react-bootstrap/ProgressBar"; // Progress bar from react-bootstrap
+import { Button, Modal } from "react-bootstrap"; // Button and Modal from react-bootstrap
+import { jsPDF } from "jspdf"; // jsPDF for generating certificates
 
 function ITUserDashboard() {
-  const [courses, setCourses] = useState([]); // Hold both General and IT courses
+  const [courses, setCourses] = useState([]); // Hold all available courses
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [userAnswers, setUserAnswers] = useState([]);
   const [progress, setProgress] = useState(0);
-  const [attempts, setAttempts] = useState(0); // Track attempts
+  const [attempts, setAttempts] = useState(0); // Track quiz attempts
   const [hasPassed, setHasPassed] = useState(false);
-  const [userId, setUserId] = useState(null); // Store userId
-  const [fullName, setFullName] = useState("User"); // Store user's full name
-  const [completedCourses, setCompletedCourses] = useState([]); // Store the IDs of completed courses
-  const [retryTimeout, setRetryTimeout] = useState(0); // Store the countdown for retry
-  const [showReattempt, setShowReattempt] = useState(false); // Control reattempt visibility
-  const [reattemptCountdown, setReattemptCountdown] = useState(3); // Countdown for reattempt button
-  const [showCorrectAnswers, setShowCorrectAnswers] = useState(false); // To show correct answers
-  const [correctAnswers, setCorrectAnswers] = useState([]); // Store the correct answers
-  const [certifiedUsers, setCertifiedUsers] = useState([]); // Hold certified users
+  const [userId, setUserId] = useState(null); // Store the user's ID
+  const [fullName, setFullName] = useState("User"); // Store the user's full name
+  const [retryTimeout, setRetryTimeout] = useState(0); // Countdown for retrying the quiz
+  const [showReattempt, setShowReattempt] = useState(false); // Control reattempt button visibility
+  const [reattemptCountdown, setReattemptCountdown] = useState(3); // Countdown timer for reattempts
+  const [showCorrectAnswers, setShowCorrectAnswers] = useState(false); // Show correct answers after submission
+  const [correctAnswers, setCorrectAnswers] = useState([]); // Store correct answers
+  const [showEnrollModal, setShowEnrollModal] = useState(false); // Control course enrollment modal
+  const [enrollingCourse, setEnrollingCourse] = useState(null); // Store the course to enroll
+  const [enrolledCourses, setEnrolledCourses] = useState([]); // Store enrolled courses
+  const [completedCourses, setCompletedCourses] = useState([]); // Store completed courses (for prerequisites)
 
-  // Fetch the currently logged-in user's ID, name, and completed courses
+  // Fetch the currently logged-in user's ID, name, enrolled, and completed courses
   useEffect(() => {
     const fetchUserDetails = async () => {
       const currentUser = auth.currentUser;
@@ -39,7 +41,8 @@ function ITUserDashboard() {
           setFullName(userData.fullName || "User");
         }
 
-        fetchCompletedCourses(currentUser.uid); // Fetch the completed courses
+        fetchEnrolledCourses(currentUser.uid); // Fetch the courses the user is enrolled in
+        fetchCompletedCourses(currentUser.uid); // Fetch completed courses for prerequisites
       } else {
         toast.error("User is not authenticated. Please log in.");
       }
@@ -48,13 +51,18 @@ function ITUserDashboard() {
     fetchUserDetails();
   }, []);
 
-  // Fetch the user's completed courses
+  // Fetch enrolled courses
+  const fetchEnrolledCourses = async (userId) => {
+    const enrollmentSnapshot = await getDocs(query(collection(db, "Enrollments"), where("userId", "==", userId)));
+    const enrolled = enrollmentSnapshot.docs.map((doc) => doc.data().courseId);
+    setEnrolledCourses(enrolled); // Store the list of enrolled course IDs
+  };
+
+  // Fetch completed courses (Courses that the user has passed as prerequisites)
   const fetchCompletedCourses = async (userId) => {
-    const quizResultsSnapshot = await getDocs(collection(db, "QuizResults"));
-    const completed = quizResultsSnapshot.docs
-      .filter((doc) => doc.data().userId === userId && doc.data().passed === true)
-      .map((doc) => doc.data().courseId);
-    setCompletedCourses(completed); // Set the list of completed course IDs
+    const resultsSnapshot = await getDocs(query(collection(db, "QuizResults"), where("userId", "==", userId), where("passed", "==", true)));
+    const completed = resultsSnapshot.docs.map((doc) => doc.data().courseId);
+    setCompletedCourses(completed); // Store the list of completed course IDs
   };
 
   // Fetch existing courses from both GeneralCourses and ITCourses collections
@@ -80,21 +88,25 @@ function ITUserDashboard() {
     fetchCourses();
   }, []);
 
-  // Fetch certified users for the selected course
-  const fetchCertifiedUsers = async (courseId) => {
-    const certifiedQuery = query(
-      collection(db, "QuizResults"),
-      where("courseId", "==", courseId),
-      where("passed", "==", true)
-    );
-
-    const certifiedSnapshot = await getDocs(certifiedQuery);
-    const certified = certifiedSnapshot.docs.map((doc) => doc.data());
-    setCertifiedUsers(certified); // Set the list of certified users
+  // Handle course selection
+  const handleSelectCourse = (course) => {
+    if (!enrolledCourses.includes(course.id)) {
+      toast.error("You must enroll in the course to view its content.");
+      return;
+    }
+    setSelectedCourse(course);
+    setProgress(0); // Reset progress when a new course is selected
+    setUserAnswers(Array(course.questions?.length || 0).fill("")); // Initialize user answers array
+    setAttempts(0); // Reset attempts for the new course
+    setHasPassed(false); // Reset passed state for the new course
+    setRetryTimeout(0); // Reset retry timeout
+    setShowReattempt(false); // Hide reattempt button
+    setShowCorrectAnswers(false); // Hide correct answers
+    setCorrectAnswers([]); // Reset correct answers
   };
 
-  // Handle course selection and check prerequisite
-  const handleSelectCourse = (course) => {
+  // Check if the user has completed the prerequisite courses before allowing enrollment
+  const handleEnrollCourse = (course) => {
     if (course.prerequisites && course.prerequisites.length > 0) {
       const hasCompletedPrerequisites = course.prerequisites.every((preReqId) =>
         completedCourses.includes(preReqId)
@@ -102,29 +114,41 @@ function ITUserDashboard() {
 
       if (!hasCompletedPrerequisites) {
         toast.error("You need to complete the prerequisite course(s) before accessing this one.");
-        return; // Do not allow selecting the course
+        return; // Do not allow enrollment
       }
     }
-    setSelectedCourse(course);
-    setProgress(0); // Reset progress when a new course is selected
-    setUserAnswers(Array(course.questions?.length || 0).fill("")); // Initialize user answers array
-    setAttempts(0); // Reset attempts for the new course
-    setHasPassed(false); // Reset passed state for the new course
-    setRetryTimeout(0); // Reset retry timeout when selecting a new course
-    setShowReattempt(false); // Hide reattempt button
-    setShowCorrectAnswers(false); // Hide correct answers
-    setCorrectAnswers([]); // Reset correct answers
-
-    // Fetch certified users for the selected course
-    fetchCertifiedUsers(course.id);
+    setEnrollingCourse(course);
+    setShowEnrollModal(true); // Open enrollment modal
   };
 
+  // Confirm course enrollment
+  const confirmEnroll = async () => {
+    if (enrollingCourse) {
+      try {
+        await setDoc(doc(db, "Enrollments", `${userId}_${enrollingCourse.id}`), {
+          userId,
+          courseId: enrollingCourse.id,
+          courseTitle: enrollingCourse.courseTitle,
+          enrolledDate: new Date(),
+        });
+        toast.success(`You have been enrolled in ${enrollingCourse.courseTitle}!`);
+        setEnrolledCourses((prev) => [...prev, enrollingCourse.id]); // Add to enrolled courses
+      } catch (error) {
+        toast.error("Failed to enroll in the course.");
+      }
+    }
+
+    setShowEnrollModal(false); // Close modal after enrolling
+  };
+
+  // Handle answer change
   const handleAnswerChange = (questionIndex, choice) => {
     const newAnswers = [...userAnswers];
     newAnswers[questionIndex] = choice || ""; // Ensure choice is not undefined
     setUserAnswers(newAnswers);
   };
 
+  // Generate the certificate after passing the quiz
   const generateCertificate = (fullName, courseTitle) => {
     const doc = new jsPDF();
 
@@ -132,12 +156,12 @@ function ITUserDashboard() {
     doc.text("Certificate of Completion", 105, 50, null, null, "center");
 
     doc.setFontSize(16);
-    doc.text(`This certifies that`, 105, 70, null, null, "center");
+    doc.text("This certifies that", 105, 70, null, null, "center");
     doc.setFontSize(20);
     doc.text(fullName, 105, 90, null, null, "center");
 
     doc.setFontSize(16);
-    doc.text(`has successfully completed the course`, 105, 110, null, null, "center");
+    doc.text("has successfully completed the course", 105, 110, null, null, "center");
     doc.setFontSize(20);
     doc.text(courseTitle, 105, 130, null, null, "center");
 
@@ -148,8 +172,8 @@ function ITUserDashboard() {
     doc.save(`${fullName}_Certificate.pdf`);
   };
 
+  // Submit the quiz
   const handleSubmitQuiz = async () => {
-    // Ensure the userId is not undefined
     if (!userId) {
       toast.error("User is not authenticated. Please log in.");
       return;
@@ -157,7 +181,7 @@ function ITUserDashboard() {
 
     if (attempts >= 2) {
       toast.error("You have used all your attempts! Please wait 3 seconds to retry.");
-      startRetryTimer(); // Start the 3-second timer
+      startRetryTimer();
       return;
     }
 
@@ -167,12 +191,9 @@ function ITUserDashboard() {
     }
 
     const correctAnswersList = selectedCourse.questions.map((q) => q?.correctAnswer || "");
-    setCorrectAnswers(correctAnswersList); // Store the correct answers
+    setCorrectAnswers(correctAnswersList);
 
-    const userScore = userAnswers.filter(
-      (answer, index) => answer === correctAnswersList[index]
-    ).length;
-
+    const userScore = userAnswers.filter((answer, index) => answer === correctAnswersList[index]).length;
     const totalQuestions = correctAnswersList.length;
     const percentage = (userScore / totalQuestions) * 100;
 
@@ -180,15 +201,10 @@ function ITUserDashboard() {
       toast.success(`Congratulations ${fullName}! You passed with ${percentage}%`);
       setHasPassed(true);
       setProgress(100);
-      setShowCorrectAnswers(true); // Show correct answers after passing
+      setShowCorrectAnswers(true);
 
-      // Save the quiz result to Firestore in the required format
       const resultData = {
-        department: "IT", // Or fetch this value dynamically if available
-        email: auth.currentUser.email, // Getting the email from Firebase auth
-        fullName: fullName, // Full name of the user
-        role: "user", // This could be dynamic based on the user's role
-        userId: userId, // Storing the user ID
+        userId: userId,
         courseId: selectedCourse.id,
         courseTitle: selectedCourse.courseTitle,
         score: percentage,
@@ -199,33 +215,26 @@ function ITUserDashboard() {
 
       try {
         await setDoc(doc(db, "QuizResults", `${userId}_${selectedCourse.id}`), resultData);
-
-        // Update the user's certification status in Firestore
-        await setDoc(doc(db, "Users", userId), { certified: true }, { merge: true });
-
-        // Generate the certificate
         generateCertificate(fullName, selectedCourse.courseTitle);
+        fetchCompletedCourses(userId); // Refresh completed courses
       } catch (error) {
         toast.error("Failed to save quiz results.");
         console.error("Error saving quiz result:", error);
       }
-
-      // Refresh the list of completed courses
-      fetchCompletedCourses(userId);
     } else {
       toast.error(`You failed. Your score: ${percentage}%`);
       setProgress(50);
       setAttempts(attempts + 1);
 
       if (attempts + 1 >= 2) {
-        setShowCorrectAnswers(true); // Show correct answers after 2 attempts fail
-        setShowReattempt(true); // Show reattempt button only after 2 attempts
-        startReattemptCountdown(); // Start 3-second countdown for reattempt
+        setShowCorrectAnswers(true);
+        setShowReattempt(true);
+        startReattemptCountdown();
       }
     }
   };
 
-  // Function to start the 3-second retry timer
+  // Retry timer function
   const startRetryTimer = () => {
     let countdown = 3;
     setRetryTimeout(countdown);
@@ -236,15 +245,15 @@ function ITUserDashboard() {
 
       if (countdown <= 0) {
         clearInterval(interval);
-        setAttempts(0); // Reset the attempts after the 3 seconds
+        setAttempts(0);
         toast.info("You can now retake the quiz.");
       }
     }, 1000);
   };
 
-  // Function to start the 3-second countdown for reattempt button
+  // Reattempt countdown
   const startReattemptCountdown = () => {
-    let countdown = 3; // Set countdown to 3 seconds
+    let countdown = 3;
     setReattemptCountdown(countdown);
 
     const interval = setInterval(() => {
@@ -257,17 +266,17 @@ function ITUserDashboard() {
     }, 1000);
   };
 
-  // Handle reattempt button click
+  // Reattempt quiz function
   const handleReattemptQuiz = () => {
     setAttempts(0);
     setProgress(0);
-    setShowReattempt(false); // Hide reattempt button
-    setUserAnswers(Array(selectedCourse.questions?.length || 0).fill("")); // Reset answers
-    setShowCorrectAnswers(false); // Hide correct answers for the next attempt
+    setShowReattempt(false);
+    setUserAnswers(Array(selectedCourse.questions?.length || 0).fill(""));
+    setShowCorrectAnswers(false);
   };
 
   const convertToEmbedUrl = (videoLink) => {
-    if (!videoLink || typeof videoLink !== "string") return null; // Check if videoLink exists and is a string
+    if (!videoLink || typeof videoLink !== "string") return null;
 
     const isYouTubeLink = videoLink.includes("youtube.com") || videoLink.includes("youtu.be");
 
@@ -276,7 +285,7 @@ function ITUserDashboard() {
       return `https://www.youtube.com/embed/${videoId}`;
     }
 
-    return videoLink; // Return the original link if it's not YouTube
+    return videoLink;
   };
 
   return (
@@ -290,28 +299,34 @@ function ITUserDashboard() {
             <div
               key={index}
               className="course-card"
-              onClick={() => handleSelectCourse(course)}
               style={{
                 cursor: "pointer",
-                opacity: course.prerequisites && course.prerequisites.length > 0 &&
-                !course.prerequisites.every((preReqId) => completedCourses.includes(preReqId))
-                  ? 0.5
-                  : 1,
+                opacity: enrolledCourses.includes(course.id) ? 1 : 0.5,
               }}
             >
               <div className="course-icon">📘</div>
               <h5>{course.courseTitle}</h5>
               <p>{course.courseDescription}</p>
-              {course.prerequisites && course.prerequisites.length > 0 &&
-              !course.prerequisites.every((preReqId) => completedCourses.includes(preReqId)) && (
-                <small style={{ color: "red" }}>Locked (Complete prerequisite course(s))</small>
+              {!enrolledCourses.includes(course.id) && (
+                <Button className="mt-2" variant="success" onClick={() => handleEnrollCourse(course)}>
+                  Enroll in Course
+                </Button>
+              )}
+              {enrolledCourses.includes(course.id) && (
+                <Button
+                  className="mt-2"
+                  variant="primary"
+                  onClick={() => handleSelectCourse(course)}
+                >
+                  Access Course
+                </Button>
               )}
             </div>
           ))}
         </div>
       )}
 
-      {selectedCourse && (
+      {selectedCourse && enrolledCourses.includes(selectedCourse.id) && (
         <div className="course-details mt-5">
           <h4>{selectedCourse.courseTitle}</h4>
           <p>{selectedCourse.courseDescription}</p>
@@ -346,7 +361,6 @@ function ITUserDashboard() {
                     />
                     <label>{choice}</label>
 
-                    {/* Show correct/incorrect after completion */}
                     {showCorrectAnswers && (
                       <span
                         style={{
@@ -411,18 +425,23 @@ function ITUserDashboard() {
         </div>
       )}
 
-      {certifiedUsers.length > 0 && (
-        <div className="certified-users-section mt-5">
-          <h4>Certified Users for {selectedCourse.courseTitle}</h4>
-          <ul>
-            {certifiedUsers.map((user, index) => (
-              <li key={index}>
-                {user.fullName} ({user.email}) - Certified on {new Date(user.timestamp.seconds * 1000).toLocaleDateString()}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Modal for confirming course enrollment */}
+      <Modal show={showEnrollModal} onHide={() => setShowEnrollModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Enroll in {enrollingCourse?.courseTitle}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to enroll in {enrollingCourse?.courseTitle}?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEnrollModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={confirmEnroll}>
+            Confirm Enrollment
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

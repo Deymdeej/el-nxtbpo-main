@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase"; // Firebase setup
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore"; // Firestore methods
+import { collection, getDocs, deleteDoc, doc, query, where } from "firebase/firestore"; // Firestore methods
 import { Modal, Button } from "react-bootstrap"; // Import Modal from React Bootstrap
 import "./css/AdminCoursePage.css"; // For custom styling
 
 function AdminCoursePage() {
   const [courses, setCourses] = useState([]);
+  const [enrollmentCounts, setEnrollmentCounts] = useState({}); // Store enrollment counts
   const [showCourseDetailsModal, setShowCourseDetailsModal] = useState(false); // Course details modal
   const [selectedCourse, setSelectedCourse] = useState(null); // Store the selected course
 
@@ -41,6 +42,29 @@ function AdminCoursePage() {
     fetchCourses();
   }, []);
 
+  // Fetch enrollments for a course and count them
+  const fetchEnrollmentCount = async (courseId) => {
+    const enrollmentsQuery = query(collection(db, "Enrollments"), where("courseId", "==", courseId));
+    const enrollmentSnapshot = await getDocs(enrollmentsQuery);
+    return enrollmentSnapshot.size; // Number of enrollments
+  };
+
+  // Fetch enrollment counts for all courses
+  useEffect(() => {
+    const fetchAllEnrollments = async () => {
+      const newEnrollmentCounts = {};
+      for (const course of courses) {
+        const count = await fetchEnrollmentCount(course.id);
+        newEnrollmentCounts[course.id] = count;
+      }
+      setEnrollmentCounts(newEnrollmentCounts);
+    };
+
+    if (courses.length > 0) {
+      fetchAllEnrollments();
+    }
+  }, [courses]);
+
   // Show course details in modal
   const handleShowCourseDetails = (course) => {
     setSelectedCourse(course);
@@ -52,7 +76,6 @@ function AdminCoursePage() {
   // Function to delete course from Firestore
   const handleDeleteCourse = async () => {
     if (selectedCourse) {
-      // Construct the collection path based on the course category
       let collectionPath = "";
       if (selectedCourse.category === "General") {
         collectionPath = "GeneralCourses";
@@ -62,7 +85,6 @@ function AdminCoursePage() {
         collectionPath = "HRCourses";
       }
 
-      // Ensure collectionPath is valid before attempting to delete
       if (collectionPath) {
         const courseRef = doc(db, collectionPath, selectedCourse.id);
 
@@ -104,7 +126,13 @@ function AdminCoursePage() {
                   <h5 className="course-title">
                     {course.courseTitle} ({course.category})
                   </h5>
-                  <p className="course-description">{course.courseDescription}</p> {/* Show course description */}
+                  <p className="course-description">{course.courseDescription}</p>
+                  <p className="enrollment-count">
+                    <strong>Enrolled Users:</strong> {enrollmentCounts[course.id] || 0}
+                  </p>
+                  <p className="created-by">
+                    <strong>Created By:</strong> {course.createdBy || "Unknown"}
+                  </p> {/* Show created by */}
                 </div>
               ))}
             </div>
@@ -125,6 +153,9 @@ function AdminCoursePage() {
             <p>
               <strong>Video Link:</strong> {selectedCourse.videoLink || "No Video"}
             </p>
+            <p>
+              <strong>Created By:</strong> {selectedCourse.createdBy || "Unknown"}
+            </p> {/* Show Created By in modal */}
             <h5>Questions</h5>
             <ul>
               {selectedCourse.questions.map((q, index) => (
