@@ -1,22 +1,75 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { db } from '../firebase';
+import { collection, onSnapshot } from 'firebase/firestore'; // Use onSnapshot for real-time updates
 import './css/AdminForm.css';
 import BPOLOGO from '../assets/bpo-logo.png';
 
-// Grayed Icons (for inactive nav items)
 import UserDefault from '../assets/userdefault.png';
 import CourseDefault from '../assets/coursedefault.png';
 import LogoutDefault from '../assets/logoutdefault.png';
 
-// Black Icons (for active nav items)
 import UserPick from '../assets/userpick.png';
 import CoursePick from '../assets/coursepick.png';
 import LogoutPick from '../assets/logoutpick.png';
 
 function AdminForm() {
-  const [selectedNav, setSelectedNav] = useState('dashboard'); // default selected nav item
+  const [selectedNav, setSelectedNav] = useState('dashboard'); // Default selected nav item
+  const [courses, setCourses] = useState([]); // State for storing fetched courses
+  const navigate = useNavigate();
+
+  // Fetch courses from Firestore with real-time updates
+  useEffect(() => {
+    const unsubscribeGeneralCourses = onSnapshot(collection(db, 'GeneralCourses'), (snapshot) => {
+      const generalCourses = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        category: 'General',
+        ...doc.data(),
+      }));
+      setCourses((prevCourses) => {
+        const otherCourses = prevCourses.filter((course) => course.category !== 'General');
+        return [...otherCourses, ...generalCourses];
+      });
+    });
+
+    const unsubscribeITCourses = onSnapshot(collection(db, 'ITCourses'), (snapshot) => {
+      const itCourses = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        category: 'IT',
+        ...doc.data(),
+      }));
+      setCourses((prevCourses) => {
+        const otherCourses = prevCourses.filter((course) => course.category !== 'IT');
+        return [...otherCourses, ...itCourses];
+      });
+    });
+
+    const unsubscribeHRCourses = onSnapshot(collection(db, 'HRCourses'), (snapshot) => {
+      const hrCourses = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        category: 'HR',
+        ...doc.data(),
+      }));
+      setCourses((prevCourses) => {
+        const otherCourses = prevCourses.filter((course) => course.category !== 'HR');
+        return [...otherCourses, ...hrCourses];
+      });
+    });
+
+    // Clean up Firestore listeners when the component is unmounted
+    return () => {
+      unsubscribeGeneralCourses();
+      unsubscribeITCourses();
+      unsubscribeHRCourses();
+    };
+  }, []);
 
   const handleNavClick = (navItem) => {
-    setSelectedNav(navItem); // Update selected nav item
+    setSelectedNav(navItem);
+  };
+
+  const handleLogout = () => {
+    navigate('/login');
   };
 
   return (
@@ -36,7 +89,7 @@ function AdminForm() {
               <img
                 className="icon2"
                 alt="User List Icon"
-                src={selectedNav === 'userlist' ? UserPick : UserDefault} // Conditionally render icons
+                src={selectedNav === 'userlist' ? UserPick : UserDefault}
               />
             </div>
             UserList
@@ -51,7 +104,7 @@ function AdminForm() {
               <img
                 className="icon3"
                 alt="Courses Icon"
-                src={selectedNav === 'courses' ? CoursePick : CourseDefault} // Conditionally render icons
+                src={selectedNav === 'courses' ? CoursePick : CourseDefault}
               />
             </div>
             Courses
@@ -61,44 +114,36 @@ function AdminForm() {
           className={`nav-logout ${selectedNav === 'logout' ? 'active' : ''}`}
           role="button"
           tabIndex="3"
-          onClick={() => handleNavClick('logout')}
+          onClick={handleLogout}
         >
           <div className="icon-container">
             <img
               className="icon4"
               alt="Logout Icon"
-              src={selectedNav === 'logout' ? LogoutPick : LogoutDefault} // Conditionally render icons
+              src={selectedNav === 'logout' ? LogoutPick : LogoutDefault}
             />
           </div>
           Logout
         </div>
-        <table class="table-fixed">
-        <thead>
-              <tr>
-              <th>Song</th>
-            <th>Artist</th>
-              <th>Year</th>
-                </tr>
-             </thead>
-          <tbody>
-              <tr>
-              <td>The Sliding Mr. Bones (Next Stop, Pottersville)</td>
-              <td>Malcolm Lockyer</td>
-              <td>1961</td>
-          </tr>
-         <tr>
-              <td>Witchy Woman</td>
-              <td>The Eagles</td>
-              <td>1972</td>
-        </tr>
-          <tr>
-              <td>Shining Star</td>
-              <td>Earth, Wind, and Fire</td>
-              <td>1975</td>
-          </tr>
-          </tbody>
-          </table>
-    </div>
+      </div>
+
+      <div className="content">
+        {selectedNav === 'courses' && (
+          <div className="courses-container">
+            {courses.length === 0 ? (
+              <p>No courses available</p>
+            ) : (
+              courses.map((course, index) => (
+                <div key={index} className="course-box">
+                  <h3>{course.courseTitle} ({course.category})</h3>
+                  <p>{course.courseDescription}</p>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+        
+      </div>
     </div>
   );
 }

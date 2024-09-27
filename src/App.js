@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import AdminPage from "./components/AdminPage";
+import AdminPage from "./components/AdminForm";
 import UserPage from "./components/UserPage";
 import AdminCoursePage from "./components/AdminCoursePage";
 import UserCoursePage from "./components/UserCoursePage";
