@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { db, auth } from "../firebase"; // Firebase setup including auth
+import { db, auth, storage } from "../firebase"; // Include Firebase storage
 import { collection, addDoc, getDocs, doc, getDoc, query, where } from "firebase/firestore"; // Firestore methods
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; // Firebase Storage methods
 import { toast } from "react-toastify"; // For feedback
 import { Modal, Button } from "react-bootstrap"; // Import Modal from React Bootstrap
 import "./css/AdminCoursePage.css"; // For custom styling
@@ -22,12 +23,14 @@ function HRAdminDashboard() {
   const [selectedCourse, setSelectedCourse] = useState(null); // Store the selected course
   const [section, setSection] = useState("general"); // Dropdown state for selecting section inside modal
   const [createdBy, setCreatedBy] = useState(""); // Store the createdBy full name
+  const [pdfFile, setPdfFile] = useState(null); // State for storing selected PDF file
+  const [pdfUrl, setPdfUrl] = useState(""); // State to store PDF URL after upload
 
   // Fetch existing courses and enrollment counts from the database
   useEffect(() => {
     const fetchCoursesAndEnrollments = async () => {
       const generalCoursesSnapshot = await getDocs(collection(db, "GeneralCourses"));
-      const hrCoursesSnapshot = await getDocs(collection(db, "HRCourses"));
+      const hrCoursesSnapshot = await getDocs(collection(db, "HRCourses")); // Fetch HR Courses
 
       const generalCourses = generalCoursesSnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -95,6 +98,40 @@ function HRAdminDashboard() {
     setPrerequisites(selectedOptions); // Update selected prerequisites
   };
 
+  // Handle PDF file selection
+  const handlePdfChange = (e) => {
+    if (e.target.files[0]) {
+      setPdfFile(e.target.files[0]);
+    }
+  };
+
+  // Upload PDF to Firebase Storage
+  const uploadPdfToStorage = async () => {
+    if (!pdfFile) {
+      toast.error("Please select a PDF file to upload.");
+      return null;
+    }
+
+    const storageRef = ref(storage, `course-pdfs/${pdfFile.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, pdfFile);
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {},
+        (error) => {
+          toast.error("Error uploading PDF: " + error.message);
+          reject(error);
+        },
+        async () => {
+          const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+          toast.success("PDF uploaded successfully!");
+          resolve(downloadUrl); // Return the download URL
+        }
+      );
+    });
+  };
+
   // Error handling function
   const validateForm = () => {
     if (!courseTitle.trim()) {
@@ -128,8 +165,15 @@ function HRAdminDashboard() {
     if (!validateForm()) return; // Run the validation checks before proceeding
 
     try {
-      // Only add prerequisites if they are selected
-      const coursePrerequisites = prerequisites.length > 0 ? prerequisites : [];
+      const pdfDownloadUrl = await uploadPdfToStorage(); // Upload PDF and get the URL
+
+      // Add first course as prerequisite if no prerequisite is selected and there is a first course
+      const coursePrerequisites =
+        prerequisites.length === 0 && firstCourseId
+          ? [firstCourseId] // Set first course as prerequisite if none selected
+          : prerequisites.length > 0
+          ? prerequisites // Use the selected prerequisites
+          : []; // If no prerequisites are selected and no first course exists, leave it empty
 
       // Store course in the selected section (General or HR Department)
       const collectionPath = section === "general" ? "GeneralCourses" : "HRCourses";
@@ -140,9 +184,10 @@ function HRAdminDashboard() {
         courseDescription,
         videoLink: disableVideoLink ? "" : videoLink, // Disable video link if checkbox is checked
         questions,
-        prerequisites: coursePrerequisites, // Save prerequisites if selected
+        prerequisites: coursePrerequisites.length > 0 ? coursePrerequisites : [], // Only save prerequisites if they exist
         createdBy, // Add the createdBy field (full name)
         createdAt: new Date(), // Store the created timestamp
+        pdfUrl: pdfDownloadUrl || "", // Save the PDF download URL
       });
 
       // Create the new course object
@@ -155,6 +200,7 @@ function HRAdminDashboard() {
         prerequisites: coursePrerequisites,
         createdBy, // Add createdBy (full name) to the course object
         createdAt: new Date(), // Store createdAt timestamp
+        pdfUrl: pdfDownloadUrl || "", // Save the PDF download URL
       };
 
       // Add the new course to the state without re-fetching
@@ -167,6 +213,7 @@ function HRAdminDashboard() {
       setQuestions([{ question: "", choices: ["", "", "", ""], correctAnswer: "" }]);
       setPrerequisites([]); // Reset prerequisites after submission
       setDisableVideoLink(false); // Reset video link checkbox
+      setPdfFile(null); // Reset PDF file input
 
       toast.success("Course added successfully!");
 
@@ -249,7 +296,6 @@ function HRAdminDashboard() {
               className="form-control"
             />
           </div>
-
           <div className="form-group">
             <label>Course Description</label>
             <textarea
@@ -260,28 +306,10 @@ function HRAdminDashboard() {
             />
           </div>
 
+          {/* PDF file upload */}
           <div className="form-group">
-            <label>Video Link</label>
-            <input
-              type="text"
-              value={videoLink}
-              onChange={(e) => setVideoLink(e.target.value)}
-              placeholder="Enter video link"
-              className="form-control"
-              disabled={disableVideoLink} // Disable the input if the checkbox is checked
-            />
-            <div className="form-check mt-2">
-              <input
-                type="checkbox"
-                className="form-check-input"
-                id="disableVideoLink"
-                checked={disableVideoLink}
-                onChange={(e) => setDisableVideoLink(e.target.checked)} // Toggle disable/enable of the input field
-              />
-              <label className="form-check-label" htmlFor="disableVideoLink">
-                No Video Link
-              </label>
-            </div>
+            <label>Upload Course PDF</label>
+            <input type="file" accept=".pdf" onChange={handlePdfChange} className="form-control" />
           </div>
 
           {/* Prerequisite selection */}
@@ -299,6 +327,31 @@ function HRAdminDashboard() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="form-check mt-2">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id="disableVideoLink"
+              checked={disableVideoLink}
+              onChange={(e) => setDisableVideoLink(e.target.checked)} // Toggle disable/enable of the input field
+            />
+            <label className="form-check-label" htmlFor="disableVideoLink">
+              No Video Link
+            </label>
+          </div>
+
+          <div className="form-group">
+            <label>Video Link</label>
+            <input
+              type="text"
+              value={videoLink}
+              onChange={(e) => setVideoLink(e.target.value)}
+              placeholder="Enter video link"
+              className="form-control"
+              disabled={disableVideoLink} // Disable the input if the checkbox is checked
+            />
           </div>
 
           <div>
@@ -358,6 +411,7 @@ function HRAdminDashboard() {
           </Modal.Header>
           <Modal.Body>
             <p><strong>Video Link:</strong> {selectedCourse.videoLink}</p>
+            <p><strong>PDF Link:</strong> {selectedCourse.pdfUrl ? <a href={selectedCourse.pdfUrl} target="_blank" rel="noopener noreferrer">Download PDF</a> : "No PDF available"}</p>
             <p><strong>Created By:</strong> {selectedCourse.createdBy}</p> {/* Display createdBy */}
             <h5>Questions</h5>
             <ul>

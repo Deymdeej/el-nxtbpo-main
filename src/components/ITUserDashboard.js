@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import ProgressBar from "react-bootstrap/ProgressBar"; // Progress bar from react-bootstrap
 import { Button, Modal } from "react-bootstrap"; // Button and Modal from react-bootstrap
 import { jsPDF } from "jspdf"; // jsPDF for generating certificates
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Firebase Storage methods
 
 function ITUserDashboard() {
   const [courses, setCourses] = useState([]); // Hold all available courses
@@ -24,6 +25,9 @@ function ITUserDashboard() {
   const [enrollingCourse, setEnrollingCourse] = useState(null); // Store the course to enroll
   const [enrolledCourses, setEnrolledCourses] = useState([]); // Store enrolled courses
   const [completedCourses, setCompletedCourses] = useState([]); // Store completed courses (for prerequisites)
+  const [certificateUrl, setCertificateUrl] = useState(null); // Store the certificate URL
+
+  const storage = getStorage(); // Initialize Firebase Storage
 
   // Fetch the currently logged-in user's ID, name, enrolled, and completed courses
   useEffect(() => {
@@ -148,8 +152,8 @@ function ITUserDashboard() {
     setUserAnswers(newAnswers);
   };
 
-  // Generate the certificate after passing the quiz
-  const generateCertificate = (fullName, courseTitle) => {
+  // Generate the certificate after passing the quiz and upload to Firebase Storage
+  const generateCertificate = async (fullName, courseTitle) => {
     const doc = new jsPDF();
 
     doc.setFontSize(22);
@@ -168,8 +172,24 @@ function ITUserDashboard() {
     doc.setFontSize(14);
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, 150, null, null, "center");
 
-    // Save the PDF
-    doc.save(`${fullName}_Certificate.pdf`);
+    // Convert the generated PDF to Blob
+    const pdfBlob = doc.output("blob");
+
+    // Create a reference to Firebase Storage location
+    const storageRef = ref(storage, `certificates/${userId}_${selectedCourse.id}.pdf`);
+
+    try {
+      // Upload the PDF to Firebase Storage
+      await uploadBytes(storageRef, pdfBlob);
+
+      // Get the download URL for the uploaded certificate
+      const url = await getDownloadURL(storageRef);
+      setCertificateUrl(url); // Store the certificate URL for the user to view/download
+      toast.success("Certificate uploaded successfully!");
+    } catch (error) {
+      toast.error("Failed to upload certificate.");
+      console.error("Error uploading certificate:", error);
+    }
   };
 
   // Submit the quiz
@@ -215,7 +235,7 @@ function ITUserDashboard() {
 
       try {
         await setDoc(doc(db, "QuizResults", `${userId}_${selectedCourse.id}`), resultData);
-        generateCertificate(fullName, selectedCourse.courseTitle);
+        await generateCertificate(fullName, selectedCourse.courseTitle); // Upload certificate
         fetchCompletedCourses(userId); // Refresh completed courses
       } catch (error) {
         toast.error("Failed to save quiz results.");
@@ -330,7 +350,21 @@ function ITUserDashboard() {
         <div className="course-details mt-5">
           <h4>{selectedCourse.courseTitle}</h4>
           <p>{selectedCourse.courseDescription}</p>
-          <div className="video-section">
+          
+          {/* Embed the PDF if available */}
+          {selectedCourse.pdfUrl && (
+            <div className="pdf-section">
+              <h5>Course Material PDF</h5>
+              <iframe
+                src={selectedCourse.pdfUrl}
+                width="600"
+                height="500"
+                title="Course PDF"
+              ></iframe>
+            </div>
+          )}
+
+          <div className="video-section mt-4">
             <h5>Course Video</h5>
             {selectedCourse.videoLink ? (
               <iframe
@@ -391,10 +425,13 @@ function ITUserDashboard() {
             Submit Quiz
           </Button>
 
-          {hasPassed && (
+          {hasPassed && certificateUrl && (
             <div className="mt-4">
               <h4>Congratulations {fullName}! You passed!</h4>
               <p>You have been certified for this course.</p>
+              <a href={certificateUrl} target="_blank" rel="noopener noreferrer">
+                View/Download your Certificate
+              </a>
             </div>
           )}
 
