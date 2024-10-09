@@ -448,66 +448,70 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
 
       {/* Main content area */}
       <div className="container main-content">
-        <div className="row">
-          <div className="col-md-12">
-            <h4>All Courses</h4>
+  <div className="row">
+    <div className="col-md-12">
+      <h4>All Courses</h4>
 
-            {/* Search Bar and Filter By Category */}
-            <div className="filter-section">
-              <input
-                type="text"
-                placeholder="Search course title"
-                className="search-bar"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <select
-                className="filter-select"
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-              >
-                <option value="All">Filter By: All</option>
-                <option value="General">General</option>
-                <option value="IT">IT</option>
-              </select>
-            </div>
+      {/* Search Bar and Filter By Category */}
+      <div className="filter-section">
+        <input
+          type="text"
+          placeholder="Search course title"
+          className="search-bar"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <select
+          className="filter-select"
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+        >
+          <option value="All">Filter By: All</option>
+          <option value="General">General</option>
+          <option value="IT">IT</option>
+        </select>
+      </div>
 
-            {filteredCourses.length === 0 ? (
-              <p>No courses available</p>
-            ) : (
-              <div className="course-grid-horizontal">
-                {filteredCourses.map((course, index) => (
-                  <div
-                    key={index}
-                    className="course-card-horizontal"
-                    onClick={() => openCourseModal(course)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="course-card-header">
-                      <h5 className="course-title">{course.courseTitle}</h5>
-                    </div>
-                    <img
-                      src={editIcon}
-                      alt="Edit"
-                      className="edit-icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditModal(course);
-                      }}
-                    />
-                    <p className="course-description">{course.courseDescription}</p>
-                    <span className="category-tag">{course.category}</span>
-                    <div className="course-footer">
-                      <p>Enrolled Users: {enrollmentCounts[course.id] || 0}</p>
-                    </div>
-                  </div>
-                ))}
-                <div className="course-card-horizontal add-course-card" onClick={handleOpenModal}>
-                  <div className="add-icon">+</div>
-                  <p>Add Course</p>
-                </div>
+      {/* Courses Grid */}
+      <div className="course-grid-horizontal">
+        {filteredCourses.length === 0 ? (
+          <p>No courses available</p>
+        ) : (
+          filteredCourses.map((course, index) => (
+            <div
+              key={index}
+              className="course-card-horizontal"
+              onClick={() => openCourseModal(course)}
+              style={{ cursor: "pointer" }}
+            >
+              <div className="course-card-header">
+                <h5 className="course-title">{course.courseTitle}</h5>
               </div>
-            )}
+              <img
+                src={editIcon}
+                alt="Edit"
+                className="edit-icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEditModal(course);
+                }}
+              />
+              <p className="course-description">{course.courseDescription}</p>
+              <span className="category-tag">{course.category}</span>
+              <div className="course-footer">
+                <p>Enrolled Users: {enrollmentCounts[course.id] || 0}</p>
+              </div>
+            </div>
+          ))
+        )}
+
+        {/* Add Course Button (Always Visible) */}
+        <div className="course-card-horizontal add-course-card" onClick={handleOpenModal}>
+          <div className="add-icon">+</div>
+          <p>Add Course</p>
+        </div>
+              </div>
+            
           </div>
         </div>
 
