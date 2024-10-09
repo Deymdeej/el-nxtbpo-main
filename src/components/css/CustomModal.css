@@ -1,0 +1,142 @@
+.modal-form {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: #ffffff; /* Solid white background */
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Light shadow for clean look */
+  max-width: 600px;
+  width: 100%; /* Make it responsive */
+  margin: 0 auto;
+  height: auto; /* Ensure it grows as needed */
+}
+
+.modal-title {
+  font-size: 26px;
+  font-weight: bold;
+  text-align: left;
+  margin-bottom: 10px;
+  color: #333; /* Darker text for contrast */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #333;
+}
+
+.form-control {
+  padding: 12px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  color: #333;
+  background-color: #f5f5f5;
+  transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #007bff; /* Focus state */
+  outline: none;
+}
+
+.select-category {
+  padding: 12px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+.file-upload-container {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  background-color: #f9f9f9;
+  transition: background-color 0.3s ease;
+}
+
+.file-upload-container:hover {
+  background-color: #f1f1f1;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-upload-instruction {
+  font-size: 14px;
+  color: #888;
+}
+
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.cancel-button {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.save-button {
+  background-color: #4CAF50;
+  border: 1px solid #45a049;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.save-button:hover, .cancel-button:hover {
+  opacity: 0.9;
+}
+
+/* Modal Overlay Styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Background overlay effect */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 800px; /* Adjust width for better layout */
+  width: 100%;
+  max-height: 90vh; /* Adjust height to prevent overflowing */
+  overflow-y: auto; /* Add scroll if content overflows */
+  text-align: left;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 90%;
+    padding: 10px; /* Adjust padding for smaller screens */
+  }
+}

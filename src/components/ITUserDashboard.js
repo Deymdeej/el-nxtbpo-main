@@ -1,20 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { db, auth } from "../firebase"; // Firebase setup
-import { collection, getDocs, doc, setDoc, getDoc, query, where } from "firebase/firestore"; // Firestore methods
+import { db, auth } from "../firebase";
+import { collection, getDocs, doc, setDoc, getDoc, query, where } from "firebase/firestore"; 
 import { toast } from "react-toastify";
-import ProgressBar from "react-bootstrap/ProgressBar"; // Progress bar from react-bootstrap
-import { Button, Modal } from "react-bootstrap"; // Button and Modal from react-bootstrap
-import { jsPDF } from "jspdf"; // jsPDF for generating certificates
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Firebase Storage methods
+import { jsPDF } from "jspdf"; 
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"; 
+import { useNavigate } from 'react-router-dom'; 
+import ITUser from './ITUser';
 
 function ITUserDashboard() {
-  const [courses, setCourses] = useState([]); // Hold all available courses
+  const [selectedNav, setSelectedNav] = useState('dashboard'); 
+  const [courses, setCourses] = useState([]); 
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [userAnswers, setUserAnswers] = useState([]);
   const [progress, setProgress] = useState(0);
-  const [attempts, setAttempts] = useState(0); // Track quiz attempts
+  const [attempts, setAttempts] = useState(0); 
   const [hasPassed, setHasPassed] = useState(false);
-  const [userId, setUserId] = useState(null); // Store the user's ID
+  const [userId, setUserId] = useState(null); 
   const [fullName, setFullName] = useState("User"); // Store the user's full name
   const [retryTimeout, setRetryTimeout] = useState(0); // Countdown for retrying the quiz
   const [showReattempt, setShowReattempt] = useState(false); // Control reattempt button visibility
@@ -26,6 +27,7 @@ function ITUserDashboard() {
   const [enrolledCourses, setEnrolledCourses] = useState([]); // Store enrolled courses
   const [completedCourses, setCompletedCourses] = useState([]); // Store completed courses (for prerequisites)
   const [certificateUrl, setCertificateUrl] = useState(null); // Store the certificate URL
+  const navigate = useNavigate();
 
   const storage = getStorage(); // Initialize Firebase Storage
 
@@ -308,178 +310,45 @@ function ITUserDashboard() {
     return videoLink;
   };
 
+  const handleNavClick = (navItem) => {
+    setSelectedNav(navItem);
+  };
+
+  const handleLogout = () => {
+    navigate('/login');
+  };
+
   return (
-    <div className="it-user-dashboard container mt-5">
-      <h3>Select an IT or General Course</h3>
-      {courses.length === 0 ? (
-        <p>No courses available</p>
-      ) : (
-        <div className="course-grid">
-          {courses.map((course, index) => (
-            <div
-              key={index}
-              className="course-card"
-              style={{
-                cursor: "pointer",
-                opacity: enrolledCourses.includes(course.id) ? 1 : 0.5,
-              }}
-            >
-              <div className="course-icon">📘</div>
-              <h5>{course.courseTitle}</h5>
-              <p>{course.courseDescription}</p>
-              {!enrolledCourses.includes(course.id) && (
-                <Button className="mt-2" variant="success" onClick={() => handleEnrollCourse(course)}>
-                  Enroll in Course
-                </Button>
-              )}
-              {enrolledCourses.includes(course.id) && (
-                <Button
-                  className="mt-2"
-                  variant="primary"
-                  onClick={() => handleSelectCourse(course)}
-                >
-                  Access Course
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {selectedCourse && enrolledCourses.includes(selectedCourse.id) && (
-        <div className="course-details mt-5">
-          <h4>{selectedCourse.courseTitle}</h4>
-          <p>{selectedCourse.courseDescription}</p>
-          
-          {/* Embed the PDF if available */}
-          {selectedCourse.pdfUrl && (
-            <div className="pdf-section">
-              <h5>Course Material PDF</h5>
-              <iframe
-                src={selectedCourse.pdfUrl}
-                width="600"
-                height="500"
-                title="Course PDF"
-              ></iframe>
-            </div>
-          )}
-
-          <div className="video-section mt-4">
-            <h5>Course Video</h5>
-            {selectedCourse.videoLink ? (
-              <iframe
-                src={convertToEmbedUrl(selectedCourse.videoLink)}
-                title="Course Video"
-                width="600"
-                height="400"
-                allowFullScreen
-              ></iframe>
-            ) : (
-              <p>No video available for this course.</p>
-            )}
-          </div>
-
-          <div className="quiz-section mt-5">
-            <h5>Quiz</h5>
-            {selectedCourse.questions?.map((question, index) => (
-              <div key={index}>
-                <p>{question.question}</p>
-                {question.choices?.map((choice, choiceIndex) => (
-                  <div key={choiceIndex}>
-                    <input
-                      type="radio"
-                      name={`question-${index}`}
-                      value={choice}
-                      onChange={() => handleAnswerChange(index, choice)}
-                      disabled={hasPassed || attempts >= 2 || retryTimeout > 0}
-                    />
-                    <label>{choice}</label>
-
-                    {showCorrectAnswers && (
-                      <span
-                        style={{
-                          color: correctAnswers[index] === choice ? "green" : "red",
-                          marginLeft: "10px",
-                        }}
-                      >
-                        {correctAnswers[index] === choice ? "Correct" : "Incorrect"}
-                      </span>
-                    )}
-                  </div>
-                ))}
-                {showCorrectAnswers && (
-                  <p style={{ color: "blue" }}>
-                    Correct Answer: {correctAnswers[index]}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <Button
-            className="mt-3"
-            variant="primary"
-            onClick={handleSubmitQuiz}
-            disabled={hasPassed || attempts >= 2 || retryTimeout > 0}
-          >
-            Submit Quiz
-          </Button>
-
-          {hasPassed && certificateUrl && (
-            <div className="mt-4">
-              <h4>Congratulations {fullName}! You passed!</h4>
-              <p>You have been certified for this course.</p>
-              <a href={certificateUrl} target="_blank" rel="noopener noreferrer">
-                View/Download your Certificate
-              </a>
-            </div>
-          )}
-
-          {retryTimeout > 0 && (
-            <div className="mt-3">
-              <p>Retry in {retryTimeout} seconds...</p>
-            </div>
-          )}
-
-          {showReattempt && (
-            <Button
-              className="mt-3"
-              variant="danger"
-              onClick={handleReattemptQuiz}
-              disabled={reattemptCountdown > 0}
-            >
-              Reattempt Quiz {reattemptCountdown > 0 && `(${reattemptCountdown} seconds)`}
-            </Button>
-          )}
-
-          <div className="mt-4">
-            <ProgressBar now={progress} label={`${progress}%`} />
-          </div>
-
-          <div className="mt-3">
-            <p>Attempts: {attempts}/2</p>
-          </div>
-        </div>
-      )}
-
-      {/* Modal for confirming course enrollment */}
-      <Modal show={showEnrollModal} onHide={() => setShowEnrollModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Enroll in {enrollingCourse?.courseTitle}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to enroll in {enrollingCourse?.courseTitle}?
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEnrollModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={confirmEnroll}>
-            Confirm Enrollment
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </div>
+    <ITUser
+      selectedNav={selectedNav}
+      handleNavClick={handleNavClick}
+      handleLogout={handleLogout}
+      courses={courses}
+      handleEnrollCourse={handleEnrollCourse}
+      handleSelectCourse={handleSelectCourse}
+      showEnrollModal={showEnrollModal}
+      confirmEnroll={confirmEnroll}
+      setShowEnrollModal={setShowEnrollModal}
+      selectedCourse={selectedCourse}
+      enrolledCourses={enrolledCourses}
+      userAnswers={userAnswers}
+      handleAnswerChange={handleAnswerChange}
+      handleSubmitQuiz={handleSubmitQuiz}
+      hasPassed={hasPassed}
+      certificateUrl={certificateUrl}
+      progress={progress}
+      attempts={attempts}
+      retryTimeout={retryTimeout}
+      reattemptCountdown={reattemptCountdown}
+      showReattempt={showReattempt}
+      handleReattemptQuiz={handleReattemptQuiz}
+      showCorrectAnswers={showCorrectAnswers}
+      correctAnswers={correctAnswers}
+      convertToEmbedUrl={convertToEmbedUrl}
+      fullName={fullName}
+      enrollingCourse={enrollingCourse}
+      userType={"IT"}
+    />
   );
 }
 

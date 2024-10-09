@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase';
-import { collection, onSnapshot, deleteDoc, doc } from 'firebase/firestore'; // Add deleteDoc and doc // Boss Kyle
+import { db, auth } from '../firebase'; // Make sure auth is imported from Firebase
+import { collection, onSnapshot, deleteDoc, doc } from 'firebase/firestore'; 
 import './css/AdminForm.css';
 import BPOLOGO from '../assets/bpo-logo.png';
+import { FaEdit, FaTrashAlt } from 'react-icons/fa'; // Importing icons
 
 import UserDefault from '../assets/userdefault.png';
 import CourseDefault from '../assets/coursedefault.png';
@@ -13,65 +14,33 @@ import UserPick from '../assets/userpick.png';
 import CoursePick from '../assets/coursepick.png';
 import LogoutPick from '../assets/logoutpick.png';
 
+import { FaBars } from 'react-icons/fa'; // Import hamburger menu icon
+
 function AdminForm() {
   const [selectedNav, setSelectedNav] = useState('dashboard'); // Default selected nav item
   const [courses, setCourses] = useState([]); // State for storing fetched courses
   const [users, setUsers] = useState([]); // State for storing users
   const [searchTerm, setSearchTerm] = useState(''); // State for search input
-  const [selectedCategory, setSelectedCategory] = useState('All'); // State for dropdown filter
-  const [selectedCourse, setSelectedCourse] = useState(null); // State to store selected course
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility state
+  const [selectedDepartment, setSelectedDepartment] = useState('All'); // State for department filter
+  const [selectedRole, setSelectedRole] = useState('All'); // State for role filter
+  const [currentUserId, setCurrentUserId] = useState(null); // State for logged-in user ID
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Manage sidebar visibility
   const navigate = useNavigate();
 
-  
-
-  // Fetch general courses from Firestore with real-time updates
+  // Fetch logged-in user info from Firebase Auth
   useEffect(() => {
-    const unsubscribeGeneralCourses = onSnapshot(collection(db, 'GeneralCourses'), (snapshot) => {
-      const generalCourses = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        category: 'General',
-        ...doc.data(),
-      }));
-      setCourses((prevCourses) => {
-        const otherCourses = prevCourses.filter((course) => course.category !== 'General');
-        return [...otherCourses, ...generalCourses];
-      });
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setCurrentUserId(user.uid); // Store the logged-in user's ID
+      } else {
+        navigate('/login'); // Redirect to login if not logged in
+      }
     });
 
-    const unsubscribeITCourses = onSnapshot(collection(db, 'ITCourses'), (snapshot) => {
-      const itCourses = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        category: 'IT',
-        ...doc.data(),
-      }));
-      setCourses((prevCourses) => {
-        const otherCourses = prevCourses.filter((course) => course.category !== 'IT');
-        return [...otherCourses, ...itCourses];
-      });
-    });
+    return () => unsubscribeAuth();
+  }, [navigate]);
 
-    const unsubscribeHRCourses = onSnapshot(collection(db, 'HRCourses'), (snapshot) => {
-      const hrCourses = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        category: 'HR',
-        ...doc.data(),
-      }));
-      setCourses((prevCourses) => {
-        const otherCourses = prevCourses.filter((course) => course.category !== 'HR');
-        return [...otherCourses, ...hrCourses];
-      });
-    });
-
-    // Clean up Firestore listeners when the component is unmounted
-    return () => {
-      unsubscribeGeneralCourses();
-      unsubscribeITCourses();
-      unsubscribeHRCourses();
-    };
-  }, []);
-
-  // Fetch users from Firestore // Boss Kyle Userlist Code 
+  // Fetch users from Firestore
   useEffect(() => {
     const unsubscribeUsers = onSnapshot(collection(db, 'Users'), (snapshot) => {
       const usersData = snapshot.docs.map((doc) => ({
@@ -86,6 +55,43 @@ function AdminForm() {
     };
   }, []);
 
+  // Fetch courses from Firestore
+  useEffect(() => {
+    const unsubscribeGeneralCourses = onSnapshot(collection(db, 'GeneralCourses'), (snapshot) => {
+      const generalCourses = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        category: 'General',
+        ...doc.data(),
+      }));
+      setCourses((prevCourses) => [...prevCourses, ...generalCourses]);
+    });
+
+    const unsubscribeITCourses = onSnapshot(collection(db, 'ITCourses'), (snapshot) => {
+      const itCourses = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        category: 'IT',
+        ...doc.data(),
+      }));
+      setCourses((prevCourses) => [...prevCourses, ...itCourses]);
+    });
+
+    const unsubscribeHRCourses = onSnapshot(collection(db, 'HRCourses'), (snapshot) => {
+      const hrCourses = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        category: 'HR',
+        ...doc.data(),
+      }));
+      setCourses((prevCourses) => [...prevCourses, ...hrCourses]);
+    });
+
+    return () => {
+      unsubscribeGeneralCourses();
+      unsubscribeITCourses();
+      unsubscribeHRCourses();
+    };
+  }, []);
+
+  // Function to delete a user
   const handleDeleteUser = async (id) => {
     try {
       await deleteDoc(doc(db, 'Users', id));
@@ -95,13 +101,29 @@ function AdminForm() {
     }
   };
 
-  const handleUpdateUser = (id) => {
-    // Handle update logic here (redirect to update page or open modal)
-    alert('Update function for user ' + id);
+  // Filter the users based on search term, department, role, and exclude the logged-in user
+  const filteredUsers = users
+    .filter((user) => user.id !== currentUserId) // Exclude logged-in user
+    .filter((user) => {
+      const matchesDepartment = selectedDepartment === 'All' || user.department === selectedDepartment;
+      const matchesRole = selectedRole === 'All' || user.role === selectedRole;
+      const matchesSearchTerm = user.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return matchesDepartment && matchesRole && matchesSearchTerm;
+    });
+
+  // Filter the courses based on search term and selected category (department)
+  const filteredCourses = courses.filter((course) => {
+    return (
+      (selectedDepartment === 'All' || course.category === selectedDepartment) &&
+      course.courseTitle.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  // Toggle the sidebar visibility
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
   };
-
-  // Boss Kyle Userlist Code
-
 
   const handleNavClick = (navItem) => {
     setSelectedNav(navItem);
@@ -111,36 +133,15 @@ function AdminForm() {
     navigate('/login');
   };
 
-  // **Handle course click to open the modal**
-  const handleCourseClick = (course) => {
-    setSelectedCourse(course);
-    setIsModalOpen(true); // Open modal when course is clicked
-  };
-
-  // **Handle modal close**
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedCourse(null); // Clear selected course data
-  };
-
-  // Helper function to truncate description to 50 words
-  const truncateDescription = (description) => {
-    const words = description.split(' ');
-    return words.length > 50 ? words.slice(0, 50).join(' ') + '...' : description;
-  };
-
-  // Filter the courses based on search term and selected category
-  const filteredCourses = courses.filter((course) => {
-    return (
-      (selectedCategory === 'All' || course.category === selectedCategory) &&
-      course.courseTitle.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
-
-
   return (
     <div>
-      <div className="sidebar">
+      {/* Hamburger menu icon for smaller screens */}
+      <div className="hamburger-icon" onClick={toggleSidebar}>
+        <FaBars />
+      </div>
+
+      {/* Sidebar */}
+      <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="header">
           <img className="logo" alt="Group" src={BPOLOGO} />
         </div>
@@ -148,7 +149,6 @@ function AdminForm() {
           <div
             className={`nav-item ${selectedNav === 'userlist' ? 'active' : ''}`}
             role="button"
-            tabIndex="1"
             onClick={() => handleNavClick('userlist')}
           >
             <div className="icon-container">
@@ -163,7 +163,6 @@ function AdminForm() {
           <div
             className={`nav-item ${selectedNav === 'courses' ? 'active' : ''}`}
             role="button"
-            tabIndex="2"
             onClick={() => handleNavClick('courses')}
           >
             <div className="icon-container">
@@ -179,7 +178,6 @@ function AdminForm() {
         <div
           className={`nav-logout ${selectedNav === 'logout' ? 'active' : ''}`}
           role="button"
-          tabIndex="3"
           onClick={handleLogout}
         >
           <div className="icon-container">
@@ -193,11 +191,39 @@ function AdminForm() {
         </div>
       </div>
 
-
-      {/* Boss Kyle Userlist Code */}
+      {/* User List Section */}
       <div className="content">
         {selectedNav === 'userlist' && (
           <div className="userlist-container">
+            {/* Search and Filter Section */}
+            <div className="search-container">
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)} // Update search term on input
+                className="search-input"
+              />
+              <select
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)} // Filter by department
+                className="search-dropdown"
+              >
+                <option value="All">All Departments</option>
+                <option value="HR">HR</option>
+                <option value="IT">IT</option>
+              </select>
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)} // Filter by role
+                className="search-dropdown"
+              >
+                <option value="All">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
+            </div>
+            {/* User List Table */}
             <table className="user-table">
               <thead>
                 <tr>
@@ -208,14 +234,21 @@ function AdminForm() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <tr key={user.id}>
                     <td>{user.fullName}</td>
                     <td>{user.department}</td>
                     <td>{user.role}</td>
-                    <td>
-                      <button className="update-btn" onClick={() => handleUpdateUser(user.id)}>Update</button>
-                      <button className="delete-btn" onClick={() => handleDeleteUser(user.id)}>Delete</button>
+                    <td style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <FaEdit
+                        className="icon update-icon"
+                        style={{ cursor: 'pointer', marginRight: '10px' }}
+                      />
+                      <FaTrashAlt
+                        className="icon delete-icon"
+                        onClick={() => handleDeleteUser(user.id)}
+                        style={{ cursor: 'pointer', color: 'red' }}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -224,14 +257,9 @@ function AdminForm() {
           </div>
         )}
       </div>
-     {/* Boss Kyle Userlist Code */}
 
-
-
-
-
-
-     <div className="content">
+      {/* Courses Section */}
+      <div className="content">
         {selectedNav === 'courses' && (
           <div>
             <div className="search-container">
@@ -243,8 +271,8 @@ function AdminForm() {
                 className="search-input"
               />
               <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)} // Filter by department (General, IT, HR)
                 className="search-dropdown"
               >
                 <option value="All">All</option>
@@ -253,7 +281,6 @@ function AdminForm() {
                 <option value="HR">HR</option>
               </select>
             </div>
-
             <div className="courses-container">
               {filteredCourses.length === 0 ? (
                 <p>No courses available</p>
@@ -270,51 +297,17 @@ function AdminForm() {
                         ? 'hr-course'
                         : ''
                     }`}
-                    onClick={() => handleCourseClick(course)}
                   >
                     <h3>{course.courseTitle}</h3>
                     <h4>({course.category})</h4>
-                    <p>{truncateDescription(course.courseDescription)}</p> {/* Truncate to 50 words */}
                   </div>
                 ))
               )}
             </div>
-            
           </div>
         )}
       </div>
-
-      {/* Modal Component */}
-      {isModalOpen && selectedCourse && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>{selectedCourse.courseTitle}</h2>
-            <h4>Category: {selectedCourse.category}</h4>
-            <h5>{selectedCourse.courseDescription}</h5>
-            <p>Number of Employees Enrolled: {selectedCourse.enrolledEmployees || 0}</p>
-
-            <h3>Files:</h3>
-            <ul>
-              {selectedCourse.files && selectedCourse.files.length > 0 ? (
-                selectedCourse.files.map((file, index) => (
-                  <li key={index}>
-                    <a href={file.url} target="_blank" rel="noopener noreferrer">
-                      {file.name}
-                    </a>
-                  </li>
-                ))
-              ) : (
-                <p>No files available.</p>
-              )}
-            </ul>
-
-            <button className="openmodal"onClick={handleCloseModal}>Close</button>
-          </div>
-        </div>
-      )}
-  
     </div>
-    
   );
 }
 

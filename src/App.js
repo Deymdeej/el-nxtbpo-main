@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import AdminPage from "./components/AdminForm";
 import UserPage from "./components/UserPage";
-import AdminCoursePage from "./components/AdminCoursePage";
+import ITAdminCoursePage1 from "./components/ITAdminCoursePage1";
 import UserCoursePage from "./components/UserCoursePage";
 import AdminResultsPage from "./components/AdminResultsPage";
 import HRAdminDashboard from "./components/HRAdminDashboard";
 import HRUserDashboard from "./components/HRUserDashboard";
 import ITAdminDashboard from "./components/ITAdminDashboard";
 import ITUserDashboard from "./components/ITUserDashboard";
+import ITAdminTrainingDashboard from "./components/ITAdminTrainingDashboard";
+import ITAdminCertificateDashboard from "./components/ITAdminCertificateDashboard"; // Import IT Admin Certificate Dashboard
 import AuthContainer from "./components/AuthContainer";  
 import { ToastContainer, toast } from "react-toastify"; 
 import "react-toastify/dist/ReactToastify.css"; 
@@ -114,14 +116,28 @@ function App() {
                 element={user && role === "user" && department === "IT" ? <ITUserDashboard /> : <Navigate to="/login" />}
               />
 
+              {/* Add ITAdminCoursePage1 Route for IT Admin */}
+              <Route
+                path="/it-admin-courses"
+                element={user && role === "admin" && department === "IT" ? <ITAdminCoursePage1 /> : <Navigate to="/login" />}
+              />
+
+              {/* Add ITAdminTrainingDashboard Route for IT Admin */}
+              <Route
+                path="/it-admin-training"
+                element={user && role === "admin" && department === "IT" ? <ITAdminTrainingDashboard /> : <Navigate to="/login" />}
+              />
+
+              {/* Add ITAdminCertificateDashboard Route for IT Admin */}
+              <Route
+                path="/it-admin-certificates"
+                element={user && role === "admin" && department === "IT" ? <ITAdminCertificateDashboard /> : <Navigate to="/login" />}
+              />
+
               {/* Admin Routes */}
               <Route
                 path="/admin"
                 element={user && role === "admin" ? <AdminPage /> : <Navigate to="/login" />}
-              />
-              <Route
-                path="/admincoursepage"
-                element={user && role === "admin" ? <AdminCoursePage /> : <Navigate to="/login" />}
               />
               <Route
                 path="/adminresults"
