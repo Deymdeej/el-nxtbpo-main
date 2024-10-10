@@ -202,6 +202,11 @@
     line-height: 1.5; 
     word-wrap: break-word; 
     word-break: break-word;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+    word-wrap: break-word; /* Ensures long text wraps properly */
+    line-height: 1.5; /* Adds a bit more space between lines */
   }
   
   .IT-user-course-category-text {
@@ -385,3 +390,747 @@
   .IT-user-course-cancel-button:hover {
     background-color: #c9302c; /* Darker red on hover for cancel */
   }
+
+
+  .IT-user-course-mycourse-modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.5); /* Background overlay */
+  }
+  
+  .IT-user-course-mycourse-content {
+    padding: 20px;
+  }
+  
+  .IT-user-course-mycourse-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  .IT-user-course-mycourse-title {
+    margin: 0;
+  }
+  
+  .IT-user-course-mycourse-close-button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  .IT-user-course-mycourse-body {
+    margin-top: 20px;
+  }
+  
+  .IT-user-course-mycourse-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 10px;
+  }
+  
+
+  .pdf-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .pdf-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: black;
+    transition: color 0.3s;
+  }
+  
+  .pdf-link:hover {
+    color: #007BFF;  /* Add hover color effect */
+  }
+  
+  .pdf-icon {
+    width: 40px;
+    margin-right: 10px;
+  }
+  
+  .pdf-filename {
+    font-family: 'Arial', sans-serif;
+    font-size: 16px;
+  } 
+
+  
+
+  .IT-user-course-next-modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .IT-user-course-next-content {
+    width: 80%;
+    max-width: 900px;
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    text-align: left;
+  }
+  
+
+  .IT-user-course-next-header h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+
+  .IT-user-course-next-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .next-button:hover {
+    background-color: #0056b3;
+  }
+  .close-button {
+    background-color: black;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    position: absolute;
+    top: 10px;    /* Adjust to fit inside the container */
+    right: 10px;  /* Adjust to fit inside the container */
+    z-index: 10;  /* Ensure it's above other modal content */
+  }
+  
+
+ /* Quiz Modal Overlay */
+ .quiz-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Overlay background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.quiz-modal-content {
+  background-color: #FFFFFF; /* Modal background */
+  border-radius: 10px;
+  width: 600px; /* Increase modal width */
+  padding: 40px; /* Increase padding */
+  text-align: center;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1); /* Drop shadow */
+  position: relative;
+}
+
+.quiz-close-button {
+  position: absolute;
+  top: 15px; /* Adjust top position */
+  right: 20px; /* Adjust right position */
+  background: none;
+  border: none;
+  font-size: 24px; /* Bigger font size */
+  font-weight: bold;
+  cursor: pointer;
+  color: #888; /* Light grey color */
+}
+
+.quiz-close-button:hover {
+  color: #000; /* Darker color on hover */
+}
+
+.quiz-icon {
+  width: 120px; /* Make icon bigger */
+  height: 120px;
+  margin-bottom: 20px;
+  margin: 0 auto; /* Center the icon */
+  display: block; /* Ensures the image is a block element */
+}
+
+.quiz-title {
+  font-size: 28px; /* Increase title size */
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.quiz-description {
+  font-size: 18px; /* Bigger description text */
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.quiz-questions, .quiz-attempts {
+  font-size: 16px; /* Slightly bigger text for these */
+  margin-bottom: 15px;
+}
+
+.quiz-start-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 15px 30px; /* Bigger button */
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px; /* Bigger button text */
+}
+
+.quiz-start-button:hover {
+  background-color: #0056b3;
+}
+
+  /* Modal overlay */
+
+/* Overlay for the modal */
+/* Modal Overlay */
+.quiz-content-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal Content */
+.quiz-content-modal {
+  background-color: white;
+  padding: 20px;
+  width: 90%;
+  max-width: 600px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Quiz Header */
+.quiz-content-modal h2 {
+  background-color: #57c4c1;
+  padding: 10px;
+  color: white;
+  border-radius: 5px;
+  text-align: center;
+  font-size: 18px;
+}
+
+/* Quiz Question and Choices */
+.quiz-content-modal ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.quiz-content-modal li {
+  margin: 10px 0;
+}
+
+.quiz-content-modal label {
+  display: block;
+  padding: 10px;
+  background-color: #f7f7f7;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.quiz-content-modal input[type="radio"] {
+  display: none;
+}
+
+.quiz-content-modal input[type="radio"]:checked + label {
+  background-color: #c8c8c8;
+  border-color: #007bff;
+}
+
+/* Next Button */
+.quiz-next-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.quiz-next-button:hover {
+  background-color: #0056b3;
+}
+  
+
+
+/* Centering modal in the middle of the screen */
+/* Style for the Detailed Results Header */
+.result-detailed-modal h2 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Style for each question container */
+.result-item {
+  margin-bottom: 20px;
+}
+
+/* Style for the question text */
+.result-item p {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Style for the list of choices */
+.result-options {
+  list-style-type: none;
+  padding: 0;
+}
+
+/* Style for each individual choice */
+.result-options li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 5px;
+  font-size: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+/* Correct answer (green) */
+.result-options li.correct-answer {
+  background-color: rgba(0, 255, 0, 0.3); /* Light green */
+}
+
+/* Wrong answer (red) */
+.result-options li.wrong-answer {
+  background-color: rgba(255, 0, 0, 0.3); /* Light red */
+}
+
+/* Style for the answer label (A, B, C, D) */
+.result-options li span:first-child {
+  font-weight: bold;
+  margin-right: 15px;
+}
+
+/* Style for checkmark or cross based on correctness */
+.result-options li span.correct {
+  color: green;
+}
+
+.result-options li span.wrong {
+  color: red;
+}
+
+/* Style for marking the correct answer */
+.result-options li span.correct-text {
+  color: green;
+  margin-left: 10px;
+}
+
+/* Close button styling */
+.result-detailed-modal button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: block;
+  margin: 20px auto 0;
+}
+
+.result-detailed-modal button:hover {
+  background-color: #0056b3;
+}
+
+
+.result-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  z-index: 1000;
+}
+
+.result-modal {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px; /* Adjust this to your desired width */
+  width: 100%;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+} 
+
+
+.congrats-modal-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  z-index: 1000; /* Ensures it is on top of other content */
+}
+
+.congrats-modal {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for depth */
+}
+
+.congrats-modal h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.congrats-modal img {
+  width: 80px; /* Adjust the size as needed */
+  height: 80px;
+  margin-bottom: 20px;
+}
+
+.congrats-modal p {
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.continue-button {
+  background-color: #4c6ef5; /* Blue button color */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.continue-button:hover {
+  background-color: #3b5bdb; /* Darker blue on hover */
+}
+
+
+
+/* Congratulations Modal Styles */
+.congrats-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.congrats-modal {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+}
+
+.congrats-modal img {
+  width: 150px;
+  height: 150px;
+}
+
+.continue-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Detailed Results Modal Styles */
+.result-detailed-modal-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.result-detailed-modal {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: scroll;
+}
+
+.result-item {
+  margin-bottom: 20px;
+}
+
+.result-options {
+  list-style-type: none;
+  padding: 0;
+}
+
+.result-options li {
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.result-options li.correct-answer {
+  background-color: rgba(0, 255, 0, 0.3); /* Green for correct answer */
+}
+
+.result-options li.wrong-answer {
+  background-color: rgba(255, 0, 0, 0.3); /* Red for wrong answer */
+}
+
+.result-options li span {
+  margin-left: 10px;
+}
+
+.result-options .checkmark {
+  color: green;
+}
+
+.result-options .cross {
+  color: red;
+}
+
+.close-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+
+
+
+/* Common Modal Overlay Styles */
+.IT-user-course-modal-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Modal Container Styles */
+.IT-user-course-mycourse-content,
+.IT-user-course-next-content {
+  width: 80%;
+  max-width: 900px;
+  background-color: white;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  max-height: 90%;
+}
+
+/* Modal Header */
+.IT-user-course-mycourse-header,
+.IT-user-course-next-header {
+  padding: 20px;
+  border-bottom: 1px solid #ccc;
+  background-color: #f7f7f7;
+  flex-shrink: 0;
+}
+
+.IT-user-course-mycourse-title {
+  font-weight: bold;
+  font-size: 24px;
+}
+
+/* Modal Close Button */
+.IT-user-course-mycourse-close-button,
+.close-button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  position: absolute;
+  right: 20px;
+  top: 20px;
+}
+
+/* Modal Body */
+.IT-user-course-mycourse-body,
+.IT-user-course-next-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* Description Section */
+.IT-user-course-description {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.IT-user-course-mycourse-pdf-container,
+.IT-user-course-mycourse-resource-container {
+  margin-top: 20px;
+}
+
+/* PDF Section */
+.pdf-item {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.IT-user-course-pdf-icon {
+  width: 40px;
+  margin-right: 10px;
+}
+
+.pdf-link {
+  text-decoration: none;
+  color: #007bff;
+}
+
+.pdf-filename {
+  margin-left: 10px;
+}
+
+/* Modal Footer */
+.IT-user-course-mycourse-footer,
+.IT-user-course-next-footer {
+  padding: 20px;
+  border-top: 1px solid #ccc;
+  background-color: #f7f7f7;
+  flex-shrink: 0;
+}
+
+/* Button Styles */
+.IT-user-course-mycourse-footer button,
+.IT-user-course-next-footer button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Video Container */
+.IT-user-course-next-video-container {
+  margin-top: 20px;
+}
+
+.IT-user-course-next-video-container iframe {
+  width: 100%;
+  height: 500px;
+  border: none;
+} 
+
+.IT-user-course-mycourse-pdf-container iframe {
+  width: 100%;
+  height: 600px;
+  border: none;
+}
+ 
+
+
+.certificate-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* Dim background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Make sure it is on top of other elements */
+}
+
+.certificate-modal {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 90%;
+  text-align: center;
+}
+
+.certificate-content {
+  margin-top: 20px;
+}
+
+.certificate-template {
+  max-width: 100%;
+  height: auto;
+}
+
+.certificate-details h3,
+.certificate-details p {
+  margin: 0;
+  padding: 5px;
+}
+
