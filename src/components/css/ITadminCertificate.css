@@ -308,15 +308,7 @@
   border-color: #999;
 }
 
-button {
-  padding: 10px 20px;
-  border: none;
-  background-color: #007bff;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-right: 10px;
-}
+
 
 button.btn-secondary {
   background-color: #f44336;

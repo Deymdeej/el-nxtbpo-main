@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect,useRef} from 'react';
 import { db, auth } from "../firebase"; // Ensure Firebase is properly configured
-import { setDoc, doc, getDocs, query, where, collection, getDoc, updateDoc } from "firebase/firestore";
+import {
+  setDoc, doc, getDocs, query, where, collection, getDoc, updateDoc, deleteDoc, onSnapshot
+} from "firebase/firestore";
+
 import BPOLOGO from '../assets/bpo-logo.png';
 import CoursePick from '../assets/coursepick.png';
 import LogoutPick from '../assets/logoutpick.png';
@@ -20,10 +23,10 @@ import sadGif from '../assets/sad.gif';  // Adjust the path as needed
 import trophyGif from '../assets/trophy.gif';
 import { getDownloadURL, ref } from "firebase/storage";
 import { storage } from "../firebase";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-
-
+import { useNavigate } from "react-router-dom";
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import UserDefault from '../assets/userdefault.png';
 
 
 
@@ -57,16 +60,33 @@ const ITUser = ({
   const [selectedAnswer, setSelectedAnswer] = useState(null); // New state for the selected answer
   const [isResultModalOpen, setIsResultModalOpen] = useState(false); // New state for result modal
 const [quizScore, setQuizScore] = useState(0); // Store the quiz score
-// State to track if detailed results are being shown
 const [showDetailedResults, setShowDetailedResults] = useState(false);
 const [showCongratsModal, setShowCongratsModal] = useState(false);
 const [showCertificateModal, setShowCertificateModal] = useState(false);
 const [certificateUrl, setCertificateUrl] = useState(null); // To store the certificate URL
-const certificateRef = useRef(null);  // Initialize ref to store the certificate DOM element
+const certificateRef = useRef(null);
+const { createCanvas, loadImage } = require('canvas');
+const [quizSaved, setQuizSaved] = useState(false); // New state to track if the quiz result is saved
+const [showPassedQuizModal, setShowPassedQuizModal] = useState(false);
+const [passedCourses, setPassedCourses] = useState([]); // Store IDs of passed courses
+const [isOpen, setIsOpen] = useState(true);
+const [selectedSection, setSelectedSection] = useState('courses');
+const [prerequisiteResults, setPrerequisiteResults] = useState([]);
+const [quizResults, setQuizResults] = useState([]); // State to hold quiz results
+const [certifications, setCertifications] = useState([]); // State to hold certifications
+const [quizResult, setQuizResult] = useState(null); // Initialize quizResult
 
 
 
-  
+
+
+const navigate = useNavigate();
+
+
+
+
+
+
 
 
 
@@ -80,121 +100,151 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
   const userId = auth.currentUser?.uid; // Assuming the user is authenticated, get the user ID
   // Fetch enrolled courses and available courses (General and IT) from Firebase when the component mounts
   useEffect(() => {
-    const fetchEnrolledCourses = async () => {
-      try {
-        if (userId) {
-          const enrollmentQuery = query(collection(db, "Enrollments"), where("userId", "==", userId));
-          const enrollmentSnapshot = await getDocs(enrollmentQuery);
-    
-          if (!enrollmentSnapshot.empty) {
-            const enrolledCoursesFromFirebase = enrollmentSnapshot.docs.map((doc) => ({
-              id: doc.data().courseId,
-              courseTitle: doc.data().courseTitle,
-              courseDescription: doc.data().courseDescription || "No description available",
-              category: doc.data().category || "Uncategorized",
-              pdfURLs: doc.data().pdfURLs || [],
-              videoLink: doc.data().videoLink || ""  // Ensure videoLink is fetched here
-            }));
-    
-            setMyCourses(enrolledCoursesFromFirebase);
-            setEnrolledCourses(enrolledCoursesFromFirebase.map(course => course.id));
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching enrolled courses:", error.message);
+    if (userId) {
+      // Real-time listener for enrolled courses
+      const enrollmentQuery = query(collection(db, "Enrollments"), where("userId", "==", userId));
+      const unsubscribeEnrolled = onSnapshot(enrollmentQuery, (snapshot) => {
+        const enrolledCoursesFromFirebase = snapshot.docs.map(doc => ({
+          id: doc.data().courseId,
+          courseTitle: doc.data().courseTitle,
+          courseDescription: doc.data().courseDescription || "No description available",
+          category: doc.data().category || "Uncategorized",
+          pdfURLs: doc.data().pdfURLs || [],
+          videoLink: doc.data().videoLink || "",
+          certificateId: doc.data().certificateId || null,
+          enrolledDate: doc.data().enrolledDate?.toDate() || null,
+        }));
+
+        setMyCourses(enrolledCoursesFromFirebase);
+        setEnrolledCourses(enrolledCoursesFromFirebase.map(course => course.id));
+      }, (error) => {
+        console.error("Error fetching enrolled courses in real-time:", error.message);
         toast.error("Failed to fetch enrolled courses.");
-      }
-    };
+      });
 
-    const fetchQuizDataFromEnrollment = async (courseId) => {
-      try {
-        const enrollmentRef = doc(db, "Enrollments", `${userId}_${courseId}`);
-        const enrollmentSnap = await getDoc(enrollmentRef);
-    
-        if (enrollmentSnap.exists()) {
-          const enrollmentData = enrollmentSnap.data();
-          
-          // Ensure that questions field is an array
-          if (Array.isArray(enrollmentData.questions)) {
-            const questionCount = enrollmentData.questions.length;
-            setNumberOfQuestions(questionCount);
-          } else {
-            setNumberOfQuestions(0); // Fallback if no questions array is present
-          }
-    
-          // Fetch quiz attempts specific to this course
-          const quizAttempts = enrollmentData.quizAttempts || 0;  // Default to 0 if not set
-          setAttemptsUsed(quizAttempts); // Set attempts used for this course
-        } else {
-          toast.error("No enrollment data found.");
-          setNumberOfQuestions(0);
-          setAttemptsUsed(0); // Default attempts to 0 if no enrollment data is found
-        }
-      } catch (error) {
-        console.error("Error fetching enrollment data:", error.message);
-        toast.error("Failed to fetch enrollment data.");
-      }
-    };
-    
-
-    const fetchAvailableCourses = async () => {
-      try {
-        // Fetch IT Courses
-        const itCoursesSnapshot = await getDocs(collection(db, "ITCourses"));
-        const itCourses = itCoursesSnapshot.docs.map(doc => ({
+      // Real-time listener for IT and General courses
+      const unsubscribeITCourses = onSnapshot(collection(db, "ITCourses"), (snapshot) => {
+        const itCourses = snapshot.docs.map(doc => ({
           id: doc.id,
           courseTitle: doc.data().courseTitle,
           courseDescription: doc.data().courseDescription || "No description available",
-          category: "IT", // Mark the category as IT
+          category: "IT",
         }));
+        setCourses(prevCourses => [...prevCourses.filter(course => course.category !== 'IT'), ...itCourses]);
+      }, (error) => {
+        console.error("Error fetching IT courses in real-time:", error.message);
+        toast.error("Failed to fetch IT courses.");
+      });
 
-        // Fetch General Courses
-        const generalCoursesSnapshot = await getDocs(collection(db, "GeneralCourses"));
-        const generalCourses = generalCoursesSnapshot.docs.map(doc => ({
+      const unsubscribeGeneralCourses = onSnapshot(collection(db, "GeneralCourses"), (snapshot) => {
+        const generalCourses = snapshot.docs.map(doc => ({
           id: doc.id,
           courseTitle: doc.data().courseTitle,
           courseDescription: doc.data().courseDescription || "No description available",
-          category: "General", // Mark the category as General
+          category: "General",
         }));
+        setCourses(prevCourses => [...prevCourses.filter(course => course.category !== 'General'), ...generalCourses]);
+      }, (error) => {
+        console.error("Error fetching General courses in real-time:", error.message);
+        toast.error("Failed to fetch General courses.");
+      });
 
-        // Merge IT and General courses and update state
-        setCourses([...itCourses, ...generalCourses]);
-      } catch (error) {
-        console.error("Error fetching available courses:", error.message);
-        toast.error("Failed to fetch available courses.");
-      }
-    };
-
-    fetchEnrolledCourses(); // Fetch the user's enrolled courses from Firebase
-    fetchAvailableCourses(); // Fetch both IT and General courses
+      // Cleanup listeners when component unmounts
+      return () => {
+        unsubscribeEnrolled();
+        unsubscribeITCourses();
+        unsubscribeGeneralCourses();
+      };
+    }
   }, [userId]);
 
+
+  useEffect(() => {
+    // Fetch quiz result in real-time when the component loads or when userId or selectedCourse changes
+    if (userId && selectedCourse) {
+      const quizResultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
+
+      const unsubscribeQuizResult = onSnapshot(quizResultRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          setQuizResult(data);
+          setQuizScore(data.score);  // Set quiz score from Firestore
+          setQuizSaved(true);  // Mark quiz as saved since data exists
+          setIsResultModalOpen(true);  // Open result modal when data is available
+        } else {
+          console.log("No quiz result data found.");
+        }
+      }, (error) => {
+        console.error("Error fetching quiz result:", error.message);
+        toast.error("Failed to fetch quiz result.");
+      });
+
+      // Cleanup on component unmount
+      return () => {
+        unsubscribeQuizResult();
+      };
+    }
+  }, [userId, selectedCourse]);
+
+  // Function to handle next page after passing quiz
+ 
+
+ 
+  
   const fetchQuizDataFromEnrollment = async (courseId) => {
     try {
-        const enrollmentRef = doc(db, "Enrollments", `${userId}_${courseId}`);
-        const enrollmentSnap = await getDoc(enrollmentRef);
-
-        if (enrollmentSnap.exists()) {
-            const enrollmentData = enrollmentSnap.data();
-            
-            // Ensure that questions field is an array
-            if (Array.isArray(enrollmentData.questions)) {
-                const questionCount = enrollmentData.questions.length; // Count number of questions
-                console.log(`Questions array length: ${questionCount}`); // Debugging to verify
-                setNumberOfQuestions(questionCount);
-            } else {
-                console.error("Questions field is not an array or is missing");
-                setNumberOfQuestions(0); // Fallback if no questions array is present
-            }
+      const enrollmentRef = doc(db, "Enrollments", `${userId}_${courseId}`);
+      const enrollmentSnap = await getDoc(enrollmentRef);
+  
+      if (enrollmentSnap.exists()) {
+        const enrollmentData = enrollmentSnap.data();
+        
+        // Assuming you have an array of questions in the enrollment data
+        if (Array.isArray(enrollmentData.questions)) {
+          const questionCount = enrollmentData.questions.length;
+          setNumberOfQuestions(questionCount);
         } else {
-            toast.error("No enrollment data found.");
-            setNumberOfQuestions(0);
+          setNumberOfQuestions(0); // Fallback if no questions array is present
         }
+  
+        const quizAttempts = enrollmentData.quizAttempts || 0;
+        setAttemptsUsed(quizAttempts); // Set the attempts used
+  
+      } else {
+        toast.error("No enrollment data found.");
+        setNumberOfQuestions(0);
+        setAttemptsUsed(0); // Default attempts to 0 if no enrollment data is found
+      }
     } catch (error) {
-        console.error("Error fetching enrollment data:", error.message);
-        toast.error("Failed to fetch enrollment data.");
+      console.error("Error fetching enrollment data:", error.message);
+      toast.error("Failed to fetch enrollment data.");
     }
+  };
+  
+   
+
+const fetchCertificateTemplate = async (certificateId) => {
+  try {
+    if (!certificateId) {
+      throw new Error("No certificate ID provided.");
+    }
+
+    const certificateRef = doc(db, "certificates", certificateId); // Assuming 'certificates' is the collection
+    const certificateSnap = await getDoc(certificateRef);
+
+    if (certificateSnap.exists()) {
+      const certificateData = certificateSnap.data();
+      return certificateData.fileUrl; // Assuming the certificate data contains a 'fileUrl' field
+    } else {
+      throw new Error("Certificate not found.");
+    }
+  } catch (error) {
+    console.error("Error fetching certificate template:", error);
+    return null;
+  }
 };
+
+
 
 const handleNextClick = () => {
   setIsMyCoursesModalOpen(false);
@@ -203,6 +253,73 @@ const handleNextClick = () => {
 const handleCloseQuizModal = () => {
   setIsQuizModalOpen(false); // Close the quiz modal
 };
+
+// Add this function above your component's return statement
+const downloadCertificateAsImageWithDesign = () => {
+  if (!certificateUrl) {
+    console.error('No certificate template URL available.');
+    return;
+  }
+
+  // Create a new Image element to load the certificate template (design background)
+  const img = new Image();
+  img.crossOrigin = 'anonymous'; // Ensure CORS is handled for external images
+  img.src = certificateUrl; // Set the certificate design image URL
+
+  img.onload = () => {
+    // Create a canvas element
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    // Set canvas dimensions to match the loaded image
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    // Draw the template image onto the canvas
+    context.drawImage(img, 0, 0, img.width, img.height);
+
+    // Customize the text style for the course title
+    context.font = 'bold 40px Arial';
+    context.fillStyle = '#4CAF50'; // Green color for the course title
+    context.textAlign = 'center';
+
+    // Add the course title
+    context.fillText(`FOR ${selectedCourse?.courseTitle || 'Course Title'}`, canvas.width / 2, canvas.height / 2 - 50);
+
+    // Customize the text style for the full name
+    context.font = 'bold 36px Arial';
+    context.fillStyle = '#000'; // Black color for the name
+
+    // Add the user's full name
+    context.fillText(`${fullName || 'Full Name'}`, canvas.width / 2, canvas.height / 2);
+
+    // Customize the text style for the date
+    context.font = 'bold 28px Arial';
+    context.fillStyle = '#000'; // Black color for the date
+
+    // Add the date
+    const date = new Date().toLocaleDateString();
+    context.fillText(`Date: ${date}`, canvas.width / 2, canvas.height / 2 + 50);
+
+    // Convert the final canvas content to a PNG image
+    const imgData = canvas.toDataURL('image/png');
+
+    // Create a link element to trigger the download
+    const link = document.createElement('a');
+    link.href = imgData;
+    link.download = `${fullName}_Certificate_with_Design.png`; // Set the file name using the user's full name
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link); // Clean up the DOM after triggering the download
+  };
+
+  img.onerror = () => {
+    console.error('Failed to load the certificate template image.');
+  };
+};
+
+
+
 
 
 
@@ -229,9 +346,7 @@ const fetchQuizData = async (courseId) => {
 };
 
 
-  const handleNavClick = (navItem) => {
-    setSelectedNav(navItem); // This will set the selected navigation item (Courses, Training, etc.)
-  };
+
 
   // Filter available courses based on the search query, selected filter, and enrollment status
   const filteredAvailableCourses = (courses || []).filter(course =>
@@ -242,11 +357,21 @@ const fetchQuizData = async (courseId) => {
 
   const handleMyCoursesClick = async (course) => {
     try {
+      if (selectedCourse && selectedCourse.id === course.id) {
+        // If the same course is selected, just show the appropriate modal
+        if (passedCourses.includes(course.id)) {
+          setShowPassedQuizModal(true); // Show passed modal if the course is passed
+        } else {
+          setIsMyCoursesModalOpen(true); // Open the modal for My Courses if not passed
+        }
+        return; // Exit the function to prevent re-fetching
+      }
+  
       const enrollmentRef = doc(db, "Enrollments", `${userId}_${course.id}`);
       const enrollmentSnapshot = await getDoc(enrollmentRef);
   
       if (!enrollmentSnapshot.exists()) {
-        toast.error("No enrollment data found.");
+        toast.error("No enrollment data found for this user.");
         return;
       }
   
@@ -262,32 +387,107 @@ const fetchQuizData = async (courseId) => {
         certificateId: enrollmentData.certificateId || null, // Fetch and set the certificateId
       });
   
-      setIsMyCoursesModalOpen(true); // Open the modal for My Courses
+      // Check if the user has passed the quiz for this course
+      await checkIfQuizPassed(course.id, enrollmentData.courseTitle);
+  
+      // Show the appropriate modal depending on whether the course is passed
+      if (passedCourses.includes(course.id)) {
+        setShowPassedQuizModal(true); // Show passed modal if the course is passed
+      } else {
+        setIsMyCoursesModalOpen(true); // Open the modal for My Courses if not passed
+      }
     } catch (error) {
       console.error("Error fetching enrollment details:", error.message);
       toast.error("Failed to fetch enrollment details.");
     }
   };
   
-// Fetch certificate template based on certificateId
-const fetchCertificateTemplate = async (certificateId) => {
+// Function to handle the retake process
+const handleRetakeCourse = async () => {
   try {
-    const certificateRef = doc(db, "certificates", certificateId);
-    const certificateDoc = await getDoc(certificateRef);
-
-    if (certificateDoc.exists()) {
-      const certificateData = certificateDoc.data();
-      return certificateData.fileUrl; // Assuming the fileUrl field contains the URL to the certificate template
-    } else {
-      console.error("Certificate not found.");
-      return null;
+    if (!selectedCourse || !userId) {
+      toast.error("No course selected or user not authenticated");
+      return;
     }
+
+    // Delete the quiz result from Firestore
+    const quizResultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
+    await deleteDoc(quizResultRef); // Use deleteDoc to remove the quiz result
+
+    // Reset local state related to the quiz
+    setAttemptsUsed(0);  // Reset attempts
+    setQuizScore(0);     // Reset score
+    setSelectedAnswers([]);  // Clear selected answers
+    setCurrentQuestion(0);   // Reset the current question index
+
+    // Close the passed quiz modal
+    setShowPassedQuizModal(false);
+
+    // Open the "My Courses" modal again so the user can retake the course
+    setIsMyCoursesModalOpen(true);
+
+    toast.success("Quiz deleted. You can now retake the course.");
   } catch (error) {
-    console.error("Error fetching certificate template:", error);
-    return null;
+    console.error("Error deleting quiz data:", error);
+    toast.error("Failed to delete quiz data.");
   }
 };
 
+  
+
+  
+  
+  const downloadCertificateTemplateAsImage = () => {
+    if (!certificateUrl) {
+      console.error('No certificate template URL available.');
+      return;
+    }
+  
+    // Create a link element, trigger download of the background image
+    const link = document.createElement('a');
+    link.href = certificateUrl; // The URL of the certificate template image
+    link.download = `Certificate_Template.png`; // The name for the downloaded image
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link); // Clean up the DOM after triggering the download
+  };
+  
+  
+
+
+  const downloadCertificateAsImage = () => {
+    const input = certificateRef.current; // Reference to the certificate DOM element
+  
+    if (!input) {
+      console.error('No certificate reference available.');
+      return;
+    }
+  
+    html2canvas(input, {
+      scale: 2, // Increase scale for better quality
+      useCORS: true // Handle external images with CORS
+    })
+      .then((canvas) => {
+        const imgData = canvas.toDataURL('image/png'); // Get the image data from the canvas
+  
+        // Create a link element, trigger download
+        const link = document.createElement('a');
+        link.href = imgData;
+        link.download = `${fullName}_Certificate.png`; // Name the image file using the user's full name
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link); // Clean up the DOM after triggering the download
+      })
+      .catch((error) => {
+        console.error('Error generating image:', error);
+      });
+  };
+  
+  
+  
+
+  
+  
 
   const fetchCertificateTemplateUrl = async (certificateId) => {
     try {
@@ -299,8 +499,44 @@ const fetchCertificateTemplate = async (certificateId) => {
       return null;
     }
   };
+  const downloadCertificateAsPDF = () => {
+    const input = certificateRef.current; // Reference to the certificate DOM element
+    if (!input) {
+      console.error('No certificate reference available.');
+      return;
+    }
+  
+    html2canvas(input, {
+      scale: 2, // Increase scale for better quality
+      useCORS: true // Enable CORS for loading external images
+    })
+      .then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'px',
+          format: [canvas.width, canvas.height] // Match PDF size to the canvas
+        });
+  
+        // Add the rendered canvas as the image
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+  
+        // Save the generated PDF using the user's full name
+        pdf.save(`${fullName}_Certificate.pdf`);
+      })
+      .catch((error) => {
+        console.error('Error generating PDF:', error);
+      });
+  };
   
 
+  
+  
+  
+  
+  
+  
+  
  
 
   const handleConfirmEnroll = () => {
@@ -350,7 +586,13 @@ const fetchCertificateTemplate = async (certificateId) => {
       console.error("Error enrolling in course:", error);
       toast.error("Failed to enroll in the course. Please try again.");
     }
+  }; 
+
+  const handleViewResult = () => {
+    // Add the logic you want to perform when the "View Result" button is clicked.
+    console.log("Viewing result details...");
   };
+  
   
   const handleStartQuiz = async () => {
     if (selectedCourse && attemptsUsed < maxAttempts) { // Ensure maxAttempts not exceeded
@@ -370,12 +612,28 @@ const fetchCertificateTemplate = async (certificateId) => {
     }
 };
 
+const checkIfQuizPassed = async (courseId, courseTitle) => {
+  try {
+    const quizResultRef = doc(db, "QuizResults", `${userId}_${courseId}`);
+    const quizResultSnap = await getDoc(quizResultRef);
+    if (quizResultSnap.exists()) {
+      const quizData = quizResultSnap.data();
+      if (quizData.passed) {
+        setPassedCourses((prevPassedCourses) => [...prevPassedCourses, courseId]); // Add course ID to passed courses
+      }
+    }
+  } catch (error) {
+    console.error("Error checking quiz result:", error.message);
+  }
+};
+
+
+
 const handleRetakeQuiz = async () => {
-  // Increment the quiz attempts both locally and in Firestore
   const newAttempts = attemptsUsed + 1;
   setAttemptsUsed(newAttempts); // Update state locally
 
-  // Update Firestore with the new attempts count
+  // Update Firestore with the new attempts count for the specific user
   const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
   await updateDoc(enrollmentRef, {
     quizAttempts: newAttempts
@@ -388,6 +646,7 @@ const handleRetakeQuiz = async () => {
   setIsResultModalOpen(false); // Close the result modal
   setIsQuizContentModalOpen(true); // Open the quiz modal to restart quiz
 };
+
 
   
 
@@ -405,7 +664,6 @@ const handleRetakeQuiz = async () => {
   
   
   
-  
   const handleAvailableCoursesClick = async (course) => {
     try {
       const collectionName = course.category === "IT" ? "ITCourses" : "GeneralCourses";
@@ -418,25 +676,57 @@ const handleRetakeQuiz = async () => {
       }
   
       const fullCourseData = courseSnapshot.data();
+      
+      // Fetch prerequisite course IDs
+      const prerequisiteIds = fullCourseData.prerequisites || [];
   
-      // Make sure the certificateId is being fetched here
-      const certificateId = fullCourseData.certificateId || null;
+      // Fetch the titles of the prerequisite courses
+      const prerequisiteTitles = await Promise.all(
+        prerequisiteIds.map(async (prereqId) => {
+          const prereqCourseRef = doc(db, "ITCourses", prereqId);
+          const prereqCourseSnap = await getDoc(prereqCourseRef);
+          if (prereqCourseSnap.exists()) {
+            return prereqCourseSnap.data().courseTitle;
+          }
+          return "Unknown Course"; // Fallback for missing data
+        })
+      );
   
+      // Check if the user has passed the prerequisites by looking into QuizResults
+      const prerequisiteResults = await Promise.all(
+        prerequisiteIds.map(async (prereqId) => {
+          const quizResultRef = doc(db, "QuizResults", `${userId}_${prereqId}`);
+          const quizResultSnap = await getDoc(quizResultRef);
+  
+          if (quizResultSnap.exists()) {
+            const quizResultData = quizResultSnap.data();
+            return quizResultData.passed; // Return true if passed
+          }
+          return false; // Return false if no quiz result exists
+        })
+      );
+  
+      // Set the prerequisiteTitles and prerequisiteResults in the state
       setSelectedCourse({
         ...course,
-        prerequisites: fullCourseData.prerequisites || [],
+        prerequisites: prerequisiteTitles.length > 0 ? prerequisiteTitles : "None",
+        prerequisiteResults, // Store the results for later use
         questions: fullCourseData.questions || [],
         pdfURLs: fullCourseData.pdfURLs || [],
         videoLink: fullCourseData.videoLink || "",
-        certificateId: certificateId, // Set the certificateId in selectedCourse
+        certificateId: fullCourseData.certificateId || null,
       });
   
-      setIsAvailableCoursesModalOpen(true);
+      setIsAvailableCoursesModalOpen(true); // Open the modal with course details
     } catch (error) {
       console.error("Error fetching course details:", error);
       toast.error("Failed to fetch course details.");
     }
   };
+  
+  
+  
+  
   
 
 
@@ -464,94 +754,81 @@ const handleRetakeQuiz = async () => {
     }
   };
   // When the quiz is finished, display results:
-const handleFinishQuiz = () => {
+  // Function to handle quiz submission
+const handleFinishQuiz = async () => {
   setIsQuizContentModalOpen(false); // Close the quiz content modal
   setIsResultModalOpen(true); // Open the result modal
+
+  // Process the user's selected answers and calculate score
+  console.log("User's Answers:", selectedAnswers);
+
+  // Check if the user passed the quiz
+  const passed = quizScore >= (quizData.questions.length * 0.8);
+
+  if (passed) {
+    const quizResult = {
+      userId,
+      fullName,
+      courseTitle: selectedCourse.courseTitle,
+      score: quizScore,
+      totalQuestions: quizData.questions.length,
+      passed: true,
+      timestamp: new Date(),
+    };
+
+    try {
+      const resultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
+      await setDoc(resultRef, quizResult); // Save to Firebase
+      console.log("Quiz result saved successfully!");
+      setQuizSaved(true); // Mark as saved
+      setPassedCourses((prevPassedCourses) => [...prevPassedCourses, selectedCourse.id]); // Add to passed courses
+      toast.success("Your quiz result has been saved!");
+
+      // Show the "Passed Quiz" modal
+      setIsResultModalOpen(false); // Close the result modal
+      setShowPassedQuizModal(true); // Open the passed quiz modal
+
+    } catch (error) {
+      console.error("Error saving quiz result:", error.message);
+      toast.error("Failed to save quiz result.");
+    }
+  } else {
+    toast.error("You did not pass the quiz.");
+  }
+};
+
   
-  // Here you can process the user's selected answers
-  console.log("User's Answers:", selectedAnswers); // This will log the user's answers
-  // Compare selectedAnswers with the correct answers in quizData to display results
-};
+  
+  
+  
 
-const handleShowCertificate = async () => {
-  if (selectedCourse && selectedCourse.certificateId) {
-    const templateUrl = await fetchCertificateTemplate(selectedCourse.certificateId); // Fetch template URL
-    if (templateUrl) {
-      setCertificateUrl(templateUrl); // Set the template URL
-      setShowCertificateModal(true);  // Show the certificate modal
-    } else {
-      console.error("Certificate template not available.");
+  const handleShowCertificate = async () => {
+    try {
+      if (!selectedCourse || !selectedCourse.certificateId) {
+        toast.error("Certificate information is incomplete.");
+        return;
+      }
+  
+      // Fetch the certificate template URL based on the certificate ID
+      const templateUrl = await fetchCertificateTemplate(selectedCourse.certificateId);
+      
+      if (templateUrl) {
+        setCertificateUrl(templateUrl); // Set the certificate URL in state
+        setShowCertificateModal(true);  // Show the certificate modal
+        setShowCongratsModal(false);  // Close the congratulations modal
+      } else {
+        toast.error("Certificate template not available.");
+      }
+    } catch (error) {
+      console.error("Error showing certificate:", error);
+      toast.error("An error occurred while fetching the certificate.");
     }
-  }
-};
-
-
-const downloadCertificateAsPDF = async () => {
-  try {
-    if (!selectedCourse || !selectedCourse.certificateId) {
-      toast.error("Certificate information not available.");
-      return;
-    }
-
-    // Fetch the fileUrl from Firestore
-    const certificateDocRef = doc(db, "certificates", selectedCourse.certificateId);
-    const certificateDoc = await getDoc(certificateDocRef);
-
-    if (!certificateDoc.exists()) {
-      toast.error("Certificate template not found.");
-      return;
-    }
-
-    const { fileUrl } = certificateDoc.data(); // Extract the fileUrl from the document
-
-    const input = certificateRef.current;
-    if (input) {
-      const image = new Image();
-      image.src = fileUrl; // Use the fileUrl fetched from Firestore
-
-      image.onload = () => {
-        // Once the image is fully loaded, generate the PDF
-        html2canvas(input).then((canvas) => {
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new jsPDF({
-            orientation: 'landscape',
-          });
-
-          // Add the certificate template image
-          pdf.addImage(image, 'PNG', 0, 0, 297, 210); // Adjust the dimensions as needed
-
-          // Add dynamic content for name, course title, and date
-          pdf.setFontSize(40); // Larger font for the name
-          pdf.text(fullName, 148, 120, { align: 'center' }); // Adjust positioning based on template
-          
-          pdf.setFontSize(24); // Smaller font for the course title
-          pdf.text(selectedCourse?.courseTitle, 148, 145, { align: 'center' }); // Center the course title
-
-          pdf.setFontSize(18); // Even smaller font for the date
-          pdf.text(`Date: ${new Date().toLocaleDateString()}`, 148, 160, { align: 'center' }); // Center the date
-
-          // Save the PDF
-          pdf.save(`${fullName}_Certificate.pdf`);
-        }).catch((error) => {
-          console.error("Error generating PDF:", error);
-        });
-      };
-
-      image.onerror = () => {
-        toast.error("Error loading certificate image.");
-      };
-    }
-  } catch (error) {
-    console.error("Error fetching certificate URL or generating PDF:", error);
-    toast.error("Failed to generate the certificate.");
-  }
-};
+  };
 
 
 
 
-
-
+  
 
   const handleQuizStartClick = () => {
     if (selectedCourse) {
@@ -585,81 +862,168 @@ const downloadCertificateAsPDF = async () => {
     return videoLink;
   };
 
+  const handleNextPageAfterPass = async () => {
+    try {
+        if (!selectedCourse || !userId) {
+            toast.error("Course or user information is missing.");
+            return;
+        }
+
+        // Check if the quiz result is already saved
+        if (!quizSaved) {
+            // Prepare the quiz result data
+            const quizResult = {
+                userId: userId,
+                fullName: fullName,
+                courseTitle: selectedCourse.courseTitle,
+                score: quizScore,
+                totalQuestions: quizData.questions.length,
+                passed: quizScore >= (quizData.questions.length * 0.8),
+                timestamp: new Date(),
+            };
+
+            // Save the quiz result to Firebase
+            const resultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
+            await setDoc(resultRef, quizResult);
+            console.log("Quiz result saved successfully!");
+
+            // Mark the quiz as saved to avoid multiple saves
+            setQuizSaved(true);
+
+            // Optionally, add the course to the passed courses
+            setPassedCourses((prevPassedCourses) => [...prevPassedCourses, selectedCourse.id]);
+
+            toast.success("Your quiz result has been saved!");
+        }
+
+        // Keep the congrats modal open and proceed to the next step
+        // Do not close the congrats modal here
+       
+    } catch (error) {
+        console.error("Error during the next page process:", error);
+        toast.error("An error occurred while processing the next page.");
+    }
+};
+
+
+  
+
+  const handleFetchAndCertifyUser = async () => {
+    if (!selectedCourse || !userId) {
+      toast.error("Course or user information is missing.");
+      return;
+    }
+  
+    try {
+      // Ensure that the certificate ID is available in the selectedCourse object
+      const courseCertificateId = selectedCourse.certificateId;
+      if (!courseCertificateId) {
+        throw new Error("Certificate ID is missing from the course.");
+      }
+  
+      // Fetch the certificate template URL from Firestore using the certificateId
+      const certificateUrl = await fetchCertificateTemplate(courseCertificateId);
+  
+      if (!certificateUrl) {
+        throw new Error("Failed to fetch certificate template.");
+      }
+  
+      // Update the user's certification status in Firestore
+      const certificationData = {
+        userId,
+        courseId: selectedCourse.id,
+        courseTitle: selectedCourse.courseTitle,
+        certifiedDate: new Date(),
+        certificateUrl, // Save the fetched certificate URL
+        certificateId: courseCertificateId, // Add the certificate ID to the data
+      };
+  
+      const certificationRef = doc(db, "Certifications", `${userId}_${selectedCourse.id}`);
+      await setDoc(certificationRef, certificationData);
+  
+      toast.success("You have been certified!");
+  
+    } catch (error) {
+      console.error("Error during certification process:", error);
+      toast.error("Failed to certify the user.");
+    }
+  };
+  
+
+  const handleSectionChange = (section) => {
+    setSelectedSection(section);
+  };
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
+  const handleResize = () => {
+    if (window.innerWidth > 768) {
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
+  
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+
   return (
-    <div className="IT-user-course-layout">
-      <div className="IT-user-course-sidebar">
-        <div className="IT-user-course-header">
-          <img className="IT-user-course-logo" alt="Group" src={BPOLOGO} />
+    <div className="admin-super-container">
+      <nav className={`sidebar-super ${isOpen ? 'open-super' : ''}`}>
+        <div className="logo-super">
+          <img src={BPOLOGO} alt="Company Logo" />
         </div>
-        <nav className="IT-user-course-nav">
-          <div
-            className={`IT-user-course-nav-item ${selectedNav === 'courses' ? 'active' : ''}`}
-            role="button"
-            tabIndex="1"
-            onClick={() => handleNavClick('courses')}
-          >
-            <div className="IT-user-course-icon-container">
-              <img
-                className="IT-user-course-icon2"
-                alt="Courses Icon"
-                src={selectedNav === 'courses' ? CoursePick : CourseDefault}
-              />
-            </div>
-            Courses
-          </div>
-
-          <div
-            className={`IT-user-course-nav-item ${selectedNav === 'training' ? 'active' : ''}`}
-            role="button"
-            tabIndex="2"
-            onClick={() => handleNavClick('training')}
-          >
-            <div className="IT-user-course-icon-container">
-              <img
-                className="IT-user-course-icon3"
-                alt="Training Icon"
-                src={selectedNav === 'training' ? TrainingPick : TrainingDefault}
-              />
-            </div>
-            Training
-          </div>
-
-          <div
-            className={`IT-user-course-nav-item ${selectedNav === 'certificates' ? 'active' : ''}`}
-            role="button"
-            tabIndex="3"
-            onClick={() => handleNavClick('certificates')}
-          >
-            <div className="IT-user-course-icon-container">
-              <img
-                className="IT-user-course-icon4"
-                alt="Certificates Icon"
-                src={selectedNav === 'certificates' ? CertPick : CertDefault}
-              />
-            </div>
-            Certificates
-          </div>
-        </nav>
-        <div
-          className={`IT-user-course-nav-logout ${selectedNav === 'logout' ? 'active' : ''}`}
-          role="button"
-          tabIndex="4"
-          onClick={handleLogout}
-        >
-          <div className="IT-user-course-icon-container">
-            <img
-              className="IT-user-course-icon4"
-              alt="Logout Icon"
-              src={selectedNav === 'logout' ? LogoutPick : LogoutDefault}
-            />
-          </div>
-          Logout
+        <ul className="nav-links-super">
+          <li>
+            <button
+              onClick={() => handleSectionChange('courses')}
+              className={`nav-button-super ${selectedSection === 'courses' ? 'active-super' : ''}`}
+            >
+              <img src={CourseDefault} alt="Courses" className="nav-icon-super" />
+              <span>Courses</span>
+            </button> 
+          </li>
+          <li>
+            <button
+              onClick={() => navigate('/it-user-training')}
+              className={`nav-button-super ${selectedSection === 'training' ? 'active-super' : ''}`}
+            >
+              <img src={TrainingDefault} alt="Training" className="nav-icon-super" />
+              <span>Training</span>
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => navigate('/it-user-certificate')}
+              className={`nav-button-super ${selectedSection === 'cert' ? 'active-super' : ''}`}
+            >
+              <img src={CertDefault} alt="Certificates" className="nav-icon-super" />
+              <span>Certificates</span>
+            </button>
+          </li>
+        </ul>
+        <div className="logout-super">
+          <button className="nav-button-super" onClick={handleLogout}>
+            <img src={LogoutDefault} alt="Logout Icon" className="nav-icon-super" />
+            Logout
+          </button>
         </div>
-      </div>
-      <div className="IT-user-course-content">
-        <h1>Hi, {fullName}</h1>
+      </nav>
 
-        {selectedNav === 'courses' && (
+      <button className="hamburger-super" onClick={toggleSidebar}>
+        ☰
+      </button>
+
+      <div className="content-super">
+        <h1>Hello IT user!</h1>
+
+        {selectedSection === 'courses' && (
           <>
             {/* My Courses Section */}
             <div className="IT-user-course-my-courses-section">
@@ -688,26 +1052,35 @@ const downloadCertificateAsPDF = async () => {
             {/* Available Courses Section */}
             <div className="IT-user-course-available-section">
               <h2>Available Courses</h2>
-              <div className="IT-user-course-course-container">
-                {filteredAvailableCourses.length > 0 ? (
-                  filteredAvailableCourses.map((course) => (
-                    <div className="IT-user-course-course-card" key={course.id} onClick={() => handleAvailableCoursesClick(course)}>
-                      <h3>{course.courseTitle}</h3>
-                      <p className="IT-user-course-course-description">{course.courseDescription}</p>
-                      <div className="IT-user-course-category-text">Category</div>
-                      <div className="IT-user-course-category-label">{course.category}</div>
-                    </div>
-                  ))
-                ) : (
-                  <p>No available courses found.</p>
-                )}
-              </div>
+              <div className="it-useravailable-course-container">
+  {filteredAvailableCourses.length > 0 ? (
+    filteredAvailableCourses.map((course) => (
+      <div
+        className="it-user-available-course-card clickable"
+        key={course.id}
+        onClick={() => handleAvailableCoursesClick(course)}
+        style={{ cursor: "pointer" }}
+      >
+        <h3>{course.courseTitle}</h3>
+        <p className="it-user-available-course-description">
+          {course.courseDescription}
+        </p>
+        <div className="it-user-available-category-text">Category</div>
+        <div className="it-user-available-category-label">{course.category}</div>
+      </div>
+    ))
+  ) : (
+    <p>No available courses found.</p>
+  )}
+</div>
+
             </div>
           </>
         )}
+        
 
         {/* My Courses Modal */}
-{isMyCoursesModalOpen && selectedCourse && (
+        {isMyCoursesModalOpen && selectedCourse && !passedCourses.includes(selectedCourse.id) && (
   <div className="IT-user-course-modal-overlay">
     <div className="IT-user-course-mycourse-content">
       
@@ -762,6 +1135,7 @@ const downloadCertificateAsPDF = async () => {
     </div>
   </div>
 )}
+
 
 {/* Next Modal */}
 {isNextModalOpen && selectedCourse && (
@@ -889,20 +1263,18 @@ const downloadCertificateAsPDF = async () => {
 
 
 
-{/* Result Modal */}
 {isResultModalOpen && (
-  <div className="result-modal-overlay">
+  <div className="result-modal-overlay" style={{ zIndex: 1 }}>
     <div className="result-modal">
       <h2>{selectedCourse.courseTitle}</h2>
       <div className="result-modal-content">
-        {quizScore >= (quizData.questions.length * 0.8) ? (
-          // Passed Modal
+        {quizResult?.passed ? ( // Check the passed field from quizResult
           <>
             <img src={verifiedGif} alt="Verified Icon" className="result-icon" />
             <h3>Congratulations, you passed!</h3>
-            <p>Your Score: {quizScore}/{quizData.questions.length}</p>
-            <button 
-              className="view-result-button" 
+            <p>Your Score: {quizResult?.score}/{quizResult?.totalQuestions}</p>
+            <button
+              className="view-result-button"
               onClick={() => {
                 setIsResultModalOpen(false);
                 setShowDetailedResults(true);
@@ -910,24 +1282,23 @@ const downloadCertificateAsPDF = async () => {
             >
               View Result
             </button>
-            <button 
-              className="next-page-button" 
+            <button
+              className="next-page-button"
               onClick={() => {
-                setIsResultModalOpen(false);
-                setShowCongratsModal(true);
+                setIsResultModalOpen(false); 
+                setShowCongratsModal(true); 
               }}
             >
               Next Page
             </button>
           </>
         ) : (
-          // Failed Modal
           <>
             <img src={sadGif} alt="Sad Icon" className="result-icon" />
             <h3>Nice Try, a little more effort.</h3>
-            <p>Your Score: {quizScore}/{quizData.questions.length}</p>
-            <button 
-              className="view-result-button" 
+            <p>Your Score: {quizResult?.score}/{quizResult?.totalQuestions}</p>
+            <button
+              className="view-result-button"
               onClick={() => {
                 setIsResultModalOpen(false);
                 setShowDetailedResults(true);
@@ -935,23 +1306,20 @@ const downloadCertificateAsPDF = async () => {
             >
               View Result
             </button>
-            <button 
-              className="retake-button" 
+            <button
+              className="retake-button"
               onClick={() => {
                 if (attemptsUsed < maxAttempts) {
-                  // Allow retake if attempts are still available
                   setCurrentQuestion(0);
                   setQuizScore(0);
-                  setSelectedAnswers([]); // Reset selected answers
-                  setAttemptsUsed((prevAttempts) => prevAttempts + 1); // Increment attempts
-                  setIsResultModalOpen(false); // Close the result modal
-                  setIsQuizContentModalOpen(true); // Reopen the quiz content modal
+                  setSelectedAnswers([]);
+                  setIsResultModalOpen(false);
+                  setIsQuizContentModalOpen(true);
                 } else {
-                  // Disable retake if attempts are maxed out
                   toast.error("No more attempts left for this quiz.");
                 }
               }}
-              disabled={attemptsUsed >= maxAttempts} // Disable retake button if max attempts reached
+              disabled={attemptsUsed >= maxAttempts}
             >
               {attemptsUsed >= maxAttempts ? "No More Attempts" : "Retake Quiz"}
             </button>
@@ -963,77 +1331,36 @@ const downloadCertificateAsPDF = async () => {
 )}
 
 
-
-{showCongratsModal && (
-        <div className="congrats-modal-overlay">
-          <div className="congrats-modal">
-            <h2>Congratulations!</h2>
-            <img src={trophyGif} alt="Trophy Icon" />
-            <p>
-              Congratulations on successfully completing the course and reaching this incredible milestone in your learning journey!
-            </p>
-            <button className="continue-button" onClick={handleShowCertificate}>
-              Continue
-            </button>
-          </div>
-        </div>
-      )}
-
-{/* Certificate Modal */}
-{showCertificateModal && certificateUrl && (
-  <div className="certificate-modal-overlay">
-    <div className="certificate-modal">
-      <h2>Course Completion Certificate</h2>
-      <div className="certificate-content" ref={certificateRef} style={{ position: 'relative' }}>
-        {/* Display the certificate template */}
-        <img src={certificateUrl} alt="Certificate Template" className="certificate-template" style={{ width: '100%', height: 'auto' }} />
-
-        {/* Overlay Course Title */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '45%', // Adjust the vertical position as per template
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            fontSize: '30px', // Adjust the font size
-            fontWeight: 'bold',
-            color: '#000',
-          }}
-        >
-          {selectedCourse?.courseTitle}
-        </div>
-
-        {/* Overlay User's full name */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '55%', // Adjust the vertical position as per template
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#000',
-          }}
-        >
-          {fullName}
-        </div>
-
-        {/* Overlay Date */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '65%', // Adjust the vertical position as per template
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            fontSize: '18px',
-            color: '#000',
-          }}
-        >
-          Date: {new Date().toLocaleDateString()}
-        </div>
+{isResultModalOpen && quizResult && (
+  <div className="result-modal-overlay" style={{ zIndex: 1 }}>
+    <div className="result-modal">
+      <h2>{selectedCourse.courseTitle}</h2>
+      <div className="result-modal-content">
+        <>
+          <img src={verifiedGif} alt="Verified Icon" className="result-icon" />
+          <h3>Congratulations, you completed the quiz!</h3>
+          <p>Your Score: {quizResult?.score}/{quizResult?.totalQuestions}</p>
+          
+          {/* Show View Result Button */}
+          <button
+            className="view-result-button"
+            onClick={() => {
+              setIsResultModalOpen(false);  // Close the result modal
+              setShowDetailedResults(true); // Open detailed results modal
+            }}
+          >
+            View Result
+          </button>
+          
+          {/* Show Retake Course Button */}
+          <button
+            className="retake-button"
+            onClick={handleRetakeCourse}
+          >
+            Retake Course
+          </button>
+        </>
       </div>
-      <button onClick={downloadCertificateAsPDF}>Download as PDF</button>
-      <button onClick={() => setShowCertificateModal(false)}>Close</button>
     </div>
   </div>
 )}
@@ -1042,37 +1369,225 @@ const downloadCertificateAsPDF = async () => {
 
 
 
-     
 
 
 
+{showCongratsModal && (
+  <div className="congrats-modal-overlay">
+    <div className="congrats-modal">
+      <h2>Congratulations!</h2>
+      <img src={trophyGif} alt="Trophy Icon" />
+      <p>
+        Congratulations on successfully completing the course and reaching this
+        incredible milestone in your learning journey!
+      </p>
+      <button
+        className="continue-button"
+        onClick={async () => {
+          try {
+            // Fetch certificate and update user certification in Firestore
+            await handleFetchAndCertifyUser(); // Fetch certificate and certify the user
+            
+            // Show the certificate modal after fetching the certificate
+            await handleShowCertificate(); // Show the certificate modal after fetching it
 
-        {/* Available Courses Modal */}
-        {isAvailableCoursesModalOpen && selectedCourse && (
-          <div className="IT-user-course-modal">
-            <div className="IT-user-course-modal-content">
-              <div className="IT-user-course-modal-header">
-                <h2>{selectedCourse.courseTitle}</h2>
-                <button className="IT-user-course-close-button" onClick={() => setIsAvailableCoursesModalOpen(false)}>X</button>
-              </div>
+            // Now close the congrats modal after the certificate has been shown
+            setShowCongratsModal(false); // Close the congratulations modal
+          } catch (error) {
+            console.error("Error during certification process:", error);
+            toast.error("An error occurred while processing certification.");
+          }
+        }}
+      >
+        Continue
+      </button>
+    </div>
+  </div>
+)}
 
-              <div className="IT-user-course-modal-body">
-                <img src={Category_IT} alt="Course visual" className="IT-user-course-modal-image" />
-                <p>{selectedCourse.courseDescription}</p>
-                <div className="IT-user-course-course-details">
-                  <h4>Prerequisite: <span className="IT-user-course-prerequisite">
-                    {selectedCourse.prerequisites?.length > 0 ? selectedCourse.prerequisites.join(', ') : "None"}
-                  </span></h4>
-                  <h5>Category: <span className="IT-user-course-category">{selectedCourse.category}</span></h5>
-                </div>
-              </div>
 
-              <div className="IT-user-course-modal-footer">
-                <button className="IT-user-course-enroll-button" onClick={handleConfirmEnroll}>Enroll Course</button>
-              </div>
-            </div>
+
+{/* Detailed Results Modal */}
+{showDetailedResults && (
+  <div className="result-detailed-modal-overlay">
+    <div className="result-detailed-modal">
+      <h2>Detailed Results</h2>
+      <div className="result-details-content">
+        {quizData.questions.map((question, index) => (
+          <div key={index} className="result-item">
+            <p><strong>{index + 1}. {question.question}</strong></p>
+            <ul className="result-options">
+              {question.choices.map((choice, choiceIndex) => (
+                <li 
+                  key={choiceIndex} 
+                  className={`
+                    ${selectedAnswers[index] === String.fromCharCode(65 + choiceIndex) && selectedAnswers[index] !== question.correctAnswer ? 'wrong-answer' : ''} 
+                    ${question.correctAnswer === String.fromCharCode(65 + choiceIndex) ? 'correct-answer' : ''}
+                  `}
+                >
+                  <span><strong>{String.fromCharCode(65 + choiceIndex)}.</strong> {choice}</span>
+                  {selectedAnswers[index] === String.fromCharCode(65 + choiceIndex) && (
+                    selectedAnswers[index] === question.correctAnswer
+                      ? <span className="checkmark"> &#10004; </span>  // Checkmark for correct answer
+                      : <span className="cross"> &#10008; </span>  // Cross for wrong answer
+                  )}
+                  {question.correctAnswer === String.fromCharCode(65 + choiceIndex) && selectedAnswers[index] !== question.correctAnswer && (
+                    <span className="correct-label">Correct Answer</span>  // Indicate correct answer
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
+        ))}
+      </div>
+      <button className="close-button" onClick={() => setShowDetailedResults(false)}>Close</button>
+    </div>
+  </div>
+)}
+
+{showCertificateModal && (
+  <div className="certificate-modal-overlay">
+    <div className="certificate-modal">
+      <h2>Course Completion Certificate</h2>
+
+      {/* Certificate layout */}
+      <div className="certificate-content" ref={certificateRef}>
+        {/* Certificate Template Image */}
+        {certificateUrl ? (
+          <img
+            src={certificateUrl}  // Use the fetched certificateUrl
+            alt="Certificate Template"
+            className="certificate-template"
+          />
+        ) : (
+          <p>Loading certificate template...</p>
         )}
+
+        {/* Overlay User's Course Title */}
+        <div className="certificate-course-title">
+          {selectedCourse?.courseTitle}
+        </div>
+
+        {/* Overlay User's Full Name */}
+        <div className="certificate-full-name">
+          {fullName}
+        </div>
+
+        {/* Overlay Date */}
+        <div className="certificate-date">
+          Date: {new Date().toLocaleDateString()}
+        </div>
+      </div>
+
+      <div className="certificate-actions">
+      <button onClick={downloadCertificateAsImageWithDesign}>Download as PNG</button>
+
+        <button onClick={() => setShowCertificateModal(false)}>Close</button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+{/* Passed Quiz Modal */}
+{showPassedQuizModal && selectedCourse && passedCourses.includes(selectedCourse.id) && (
+  <div className="result-modal-overlay">
+    <div className="result-modal">
+      
+      {/* Close Button */}
+      <button 
+        className="close-button" 
+        onClick={() => setShowPassedQuizModal(false)} 
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          background: 'none',
+          border: 'none',
+          fontSize: '20px',
+          cursor: 'pointer'
+        }}
+      >
+        X
+      </button>
+
+      <h2>{selectedCourse.courseTitle}</h2>
+      <div className="result-modal-content">
+        <img src={verifiedGif} alt="Verified Icon" className="result-icon" />
+        <h3>Congratulations, you passed!</h3>
+        <p>Your Score: {quizScore}</p>
+        <button
+  className="view-result-button"
+  onClick={() => {
+    setShowPassedQuizModal(false); // Close the modal
+    setShowDetailedResults(true); // Show detailed results
+    handleViewResult(); // Call the correct function if needed
+  }}
+>
+  View Result
+</button>
+
+        <button className="retake-button" onClick={handleRetakeCourse}>
+          Retake Course
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
+
+
+
+{isAvailableCoursesModalOpen && selectedCourse && (
+  <div className="IT-user-course-modal">
+    <div className="IT-user-course-modal-content">
+      <div className="IT-user-course-modal-header">
+        <h2>{selectedCourse.courseTitle}</h2>
+        <button className="IT-user-course-close-button" onClick={() => setIsAvailableCoursesModalOpen(false)}>X</button>
+      </div>
+
+      <div className="IT-user-course-modal-body">
+        <img src={Category_IT} alt="Course visual" className="IT-user-course-modal-image" />
+        <p>{selectedCourse.courseDescription}</p>
+        <div className="IT-user-course-course-details">
+          <h4>Prerequisite: <span className="IT-user-course-prerequisite">
+            {Array.isArray(selectedCourse.prerequisites) && selectedCourse.prerequisites.length > 0
+              ? selectedCourse.prerequisites.join(', ')  // Now showing titles instead of IDs
+              : "None"}
+          </span></h4>
+
+          <h5>Category: <span className="IT-user-course-category">{selectedCourse.category}</span></h5>
+        </div>
+      </div>
+
+      <div className="IT-user-course-modal-footer">
+        {selectedCourse.prerequisites?.length > 0 && !selectedCourse.prerequisiteResults.every(result => result) ? (
+          <div className="IT-user-course-enroll-locked">
+            <p className="prerequisite-warning">
+              Complete all prerequisite courses first.
+            </p>
+            <button disabled className="IT-user-course-enroll-button-disabled">
+              Course Locked
+            </button>
+          </div>
+        ) : (
+          <button className="IT-user-course-enroll-button" onClick={handleConfirmEnroll}>
+            Enroll Course
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
+
+
 
         {/* Confirm Enroll Modal */}
         {showConfirmModal && (

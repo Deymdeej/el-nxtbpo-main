@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { db, storage } from "../firebase";
-import { signOut } from "firebase/auth";
+import { getAuth, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, updateDoc, deleteDoc, onSnapshot, doc, getDocs } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
@@ -17,6 +17,7 @@ import LogoutDefault from '../assets/logoutdefault.png';
 import pdfIcon from '../assets/pdf.png';
 import trashIcon from '../assets/trash.png';
 import editIcon from '../assets/edit.png';
+
 
 const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,6 +38,8 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
 
   const [certificates, setCertificates] = useState([]);
   const [selectedCertificate, setSelectedCertificate] = useState(''); // Certificate
+  const [questionErrors, setQuestionErrors] = useState([]);
+  const auth = getAuth();
 
   const handleToggleVideoLink = () => {
     setIsVideoLinkEnabled(!isVideoLinkEnabled);
@@ -107,13 +110,17 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
   }, []);
   
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        // Clear local storage or session
+        localStorage.removeItem('user');
+        // Redirect to login page
+        window.location.href = '/login';
+      })
+      .catch((error) => {
+        console.error('Error during logout:', error);
+      });
   };
 
   const handleOpenModal = () => {
@@ -196,27 +203,50 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
   };
   
 
-  const handleDeleteFile = async (pdfUrl) => {
+  const handleDeleteFile = (fileName) => {
+    // Ask for confirmation before deleting the PDF
+    const confirmDelete = window.confirm("Are you sure you want to delete this PDF?");
+  
+    if (confirmDelete) {
+      try {
+        // Update the uploadedFiles state to remove the deleted file
+        setUploadedFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+        window.alert("PDF deleted from the page successfully!");
+      } catch (error) {
+        console.error("Error deleting PDF from the page:", error);
+        window.alert("An error occurred while deleting the PDF from the page. Please try again.");
+      }
+    }
+  };
+  
+  const handleDeleteFileforFirebase = async (pdfUrl) => {
+    // Ask for confirmation before deleting the PDF
     const confirmDelete = window.confirm("Are you sure you want to delete this PDF?");
     
     if (confirmDelete) {
       try {
-        // Create a reference to the file to delete
+        // Create a reference to the file in Firebase Storage
         const storageRef = ref(storage, pdfUrl);
-  
-        // Delete the file
+    
+        // Delete the file from Firebase Storage
         await deleteObject(storageRef);
         window.alert("PDF deleted successfully!");
   
-        // Update your state to remove the file locally as well (if needed)
-        setSelectedCourse((prevCourse) => ({
-          ...prevCourse,
-          pdfURLs: prevCourse.pdfURLs.filter((url) => url !== pdfUrl),
-        }));
+        // First, update your local state to remove the PDF URL
+        setSelectedCourse((prevCourse) => {
+          const updatedPdfURLs = prevCourse.pdfURLs.filter((url) => url !== pdfUrl);
+          
+          return {
+            ...prevCourse,
+            pdfURLs: updatedPdfURLs
+          };
+        });
   
-        // Optionally, update Firestore if you're storing the PDF URLs in a document
+        // Determine the collection based on the course category
         const collectionName = selectedCourse.category === "General" ? "GeneralCourses" : "ITCourses";
         const docRef = doc(db, collectionName, selectedCourse.id);
+  
+        // Update Firestore document to remove the PDF URL from the course
         await updateDoc(docRef, {
           pdfURLs: selectedCourse.pdfURLs.filter((url) => url !== pdfUrl),
         });
@@ -226,7 +256,8 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
         window.alert("An error occurred while deleting the PDF. Please try again.");
       }
     }
-  };
+  }; 
+    
   
 
   const handleChangeQuestion = (index, event) => {
@@ -253,26 +284,73 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
   };
 
   const handleSubmit = async () => {
+    let validationErrors = {};
+  
+    // Validate if at least one PDF is uploaded
     if (uploadedFiles.length === 0) {
+      alert("Please upload at least one PDF file.");
       setErrors({ pdfFile: "Please upload at least one PDF file." });
       return;
     }
-
-    let validationErrors = {};
+  
+    // Validate required fields
     if (!courseTitle) validationErrors.courseTitle = "Course Title is required.";
     if (!courseDescription) validationErrors.courseDescription = "Course Description is required.";
     if (!category) validationErrors.category = "Category is required.";
     if (!selectedCertificate) validationErrors.selectedCertificate = "Certificate is required.";
-
-    setErrors(validationErrors);
-    if (Object.keys(validationErrors).length > 0) return;
-
+  
+    // Validate quiz questions
+    let quizHasErrors = false;
+    let questionErrors = [];
+  
+    questions.forEach((question, index) => {
+      if (!question.question) {
+        questionErrors.push(`Question ${index + 1} is missing.`);
+        quizHasErrors = true;
+      }
+      question.choices.forEach((choice, cIndex) => {
+        if (!choice) {
+          questionErrors.push(`Choice ${String.fromCharCode(65 + cIndex)} for Question ${index + 1} is missing.`);
+          quizHasErrors = true;
+        }
+      });
+      if (!question.correctAnswer) {
+        questionErrors.push(`Correct answer for Question ${index + 1} is missing.`);
+        quizHasErrors = true;
+      }
+    });
+  
+    // Display error messages for empty quiz fields
+    if (quizHasErrors) {
+      let quizErrorMessage = "Please fill out the following quiz fields:\n";
+      questionErrors.forEach(error => {
+        quizErrorMessage += `- ${error}\n`;
+      });
+      alert(quizErrorMessage);
+      return; // Prevent submission if there are errors
+    }
+  
+    // If there are validation errors for other fields, display an alert and prevent submission
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      
+      let errorMessage = "Please fill out the following fields:\n";
+      if (validationErrors.courseTitle) errorMessage += "- " + validationErrors.courseTitle + "\n";
+      if (validationErrors.courseDescription) errorMessage += "- " + validationErrors.courseDescription + "\n";
+      if (validationErrors.category) errorMessage += "- " + validationErrors.category + "\n";
+      if (validationErrors.selectedCertificate) errorMessage += "- " + validationErrors.selectedCertificate + "\n";
+  
+      alert(errorMessage); // Show an alert with the missing fields
+      return;
+    }
+  
+    // Proceed to file upload and database submission if no errors
     try {
       const uploadedFileURLs = await Promise.all(
         uploadedFiles.map(async (fileData) => {
           const storageRef = ref(storage, `courses/${fileData.name}`);
           const uploadTask = uploadBytesResumable(storageRef, fileData.file);
-
+  
           return new Promise((resolve, reject) => {
             uploadTask.on(
               "state_changed",
@@ -286,7 +364,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
           });
         })
       );
-
+  
       const collectionName = category === "General" ? "GeneralCourses" : "ITCourses";
       await addDoc(collection(db, collectionName), {
         courseTitle,
@@ -299,13 +377,16 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
         certificateId: selectedCertificate,
         createdAt: new Date(),
       });
-
+  
       window.alert("Course added successfully!");
       handleCloseModal();
     } catch (error) {
       console.error("Error uploading files or adding course:", error);
+      alert("Error uploading files or adding course. Please try again.");
     }
   };
+  
+  
 
   const handleUpdateCourse = async () => {
     try {
@@ -793,17 +874,20 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
 
                     {/* Display and Edit Correct Answer */}
                     <label>Correct Answer</label>
-                    <select
-                      name="correctAnswer"
-                      value={question.correctAnswer}
-                      onChange={(e) => handleCorrectAnswerChange(index, e)}
-                      className="form-control mb-3"
-                    >
-                      <option value="A">A</option>
-                      <option value="B">B</option>
-                      <option value="C">C</option>
-                      <option value="D">D</option>
-                    </select>
+<select
+  name="correctAnswer"
+  value={question.correctAnswer}  // Make sure this is initialized as an empty string ""
+  onChange={(e) => handleCorrectAnswerChange(index, e)}
+  className={`form-control mb-3 ${errors.questions ? 'is-invalid' : ''}`} // Adding error class if needed
+>
+  <option value="">Select Correct Answer</option>  {/* Default placeholder option */}
+  <option value="A">A</option>
+  <option value="B">B</option>
+  <option value="C">C</option>
+  <option value="D">D</option>
+</select>
+{questionErrors[index] && <div className="invalid-feedback">{questionErrors[index]}</div>}  {/* Displaying validation error */}
+
                   </div>
                 ))}
               </div>
@@ -986,6 +1070,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
                     onChange={(e) => handleCorrectAnswerChange(index, e)}
                     className="form-control mb-3"
                   >
+                    <option value=""></option>
                     <option value="A">A</option>
                     <option value="B">B</option>
                     <option value="C">C</option>

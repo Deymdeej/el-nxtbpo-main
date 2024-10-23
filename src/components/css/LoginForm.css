@@ -1,226 +1,287 @@
+/* LoginForm.css */
+/* General Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+}
+
 .sign-in {
-  background-color: #08342b;
+  background: linear-gradient(135deg, #08342b, #1a684d, #34a27f, #08342b);
+  background-size: 300% 300%;
+  animation: gradientMove 10s ease infinite;
   display: flex;
-  flex-direction: row;
   justify-content: center;
-  width: 100%;
-  
+  align-items: center;
+  min-height: 100vh;
+  padding: 0;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .sign-in .overlap-group-wrapper {
-  background-color: #08342b;
-  height: 1024px;
-  width: 1440px;
+  display: flex;
+  width: 90%;
+  max-width: 849px;
+  height: 545px; /* Adjust as needed */
+  background-color: #ffffff;
+  overflow: hidden;
 }
 
-.sign-in .overlap-group {
+.sign-in .form-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  width: 50%; /* Take half the width */
   background-color: #ffffff;
-  height: 545px;
-  left: 296px;
-  position: relative;
-  top: 245px;
-  width: 849px;
+  text-align: center; /* Center text */
 }
+
+.sign-in .img-container {
+  width: 50%;
+  height: 100%; /* Make it fill the height */
+  background-color: #f5f5f5; /* Background color to match the image section */
+}
+
+.sign-in .img-container img {
+  width: 100%;  /* Ensure the image covers the container */
+  height: 100%; /* Ensures the image covers the full height */
+  object-fit: cover; /* Makes sure the image is cropped and covers the area perfectly */
+}
+
 .sign-in .text-wrapper {
   color: #000000;
-  font-family: "Poppins-SemiBold", Helvetica;
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 600;
-  left: 100px;
-  letter-spacing: 0;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 100px;
-  white-space: nowrap;
-  width: 147px;
+  margin-bottom: 10px; /* Adjust margin for a better look */
 }
 
 .sign-in .div {
-  color: #0f0f0f;
-  font-family: "Poppins-Regular", Helvetica;
-  font-size: 13px;
-  font-weight: 400;
-  left: 100px;
-  letter-spacing: 0;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 145px;
-  white-space: nowrap;
-  width: 223px;
-}
-.sign-in .div-2 {
-  color: #0f0f0f;
-  font-family: "Poppins-Regular", Helvetica;
-  font-size: 12px;
-  font-weight: 400;
-  left: 68px;
-  letter-spacing: 0;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  bottom: 110px;
-  white-space: nowrap;
-  width: 223px;
-}
-.sign-in .div-3 {
-  color: #000000;
-  font-family: "Poppins-Regular", Helvetica;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  bottom: 110px;
-  left:165px;
-  white-space: nowrap;
-  width: 223px;
-}
-.sign-in .text-wrapper-2 {
   color: #585858;
-  font-family: "Poppins-Regular", Helvetica;
-  font-size: 13px;
-  font-weight: 400;
-  left: 90px;
-  letter-spacing: 0;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 180px;
-  white-space: nowrap;
-  width: 62px;
+  font-size: 14px;
+  margin-bottom: 30px; /* Space between the subheading and form */
 }
 
+.sign-in form {
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center form elements */
+}
+
+.sign-in .text-wrapper-2,
 .sign-in .text-wrapper-3 {
-  color: #585858;
-  font-family: "Poppins-Regular", Helvetica;
-  font-size: 13px;
-  font-weight: 400;
-  left: 91px;
-  letter-spacing: 0;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 250px;
-  white-space: nowrap;
-  width: 58px;
-}
-.checkbox-wrapper {
-  display: flex;
-  align-items: center;
-  position: absolute;
-  top: 322px; /* Adjust to match your layout */
-  left: 92px; /* Adjust to match your layout */
-}
-
-.container {
-  display: flex;
-  align-items: center;
-}
-
-.container input {
-  margin-right: 6px; /* Space between checkbox and label */
-}
-.sign-in .text-wrapper-4 {
-  color: #585858;
-  font-family: "Poppins-Regular", Helvetica;
+  font-family: "Poppins-SemiBold", Helvetica;
   font-size: 12px;
-  font-weight: 400;
-  white-space: nowrap;
+  color: #585858;
+  align-self: flex-start; /* Align labels to the left */
+  margin-bottom: 5px; /* Add space between the label and the input field */
 }
-.text-wrapper-5.active, .text-wrapper-6.active {
-  font-weight: bold;
-  color: #000;
+
+/* Container for input fields with the eye icon */
+.sign-in .input-container {
+  position: relative;
+  width: 100%;
 }
-.text-wrapper-7 {
-  position: relative; /* Or relative, depending on your layout */
-  top: 355px; /* Adjust this value to move the button down */
-  left: 91px; /* Adjust this value to align with your layout */
-  padding: 10px 15px;
-  width: 247px;
-  border: none;
-  outline: none;
+
+.sign-in .usernamefield,
+.sign-in .passwordfield {
+  font-family: "Poppins-SemiBold", Helvetica;
+  font-size: 14px;
+  border: 1px solid #585858;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 15px; /* Reduce margin between input fields */
+  width: 100%;
+  padding-right: 40px; /* Space for the eye icon */
+}
+
+/* Styling for the eye icon to toggle password visibility */
+.eye-icon {
+  position: absolute;
+  right: 10px; /* Align the icon inside the input */
+  top: 38%; /* Adjust top positioning */
+  transform: translateY(-50%); /* Ensure perfect centering vertically */
+  cursor: pointer;
+  color: #585858;
+  width: 20px;
+  height: 20px;
+
+}
+
+
+
+
+.sign-in .text-wrapper-7 {
+  padding: 10px 0;
+  width: 100%;
   background-color: #151515;
   color: #eee;
+  border: none;
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.25s ease-out;
+  transition: transform 0.25s ease-out;
+  margin-top: 10px;
 }
-.text-wrapper-7:hover {
+
+.sign-in .text-wrapper-7:hover {
   transform: translateY(-3px);
 }
 
-.button-span {
-  color: #aaa;
+/* New styling to position the "Don't have an account?" and "Create one" below Sign In button */
+.sign-in .form-footer {
+  margin-top: 15px; /* Reduced margin to bring it closer to the Sign In button */
+  text-align: center;
+  width: 100%;
 }
 
-.sign-in .overlap-2 {
-  height: 40px;
-  left: 114px;
-  position: absolute;
-  top: 421px;
-  width: 198px; 
+.sign-in .div-2 {
+  font-size: 12px;
+  display: inline-block;
+}
+
+.sign-in .div-3 {
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-block;
+  margin-left: 5px;
+}
+
+/* Media Queries for responsiveness */
+@media (max-width: 768px) {
+  .sign-in .overlap-group-wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sign-in .form-container {
+    width: 100%; /* Make the form take full width on smaller screens */
+    padding: 20px;
+  }
+
+  .sign-in .img-container {
+    display: none; /* Hide the image container on smaller screens */
+  }
+}
+
+@media (max-width: 1024px) {
+
+  .sign-in .overlap-group-wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sign-in .form-container {
+    width: 100%; /* Make the form take full width on smaller screens */
+    padding: 20px;
+  }
+
+  .sign-in .img-container {
+    display: none; /* Hide the image container on smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .sign-in .text-wrapper {
+    font-size: 28px; /* Reduce heading size on smaller screens */
+  }
+
+  .sign-in .div {
+    font-size: 12px; /* Adjust subtext size */
+  }
+
+  .sign-in .text-wrapper-7 {
+    font-size: 14px;
+  }
+
+  .sign-in .div-2,
+  .sign-in .div-3 {
+    font-size: 11px;
+  }
+}
+
+
+
+
+
+/* Ensure form-container has a relative position */
+.form-container {
+  position: relative; /* Set relative positioning to use as a reference for absolute positioning */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Ensure content starts from the top */
+  align-items: flex-start; /* Align content to the left */
+  padding: 40px; /* Existing padding */
+  width: 50%;
+  background-color: #ffffff;
   text-align: center;
 }
 
-.sign-in .group {
-  height: 41px;
-  left: 7px;
-  position: absolute;
-  top: 7px;
+/* Default position (larger screens) */
+.logo-container {
+  position: absolute; /* Keeps the logo positioned relative to the form container */
+  top: 10px;
+  left: 10px;
+  margin-bottom: 10px;
+}
+
+.form-logo {
   width: 109px;
+  height: 41px;
 }
 
-.sign-in .usernamefield {
-  font-family: "Poppins-SemiBold", Helvetica;
+
+@media (max-width: 768px) {
+  /* On smaller screens, center the logo */
+  .logo-container {
+    position: relative; /* Make it relative for centering */
+    margin: 0 auto; /* Center horizontally */
+    display: flex;
+    justify-content: center; /* Ensure it's centered */
+    top: 0;
+    left: 0;
+    right: 0; /* Remove any fixed left/right positioning */
+    padding-top: 10px; /* Optional padding if needed */
+  }
+}
+/* Styling for the "Remember Me" checkbox */
+.remember-me-container {
+  display: flex;
+  align-items: center; /* Vertically align the checkbox and label */
+  margin-top: 10px;
+  margin-bottom: 3px;
+  width: 100%; /* Ensures it spans the full width of the container */
+}
+
+.remember-me-container input[type="checkbox"] {
+  margin-right: 8px;
+  margin-bottom: 1px;
+  width: 16px;
+  height: 16px;
+}
+
+.remember-me-container label {
   font-size: 12px;
-  border: 1px solid;
-  border-color: #585858;
-  border-radius: 5px;
-  height: 32px;
-  left: 90px;
-  position: absolute;
-  top: 200px;
-  width: 247px;
-  padding: 0 10px;
-}
-.sign-in .passwordfield {
+  color: #585858;
   font-family: "Poppins-SemiBold", Helvetica;
-  font-size: 12px;
-  border: 1px solid #585858;  /* Simplified border property */
-  border-radius: 5px;
-  height: 32px;
-  position: absolute;
-  top: 270px;
-  left: 90px;
-  width: 247px;
-  padding: 0 35px 0 10px;  /* Added padding on the right for the eye icon */
-}
-.eye-icon {
-  position: absolute;
-  top: 286px;
-  left: 310px; /* Align the icon to the right inside the container */
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #585858; /* Match the color scheme */
-}
-
-.eye-icon:hover {
-  color: #000000; /* Change color on hover for better interaction */
-}
-
-.eye-icon-image {
-  width: 20px;
-  height: 20px;
-  display: block;
-}
-.sign-in .img {
-  height: 545px;
-  left: 425px;
-  position: absolute;
-  top: 0;
-  width: 424px;
+  margin-bottom: 0;
 }

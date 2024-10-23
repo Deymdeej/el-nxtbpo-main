@@ -225,3 +225,141 @@
     outline: none;
 }
 
+
+
+
+
+.it-admin-training-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Control the size of each column */
+    gap: 20px; /* Add space between each column */
+    align-items: center; /* Vertically aligns the content */
+  }
+  
+  .it-admin-training-list-header {
+    font-weight: bold;
+    background-color: #f3f3f3; /* Optional for distinction */
+    padding: 10px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Match with content rows */
+    align-items: center;
+  }
+  
+  .it-admin-training-list-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Match with header */
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    align-items: center;
+  }
+  
+ 
+  
+  .attendance-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .it-admin-training-attendance-button {
+    background-color: #28a745;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  
+
+
+
+  .it-admin-training-attendance-dropdown {
+    padding: 8px;
+    font-size: 14px;
+    background-color: #28a745; /* Default green background */
+    color: white; /* Text color */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100px; /* Set a width */
+  }
+  
+  .it-admin-training-attendance-dropdown option {
+    color: black; /* Black text for options */
+    background-color: white; /* White background for options */
+  }
+
+
+
+
+
+
+
+
+
+  /* Container holding both search and sort elements */
+.it-admin-training-search-bar-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 20px; /* Space between search and dropdown */
+  }
+  
+  /* Search input */
+  .it-admin-training-search-input {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+    font-size: 14px;
+    width: 250px;
+    color: #333;
+    outline: none;
+    transition: background-color 0.2s ease;
+  }
+  
+  .it-admin-training-search-input::placeholder {
+    color: #c0c0c0;
+    font-size: 14px;
+  }
+  
+  /* On focus, change the background */
+  .it-admin-training-search-input:focus {
+    background-color: #fff;
+    border-color: #d1d1d1;
+  }
+  
+  /* Search icon next to input */
+  .it-admin-training-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 18px;
+  }
+  
+  /* Sort dropdown */
+  .it-admin-training-sort-dropdown {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+    font-size: 14px;
+    width: 200px;
+    color: #333;
+    outline: none;
+    appearance: none;
+  }
+  
+  .it-admin-training-sort-dropdown:focus {
+    background-color: #fff;
+    border-color: #d1d1d1;
+  }
+  
+  /* Flexbox layout for the search input and the search icon */
+  .search-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  

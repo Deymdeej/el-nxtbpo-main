@@ -1,0 +1,336 @@
+/* AdminFormSuper.css */
+
+/* General container for admin page */
+.admin-super-container {
+  display: flex;
+  font-family: Arial, sans-serif;
+}
+
+/* Sidebar styling */
+.sidebar-super {
+  background-color: #FFFFFF; /* White sidebar background */
+  padding: 20px;
+  width: 250px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: transform 0.3s ease-in-out;
+  transform: translateX(0);
+  z-index: 1000;
+}
+
+.sidebar-super img {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.nav-links-super {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+  margin-top: 30px;
+}
+
+.nav-links-super li {
+  width: 100%;
+  text-align: left;
+  padding: 2.5px;
+}
+
+.nav-links-super li a {
+  color: #000; /* Black text for links */
+  text-decoration: none;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+}
+
+.nav-links-super li a i {
+  margin-right: 10px; /* Space for your icons */
+}
+
+/* Hamburger menu styling */
+.hamburger-super {
+  display: none; /* Hidden on large screens */
+  background: none;
+  border: none;
+  color: #000; /* Black hamburger icon */
+  font-size: 2rem;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  z-index: 100; /* Ensure it is above the content */
+}
+
+/* Main content area (where "HEAD ADMIN" is located) */
+.content-super {
+  margin-left: 250px;
+  padding: 20px;
+  width: 100%;
+  background-color: #EFEFEF; /* Light gray background for content area */
+  min-height: 100vh; /* Ensures the full height of the content area is covered */
+  transition: margin-left 0.3s ease-in-out;
+}
+
+/* When sidebar is closed */
+.sidebar-super:not(.open-super) {
+  transform: translateX(-250px); /* Hide sidebar */
+}
+
+.content-super.sidebar-closed {
+  margin-left: 0; /* Full width content when sidebar is hidden */
+}
+
+/* Media query for small screens */
+@media (max-width: 768px) {
+  .sidebar-super {
+    width: 250px;
+    transform: translateX(-250px); /* Sidebar hidden by default */
+  }
+
+  .sidebar-super.open-super {
+    transform: translateX(0); /* Show sidebar when open */
+  }
+
+  .hamburger-super {
+    display: block; /* Show hamburger menu on small screens */
+    right: 10px; /* Position it on the right side of the screen */
+  }
+
+  .content-super {
+    margin-left: 0; /* Full width content on small screens */
+  }
+
+  .content-super.sidebar-closed {
+    margin-left: 0; /* Adjust content width when sidebar is closed */
+  }
+}
+
+/* User List Section */
+.user-list-super-section {
+  padding: 20px;
+  background-color: #EFEFEF;
+  border-radius: 8px;
+}
+
+.user-super-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.user-super-table th, .user-super-table td {
+  border: 1px solid #64BAA9;
+  padding: 8px;
+  text-align: left;
+}
+
+.user-super-table th {
+  background-color: #48887B;
+  color: white;
+}
+
+.user-super-table td {
+  background-color: #fff;
+}
+
+.user-super-table button {
+  background-color: #48887B; 
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-super-table button:hover {
+  background-color: #218838;
+}
+
+/* Adjust styling for the buttons in the sidebar */
+.nav-button-super {
+  background: none;
+  border: none;
+  color: #000;
+  text-align: left;
+  width: 100%;
+  padding: 1px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center; /* Aligns icon and text vertically */
+}
+
+.nav-button-super span {
+  flex-grow: 1; /* Makes sure the text spans properly */
+  display: flex;
+  align-items: center; /* Aligns the text and the icon together */
+}
+
+.nav-button-super img {
+  margin-left: 10px; /* Add space between the text and icon */
+  width: 20px; /* Icon size */
+  height: 20px; /* Icon size */
+  padding: 1px;
+  margin-top: 17.5px;
+}
+.nav-icon-super {
+  margin-right: 10px; /* Space between the icon and text */
+  width: 1.2em;
+  height: 1.2em;
+  display: inline-block;
+  vertical-align: middle;
+  filter: invert(1); /* Inverts the color of the icon to white */
+}
+
+.nav-button-super:hover {
+  background-color: #f0f0f0;
+  border-radius: 8px; /* Adds the curved effect on hover */
+  padding: 1px;
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out; /* Smooth transition effect */
+}
+
+
+.nav-button-super.active-super {
+  background-color: #48887B;
+  color: #fff; /* White text when active */
+  padding: 1px;
+  border-radius: 8px; /* Adds the curved effect */
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out; /* Smooth transition effect */
+}
+.logout-super {
+  margin-top: auto;
+  width: 100%;
+}
+.logout-super .nav-button-super {
+  margin-top: 15px;
+}
+.nav-button-super.active-super .nav-icon-super {
+  filter: brightness(100) invert(0); /* Makes the icon white */
+}
+
+
+.user-super-table th, .user-super-table td {
+  border: 1px solid #64BAA9;
+  padding: 8px;
+  text-align: center; /* Centers text in table cells */
+  vertical-align: middle; /* Ensures vertical centering */
+}
+
+.icon-button-super {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0; /* Remove any extra padding */
+  margin: 0 5px; /* Optional: Add a small margin between icons */
+  font-size: 1rem; /* Adjust size for Font Awesome icons (if used) */
+}
+
+.icon-button-super img {
+  width: 10px; /* Adjust the width of the icon if using image icons */
+  height: 10px; /* Adjust the height of the icon if using image icons */
+}
+
+
+.icon-button-super:hover {
+  opacity: 0.7; /* Slight opacity change on hover */
+}
+
+.delete-icon-super {
+  color: #dc3545; /* Red for Font Awesome icon */
+}
+
+.delete-icon-super:hover {
+  color: #c82333; /* Darker red on hover for delete */
+  opacity: 0.7;
+}
+
+/* Modal overlay to cover the screen */
+.modal-super-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal box styling */
+.modal-super {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: slide-down 0.3s ease-out;
+}
+
+/* Modal body */
+.modal-super-body {
+  margin-bottom: 20px;
+}
+
+.modal-super-body label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.modal-super-body input,
+.modal-super-body select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.role-selection {
+  display: flex;
+  gap: 20px;
+}
+
+/* Modal footer (buttons) */
+.modal-super-footer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.modal-super-button {
+  padding: 10px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.modal-super-button.remove {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.modal-super-button.remove:hover {
+  background-color: #e0e0e0;
+}
+
+.modal-super-button.save {
+  background-color: #48887B;
+  color: white;
+}
+
+.modal-super-button.save:hover {
+  background-color: #65aa9c;
+}
+

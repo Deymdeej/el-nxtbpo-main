@@ -11,6 +11,7 @@ import UserDefault from '../assets/userdefault.png';
 import CourseDefault from '../assets/coursedefault.png';
 import LogoutDefault from '../assets/logoutdefault.png';
 import './css/ITadminCertificate.css';
+import { getAuth, signOut } from "firebase/auth";
 
 const ITAdminCertificateForm = ({ selectedNav }) => {
   const [file, setFile] = useState(null);
@@ -26,6 +27,7 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
   const [courseCategory, setCourseCategory] = useState("");
   const [dateUploaded, setDateUploaded] = useState("");
   const [selectedCertificateId, setSelectedCertificateId] = useState(null); // Store the ID of the selected certificate for editing
+  const auth = getAuth();
 
   const navigate = useNavigate();
 
@@ -35,8 +37,16 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
   }, []);
 
   const handleLogout = () => {
-    console.log("Logging out...");
-    navigate("/login");
+    signOut(auth)
+      .then(() => {
+        // Clear local storage or session
+        localStorage.removeItem('user');
+        // Redirect to login page
+        window.location.href = '/login';
+      })
+      .catch((error) => {
+        console.error('Error during logout:', error);
+      });
   };
 
   const handleFileChange = (e) => {

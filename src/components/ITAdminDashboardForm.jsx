@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { signOut } from "firebase/auth";
+import { getAuth, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import './css/ITadminForm.css';
 import { auth, db } from "../firebase";
@@ -11,17 +11,25 @@ import UserDefault from '../assets/userdefault.png';
 import CourseDefault from '../assets/coursedefault.png';
 import LogoutDefault from '../assets/logoutdefault.png';
 
+
+
+
 const ITAdminDashboardForm = ({ selectedNav }) => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
+  const auth = getAuth();
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        // Clear local storage or session
+        localStorage.removeItem('user');
+        // Redirect to login page
+        window.location.href = '/login';
+      })
+      .catch((error) => {
+        console.error('Error during logout:', error);
+      });
   };
 
   useEffect(() => {

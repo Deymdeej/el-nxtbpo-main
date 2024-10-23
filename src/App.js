@@ -10,20 +10,22 @@ import HRUserDashboard from "./components/HRUserDashboard";
 import ITAdminDashboard from "./components/ITAdminDashboard";
 import ITUserDashboard from "./components/ITUserDashboard";
 import ITAdminTrainingDashboard from "./components/ITAdminTrainingDashboard";
+import ITUserTraining from "./components/ITUserTraining"; // Fix the import path
 import ITAdminCertificateDashboard from "./components/ITAdminCertificateDashboard"; // Import IT Admin Certificate Dashboard
 import AuthContainer from "./components/AuthContainer";  
 import { ToastContainer, toast } from "react-toastify"; 
 import "react-toastify/dist/ReactToastify.css"; 
 import { auth, db } from "./firebase";
 import { doc, getDoc } from "firebase/firestore";
-import Spinner from "react-bootstrap/Spinner"; 
-
+import Spinner from "react-bootstrap/Spinner";
+import ITUserCertificate from "./components/ITUserCertificate";
+ 
 function App() {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [department, setDepartment] = useState(null); // Track user's department
   const [loading, setLoading] = useState(true);
-
+ 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -32,7 +34,7 @@ function App() {
           // Fetch the user's role and department from Firestore
           const docRef = doc(db, "Users", user.uid);
           const docSnap = await getDoc(docRef);
-
+ 
           if (docSnap.exists()) {
             const userData = docSnap.data();
             setRole(userData.role); // Set the user's role (admin/user)
@@ -49,120 +51,130 @@ function App() {
       }
       setLoading(false); // Stop loading after user and role are fetched
     });
-
+ 
     return () => unsubscribe();
   }, []);
-
+ 
   if (loading) {
     return (
-      <div className="loading-screen">
-        <Spinner animation="border" variant="primary" />
-        <p>Loading...</p>
-      </div>
+<div className="loading-screen">
+<Spinner animation="border" variant="primary" />
+<p>Loading...</p>
+</div>
     );
   }
-
+ 
   return (
-    <Router>
-      <div className="App">
-        <div className="auth-wrapper">
-          <div className="auth-inner">
-            <Routes>
+<Router>
+<div className="App">
+<div className="auth-wrapper">
+<div className="auth-inner">
+<Routes>
               {/* Default route that checks user authentication */}
-              <Route
+<Route
                 path="/"
                 element={
                   user ? (
                     role === "admin" ? (
                       department === "HR" ? (
-                        <Navigate to="/hr-admin-dashboard" />
+<Navigate to="/hr-admin-dashboard" />
                       ) : (
-                        <Navigate to="/it-admin-dashboard" />
+<Navigate to="/it-admin-dashboard" />
                       )
                     ) : department === "HR" ? (
-                      <Navigate to="/hr-user-dashboard" />
+<Navigate to="/hr-user-dashboard" />
                     ) : department === "IT" ? (
-                      <Navigate to="/it-user-dashboard" />
+<Navigate to="/it-user-dashboard" />
                     ) : (
-                      <Navigate to="/login" />
+<Navigate to="/login" />
                     )
                   ) : (
-                    <Navigate to="/login" />  // Redirect to login if not authenticated
+<Navigate to="/login" />  // Redirect to login if not authenticated
                   )
                 }
               />
-
+ 
               {/* Use AuthContainer to handle login/signup toggling */}
-              <Route path="/login" element={<AuthContainer />} />
-              <Route path="/register" element={<AuthContainer />} />
-
+<Route path="/login" element={<AuthContainer />} />
+<Route path="/register" element={<AuthContainer />} />
+ 
               {/* HR Admin and User Routes */}
-              <Route
+<Route
                 path="/hr-admin-dashboard"
                 element={user && role === "admin" && department === "HR" ? <HRAdminDashboard /> : <Navigate to="/login" />}
               />
-              <Route
+<Route
                 path="/hr-user-dashboard"
                 element={user && role === "user" && department === "HR" ? <HRUserDashboard /> : <Navigate to="/login" />}
               />
-
+ 
               {/* IT Admin and User Routes */}
-              <Route
+<Route
                 path="/it-admin-dashboard"
                 element={user && role === "admin" && department === "IT" ? <ITAdminDashboard /> : <Navigate to="/login" />}
               />
-              <Route
+<Route
                 path="/it-user-dashboard"
                 element={user && role === "user" && department === "IT" ? <ITUserDashboard /> : <Navigate to="/login" />}
               />
-
+ 
               {/* Add ITAdminCoursePage1 Route for IT Admin */}
-              <Route
+<Route
                 path="/it-admin-courses"
                 element={user && role === "admin" && department === "IT" ? <ITAdminCoursePage1 /> : <Navigate to="/login" />}
               />
-
+ 
               {/* Add ITAdminTrainingDashboard Route for IT Admin */}
-              <Route
+<Route
                 path="/it-admin-training"
                 element={user && role === "admin" && department === "IT" ? <ITAdminTrainingDashboard /> : <Navigate to="/login" />}
               />
-
-              {/* Add ITAdminCertificateDashboard Route for IT Admin */}
+ 
+              {/* Add ITUserTrainingDashboard Route for IT Users */}
+<Route
+                path="/it-user-training"
+                element={user && role === "user" && department === "IT" ? <ITUserTraining /> : <Navigate to="/login" />}
+              />
               <Route
+                path="/it-user-certificate"
+                element={user && role === "user" && department === "IT" ? <ITUserCertificate /> : <Navigate to="/login" />}
+              />
+ 
+              {/* Add ITAdminCertificateDashboard Route for IT Admin */}
+<Route
                 path="/it-admin-certificates"
                 element={user && role === "admin" && department === "IT" ? <ITAdminCertificateDashboard /> : <Navigate to="/login" />}
               />
-
+ 
               {/* Admin Routes */}
-              <Route
+<Route
                 path="/admin"
                 element={user && role === "admin" ? <AdminPage /> : <Navigate to="/login" />}
               />
-              <Route
+<Route
                 path="/adminresults"
                 element={user && role === "admin" ? <AdminResultsPage /> : <Navigate to="/login" />}
               />
-
+ 
               {/* User Routes */}
-              <Route
+<Route
                 path="/user"
                 element={user && role === "user" ? <UserPage /> : <Navigate to="/login" />}
               />
-              <Route
+<Route
                 path="/usercoursepage"
                 element={user && role === "user" ? <UserCoursePage /> : <Navigate to="/login" />}
               />
-
+ 
               {/* Catch-all route to redirect unauthorized access to login */}
-              <Route path="*" element={<Navigate to="/login" />} />
-            </Routes>
-            <ToastContainer />
-          </div>
-        </div>
-      </div>
-    </Router>
+<Route path="*" element={<Navigate to="/login" />} />
+</Routes>
+<ToastContainer />
+</div>
+</div>
+</div>
+</Router>
   );
 }
-
+ 
 export default App;
