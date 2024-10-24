@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import UserDefault from '../assets/userdefault.png';
+import {  uploadString} from "firebase/storage"; 
 
 
 
@@ -35,7 +36,7 @@ import UserDefault from '../assets/userdefault.png';
 
 const ITUser = ({
   handleLogout,
-  fullName,
+ 
   userType // Added userType to determine whether the user is HR or IT
 }) => {
   const [courses, setCourses] = useState([]); // State to hold all courses
@@ -63,8 +64,6 @@ const [quizScore, setQuizScore] = useState(0); // Store the quiz score
 const [showDetailedResults, setShowDetailedResults] = useState(false);
 const [showCongratsModal, setShowCongratsModal] = useState(false);
 const [showCertificateModal, setShowCertificateModal] = useState(false);
-const [certificateUrl, setCertificateUrl] = useState(null); // To store the certificate URL
-const certificateRef = useRef(null);
 const { createCanvas, loadImage } = require('canvas');
 const [quizSaved, setQuizSaved] = useState(false); // New state to track if the quiz result is saved
 const [showPassedQuizModal, setShowPassedQuizModal] = useState(false);
@@ -74,8 +73,11 @@ const [selectedSection, setSelectedSection] = useState('courses');
 const [prerequisiteResults, setPrerequisiteResults] = useState([]);
 const [quizResults, setQuizResults] = useState([]); // State to hold quiz results
 const [certifications, setCertifications] = useState([]); // State to hold certifications
-const [quizResult, setQuizResult] = useState(null); // Initialize quizResult
+const [quizResult, setQuizResult] = useState(null); 
+const [fullName, setFullName] = useState(''); // Initialize fullName with an empty string
 
+const [certificateUrl, setCertificateUrl] = useState(null); // Certificate template URL from Firebase
+  const certificateRef = useRef(null); // Reference to the certificate DOM element
 
 
 
@@ -160,6 +162,31 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
 
 
   useEffect(() => {
+    const fetchUserData = async () => {
+      if (userId) {
+        try {
+          const userDocRef = doc(db, "Users", userId); // Assume 'Users' collection contains user data
+          const userDoc = await getDoc(userDocRef);
+  
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setFullName(userData.fullName || 'Anonymous'); // Assuming 'fullName' field is present
+          } else {
+            console.error("No such user data found.");
+            setFullName('Anonymous');
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+  
+    fetchUserData();
+  }, [userId]);
+  
+
+
+  useEffect(() => {
     // Fetch quiz result in real-time when the component loads or when userId or selectedCourse changes
     if (userId && selectedCourse) {
       const quizResultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
@@ -187,74 +214,57 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
   }, [userId, selectedCourse]);
 
   // Function to handle next page after passing quiz
- 
-
- 
-  
-  const fetchQuizDataFromEnrollment = async (courseId) => {
-    try {
-      const enrollmentRef = doc(db, "Enrollments", `${userId}_${courseId}`);
-      const enrollmentSnap = await getDoc(enrollmentRef);
-  
-      if (enrollmentSnap.exists()) {
-        const enrollmentData = enrollmentSnap.data();
-        
-        // Assuming you have an array of questions in the enrollment data
-        if (Array.isArray(enrollmentData.questions)) {
-          const questionCount = enrollmentData.questions.length;
-          setNumberOfQuestions(questionCount);
-        } else {
-          setNumberOfQuestions(0); // Fallback if no questions array is present
+  useEffect(() => {
+    const fetchQuizData = async () => {
+      if (userId && selectedCourse) {
+        const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
+        try {
+          const enrollmentSnap = await getDoc(enrollmentRef);
+          if (enrollmentSnap.exists()) {
+            const enrollmentData = enrollmentSnap.data();
+            setQuizData(enrollmentData); // Store the quiz data
+          } else {
+            console.error("No enrollment data found.");
+          }
+        } catch (error) {
+          console.error("Error fetching quiz data:", error);
         }
-  
-        const quizAttempts = enrollmentData.quizAttempts || 0;
-        setAttemptsUsed(quizAttempts); // Set the attempts used
-  
-      } else {
-        toast.error("No enrollment data found.");
-        setNumberOfQuestions(0);
-        setAttemptsUsed(0); // Default attempts to 0 if no enrollment data is found
       }
-    } catch (error) {
-      console.error("Error fetching enrollment data:", error.message);
-      toast.error("Failed to fetch enrollment data.");
-    }
-  };
+    };
   
-   
+    fetchQuizData();
+  }, [userId, selectedCourse]); 
 
-const fetchCertificateTemplate = async (certificateId) => {
+  useEffect(() => {
+    const fetchCertificate = async () => {
+      if (selectedCourse?.certificateId) {
+        const url = await fetchCertificateTemplateUrl(selectedCourse.certificateId);
+        setCertificateUrl(url);
+      }
+    };
+    
+    fetchCertificate();
+  }, [selectedCourse]);
+
+
+
+const uploadCertificateToFirebase = async (pngDataUrl) => {
   try {
-    if (!certificateId) {
-      throw new Error("No certificate ID provided.");
-    }
-
-    const certificateRef = doc(db, "certificates", certificateId); // Assuming 'certificates' is the collection
-    const certificateSnap = await getDoc(certificateRef);
-
-    if (certificateSnap.exists()) {
-      const certificateData = certificateSnap.data();
-      return certificateData.fileUrl; // Assuming the certificate data contains a 'fileUrl' field
-    } else {
-      throw new Error("Certificate not found.");
-    }
+    // Create a reference to the Firebase storage location where you want to store the PNG
+    const storageRef = ref(storage, `certificates/${fullName}_Certificate_with_Design.png`);
+    
+    // Upload the PNG file as a base64 URL string
+    const snapshot = await uploadString(storageRef, pngDataUrl, 'data_url');
+    
+    // Get the download URL for the uploaded certificate
+    const downloadUrl = await getDownloadURL(snapshot.ref);
+    return downloadUrl;
   } catch (error) {
-    console.error("Error fetching certificate template:", error);
+    console.error("Error uploading certificate:", error);
     return null;
   }
 };
 
-
-
-const handleNextClick = () => {
-  setIsMyCoursesModalOpen(false);
-  setIsNextModalOpen(true);
-};
-const handleCloseQuizModal = () => {
-  setIsQuizModalOpen(false); // Close the quiz modal
-};
-
-// Add this function above your component's return statement
 const downloadCertificateAsImageWithDesign = () => {
   if (!certificateUrl) {
     console.error('No certificate template URL available.');
@@ -266,7 +276,7 @@ const downloadCertificateAsImageWithDesign = () => {
   img.crossOrigin = 'anonymous'; // Ensure CORS is handled for external images
   img.src = certificateUrl; // Set the certificate design image URL
 
-  img.onload = () => {
+  img.onload = async () => {
     // Create a canvas element
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -301,21 +311,115 @@ const downloadCertificateAsImageWithDesign = () => {
     const date = new Date().toLocaleDateString();
     context.fillText(`Date: ${date}`, canvas.width / 2, canvas.height / 2 + 50);
 
-    // Convert the final canvas content to a PNG image
+    // Convert the final canvas content to a PNG image data URL
     const imgData = canvas.toDataURL('image/png');
 
-    // Create a link element to trigger the download
-    const link = document.createElement('a');
-    link.href = imgData;
-    link.download = `${fullName}_Certificate_with_Design.png`; // Set the file name using the user's full name
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link); // Clean up the DOM after triggering the download
+    // Upload the certificate PNG to Firebase
+    const downloadUrl = await uploadCertificateToFirebase(imgData);
+
+    if (downloadUrl) {
+      // Create a link element to trigger the download from Firebase
+      const link = document.createElement('a');
+      link.href = downloadUrl; // Use the Firebase download URL
+      link.download = `${fullName}_Certificate_with_Design.png`; // Set the file name using the user's full name
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link); // Clean up the DOM after triggering the download
+    } else {
+      console.error("Error: Certificate download URL not available.");
+    }
   };
 
   img.onerror = () => {
     console.error('Failed to load the certificate template image.');
   };
+};
+ 
+
+ 
+  const fetchCertificateTemplateUrl = async (certificateId) => {
+    try {
+      const certificateRef = ref(storage, `certificates/${certificateId}.png`); // Path to certificate in storage
+      const url = await getDownloadURL(certificateRef);
+      return url;
+    } catch (error) {
+      console.error("Error fetching certificate template:", error);
+      return null;
+    }
+  };
+
+
+  
+  const fetchQuizDataFromEnrollment = async (courseId) => {
+    try {
+      const enrollmentRef = doc(db, "Enrollments", `${userId}_${courseId}`);
+      const enrollmentSnap = await getDoc(enrollmentRef);
+  
+      if (enrollmentSnap.exists()) {
+        const enrollmentData = enrollmentSnap.data();
+        
+        // Assuming you have an array of questions in the enrollment data
+        if (Array.isArray(enrollmentData.questions)) {
+          const questionCount = enrollmentData.questions.length;
+          setNumberOfQuestions(questionCount);
+        } else {
+          setNumberOfQuestions(0); // Fallback if no questions array is present
+        }
+  
+        const quizAttempts = enrollmentData.quizAttempts || 0;
+        setAttemptsUsed(quizAttempts); // Set the attempts used
+  
+        // Fetch the quiz result if it exists
+        const resultRef = doc(db, "QuizResults", `${userId}_${courseId}`);
+        const resultSnap = await getDoc(resultRef);
+        if (resultSnap.exists()) {
+          const resultData = resultSnap.data();
+          setQuizScore(resultData.score || 0);  // Set the initial score if exists
+        }
+  
+      } else {
+        toast.error("No enrollment data found.");
+        setNumberOfQuestions(0);
+        setAttemptsUsed(0); // Default attempts to 0 if no enrollment data is found
+      }
+    } catch (error) {
+      console.error("Error fetching enrollment data:", error.message);
+      toast.error("Failed to fetch enrollment data.");
+    }
+  };
+  
+  
+   
+
+const fetchCertificateTemplate = async (certificateId) => {
+  try {
+    if (!certificateId) {
+      throw new Error("No certificate ID provided.");
+    }
+
+    const certificateRef = doc(db, "certificates", certificateId); // Assuming 'certificates' is the collection
+    const certificateSnap = await getDoc(certificateRef);
+
+    if (certificateSnap.exists()) {
+      const certificateData = certificateSnap.data();
+      return certificateData.fileUrl; // Assuming the certificate data contains a 'fileUrl' field
+    } else {
+      throw new Error("Certificate not found.");
+    }
+  } catch (error) {
+    console.error("Error fetching certificate template:", error);
+    return null;
+  }
+};
+
+
+
+const handleNextClick = () => {
+  setIsMyCoursesModalOpen(false);
+  setIsNextModalOpen(true);
+};
+const handleCloseQuizModal = () => {
+  setIsQuizModalOpen(false); // Close the quiz modal
 };
 
 
@@ -357,15 +461,7 @@ const fetchQuizData = async (courseId) => {
 
   const handleMyCoursesClick = async (course) => {
     try {
-      if (selectedCourse && selectedCourse.id === course.id) {
-        // If the same course is selected, just show the appropriate modal
-        if (passedCourses.includes(course.id)) {
-          setShowPassedQuizModal(true); // Show passed modal if the course is passed
-        } else {
-          setIsMyCoursesModalOpen(true); // Open the modal for My Courses if not passed
-        }
-        return; // Exit the function to prevent re-fetching
-      }
+      if (!course) return;
   
       const enrollmentRef = doc(db, "Enrollments", `${userId}_${course.id}`);
       const enrollmentSnapshot = await getDoc(enrollmentRef);
@@ -377,30 +473,38 @@ const fetchQuizData = async (courseId) => {
   
       const enrollmentData = enrollmentSnapshot.data();
   
-      // Set the selected course data along with the certificateId
+      // Set the selected course data
       setSelectedCourse({
         ...course,
         courseTitle: enrollmentData.courseTitle,
         courseDescription: enrollmentData.courseDescription || "No description available",
-        pdfURLs: enrollmentData.pdfURLs || [], // Ensure pdfURLs are fetched
+        pdfURLs: enrollmentData.pdfURLs || [],
         videoLink: enrollmentData.videoLink || "",
-        certificateId: enrollmentData.certificateId || null, // Fetch and set the certificateId
+        certificateId: enrollmentData.certificateId || null,
       });
   
-      // Check if the user has passed the quiz for this course
-      await checkIfQuizPassed(course.id, enrollmentData.courseTitle);
+      // Fetch the quiz result for the course
+      const quizResultRef = doc(db, "QuizResults", `${userId}_${course.id}`);
+      const quizResultSnapshot = await getDoc(quizResultRef);
   
-      // Show the appropriate modal depending on whether the course is passed
-      if (passedCourses.includes(course.id)) {
-        setShowPassedQuizModal(true); // Show passed modal if the course is passed
+      if (quizResultSnapshot.exists()) {
+        const quizResultData = quizResultSnapshot.data();
+        setQuizResult(quizResultData);  // Set the quiz result to be displayed
+  
+        // Show the result modal
+        setIsResultModalOpen(true);
       } else {
-        setIsMyCoursesModalOpen(true); // Open the modal for My Courses if not passed
+        // No quiz result, proceed with the normal course modal or flow
+        setIsMyCoursesModalOpen(true);
       }
     } catch (error) {
       console.error("Error fetching enrollment details:", error.message);
       toast.error("Failed to fetch enrollment details.");
     }
   };
+
+
+  
   
 // Function to handle the retake process
 const handleRetakeCourse = async () => {
@@ -489,45 +593,7 @@ const handleRetakeCourse = async () => {
   
   
 
-  const fetchCertificateTemplateUrl = async (certificateId) => {
-    try {
-      const certificateRef = ref(storage, `certificates/${certificateId}.png`); // Path to the certificate template in Firebase Storage
-      const url = await getDownloadURL(certificateRef);
-      return url;
-    } catch (error) {
-      console.error("Error fetching certificate template:", error);
-      return null;
-    }
-  };
-  const downloadCertificateAsPDF = () => {
-    const input = certificateRef.current; // Reference to the certificate DOM element
-    if (!input) {
-      console.error('No certificate reference available.');
-      return;
-    }
   
-    html2canvas(input, {
-      scale: 2, // Increase scale for better quality
-      useCORS: true // Enable CORS for loading external images
-    })
-      .then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-          orientation: 'landscape',
-          unit: 'px',
-          format: [canvas.width, canvas.height] // Match PDF size to the canvas
-        });
-  
-        // Add the rendered canvas as the image
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-  
-        // Save the generated PDF using the user's full name
-        pdf.save(`${fullName}_Certificate.pdf`);
-      })
-      .catch((error) => {
-        console.error('Error generating PDF:', error);
-      });
-  };
   
 
   
@@ -553,10 +619,16 @@ const handleRetakeCourse = async () => {
       return;
     }
   
+    // Check if the course is already enrolled
+    if (enrolledCourses.includes(selectedCourse.id)) {
+      toast.error("You are already enrolled in this course.");
+      setIsAvailableCoursesModalOpen(false);
+      return;
+    }
+  
     try {
       const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`); // Create a unique enrollment document based on user ID and course ID
   
-      // Make sure you are also fetching certificateId from selectedCourse
       const courseCertificateId = selectedCourse.certificateId || null; // Assuming that certificateId might exist in the selectedCourse object
   
       await setDoc(enrollmentRef, {
@@ -575,9 +647,7 @@ const handleRetakeCourse = async () => {
   
       toast.success(`You have been successfully enrolled in ${selectedCourse.courseTitle}!`);
   
-      // Move the enrolled course to the "My Courses" section
-      setMyCourses((prevMyCourses) => [...prevMyCourses, selectedCourse]); // Add to My Courses
-      setEnrolledCourses((prevEnrolledCourses) => [...prevEnrolledCourses, selectedCourse.id]); // Update the enrolledCourses state to reflect the new enrollment
+      // Do not yet add the course to `myCourses` here, we'll do this later when the quiz starts
   
       // Optional: Close the modal after enrollment and reset the state
       setIsAvailableCoursesModalOpen(false);
@@ -586,12 +656,9 @@ const handleRetakeCourse = async () => {
       console.error("Error enrolling in course:", error);
       toast.error("Failed to enroll in the course. Please try again.");
     }
-  }; 
-
-  const handleViewResult = () => {
-    // Add the logic you want to perform when the "View Result" button is clicked.
-    console.log("Viewing result details...");
   };
+  
+  
   
   
   const handleStartQuiz = async () => {
@@ -629,6 +696,8 @@ const checkIfQuizPassed = async (courseId, courseTitle) => {
 
 
 
+
+
 const handleRetakeQuiz = async () => {
   const newAttempts = attemptsUsed + 1;
   setAttemptsUsed(newAttempts); // Update state locally
@@ -650,16 +719,22 @@ const handleRetakeQuiz = async () => {
 
   
 
-  const handleAnswerSelect = (questionIndex, answer) => {
-    // Create a copy of selectedAnswers state
-    const updatedSelectedAnswers = [...selectedAnswers];
-    
-    // Update the selected answer for the current question
-    updatedSelectedAnswers[questionIndex] = answer;
-    
-    // Set the updated answers
-    setSelectedAnswers(updatedSelectedAnswers);
-  };
+const handleAnswerSelect = (questionIndex, answer) => {
+  // Create a copy of selectedAnswers state
+  const updatedSelectedAnswers = [...selectedAnswers];
+  
+  // Update the selected answer for the current question
+  updatedSelectedAnswers[questionIndex] = answer;
+  
+  // Set the updated answers
+  setSelectedAnswers(updatedSelectedAnswers);
+
+  // Check if the answer is correct and update the score
+  if (answer === quizData.questions[questionIndex].correctAnswer) {
+      setQuizScore(prevScore => prevScore + 1); // Increment the score if the answer is correct
+  }
+};
+
   
   
   
@@ -755,47 +830,43 @@ const handleRetakeQuiz = async () => {
   };
   // When the quiz is finished, display results:
   // Function to handle quiz submission
-const handleFinishQuiz = async () => {
-  setIsQuizContentModalOpen(false); // Close the quiz content modal
-  setIsResultModalOpen(true); // Open the result modal
-
-  // Process the user's selected answers and calculate score
-  console.log("User's Answers:", selectedAnswers);
-
-  // Check if the user passed the quiz
-  const passed = quizScore >= (quizData.questions.length * 0.8);
-
-  if (passed) {
+  const handleFinishQuiz = async () => {
+    setIsQuizContentModalOpen(false); // Close the quiz content modal
+    setIsResultModalOpen(true); // Open the result modal
+    
+    const passed = quizScore >= (quizData.questions.length * 0.8);
+  
     const quizResult = {
       userId,
       fullName,
       courseTitle: selectedCourse.courseTitle,
       score: quizScore,
       totalQuestions: quizData.questions.length,
-      passed: true,
+      passed,
       timestamp: new Date(),
     };
-
+  
     try {
       const resultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
       await setDoc(resultRef, quizResult); // Save to Firebase
       console.log("Quiz result saved successfully!");
       setQuizSaved(true); // Mark as saved
-      setPassedCourses((prevPassedCourses) => [...prevPassedCourses, selectedCourse.id]); // Add to passed courses
-      toast.success("Your quiz result has been saved!");
-
-      // Show the "Passed Quiz" modal
-      setIsResultModalOpen(false); // Close the result modal
-      setShowPassedQuizModal(true); // Open the passed quiz modal
-
+  
+      if (passed) {
+        setPassedCourses((prevPassedCourses) => [...prevPassedCourses, selectedCourse.id]); // Add to passed courses
+        toast.success("Congratulations! You passed the quiz.");
+      } else {
+        toast.error("You did not pass the quiz.");
+      }
     } catch (error) {
       console.error("Error saving quiz result:", error.message);
       toast.error("Failed to save quiz result.");
     }
-  } else {
-    toast.error("You did not pass the quiz.");
-  }
-};
+  };
+  
+
+  
+  
 
   
   
@@ -1021,7 +1092,7 @@ const handleFinishQuiz = async () => {
       </button>
 
       <div className="content-super">
-        <h1>Hello IT user!</h1>
+  <h1>Hello, {fullName || 'IT user'}!</h1>
 
         {selectedSection === 'courses' && (
           <>
@@ -1246,9 +1317,8 @@ const handleFinishQuiz = async () => {
               if (currentQuestion < quizData.questions.length - 1) {
                 setCurrentQuestion(currentQuestion + 1);
               } else {
-                // Finish quiz and show results
-                setIsQuizContentModalOpen(false);
-                setIsResultModalOpen(true);
+                // When all questions are answered, finish quiz
+                handleFinishQuiz();  // Call this function to process quiz results
               }
             }}
             disabled={!selectedAnswers[currentQuestion]} // Disable the next button if no answer is selected
@@ -1263,40 +1333,68 @@ const handleFinishQuiz = async () => {
 
 
 
-{isResultModalOpen && (
+
+
+
+
+{isResultModalOpen && quizResult && (
   <div className="result-modal-overlay" style={{ zIndex: 1 }}>
     <div className="result-modal">
-      <h2>{selectedCourse.courseTitle}</h2>
+      <h2>{selectedCourse?.courseTitle || "Course Title"}</h2>
       <div className="result-modal-content">
-        {quizResult?.passed ? ( // Check the passed field from quizResult
+        {/* If the quiz is passed, show the passed modal */}
+        {quizResult.passed ? (
           <>
             <img src={verifiedGif} alt="Verified Icon" className="result-icon" />
             <h3>Congratulations, you passed!</h3>
             <p>Your Score: {quizResult?.score}/{quizResult?.totalQuestions}</p>
+
+            {/* Show View Result Button */}
             <button
               className="view-result-button"
               onClick={() => {
                 setIsResultModalOpen(false);
-                setShowDetailedResults(true);
+                setShowDetailedResults(true); // Open the detailed result view
               }}
             >
               View Result
             </button>
+
+            {/* Next Page Button to show congrats modal */}
             <button
               className="next-page-button"
-              onClick={() => {
-                setIsResultModalOpen(false); 
-                setShowCongratsModal(true); 
+              onClick={async () => {
+                setIsResultModalOpen(false); // Close result modal
+                setShowCongratsModal(true);  // Show congrats modal
+                await handleNextPageAfterPass();  // Save quiz progress or move to certification
               }}
             >
               Next Page
+            </button>
+
+            {/* Show Retake Course Button */}
+            <button
+              className="retake-button"
+              onClick={handleRetakeCourse} // Assuming this function is already defined
+            >
+              Retake Course
+            </button>
+
+            {/* Close Button */}
+            <button
+              className="close-button"
+              onClick={() => setIsResultModalOpen(false)} // Close the modal
+            >
+              Close
             </button>
           </>
         ) : (
           <>
             <img src={sadGif} alt="Sad Icon" className="result-icon" />
-            <h3>Nice Try, a little more effort.</h3>
+            <h3>Nice Try, a little more effort needed.</h3>
             <p>Your Score: {quizResult?.score}/{quizResult?.totalQuestions}</p>
+
+            {/* Show View Result Button */}
             <button
               className="view-result-button"
               onClick={() => {
@@ -1306,15 +1404,17 @@ const handleFinishQuiz = async () => {
             >
               View Result
             </button>
+
+            {/* Retake Quiz Button */}
             <button
               className="retake-button"
               onClick={() => {
                 if (attemptsUsed < maxAttempts) {
                   setCurrentQuestion(0);
                   setQuizScore(0);
-                  setSelectedAnswers([]);
+                  setSelectedAnswers([]); // Reset selected answers
                   setIsResultModalOpen(false);
-                  setIsQuizContentModalOpen(true);
+                  setIsQuizContentModalOpen(true); // Reopen quiz content modal
                 } else {
                   toast.error("No more attempts left for this quiz.");
                 }
@@ -1322,6 +1422,14 @@ const handleFinishQuiz = async () => {
               disabled={attemptsUsed >= maxAttempts}
             >
               {attemptsUsed >= maxAttempts ? "No More Attempts" : "Retake Quiz"}
+            </button>
+
+            {/* Close Button */}
+            <button
+              className="close-button"
+              onClick={() => setIsResultModalOpen(false)} // Close the modal
+            >
+              Close
             </button>
           </>
         )}
@@ -1331,39 +1439,6 @@ const handleFinishQuiz = async () => {
 )}
 
 
-{isResultModalOpen && quizResult && (
-  <div className="result-modal-overlay" style={{ zIndex: 1 }}>
-    <div className="result-modal">
-      <h2>{selectedCourse.courseTitle}</h2>
-      <div className="result-modal-content">
-        <>
-          <img src={verifiedGif} alt="Verified Icon" className="result-icon" />
-          <h3>Congratulations, you completed the quiz!</h3>
-          <p>Your Score: {quizResult?.score}/{quizResult?.totalQuestions}</p>
-          
-          {/* Show View Result Button */}
-          <button
-            className="view-result-button"
-            onClick={() => {
-              setIsResultModalOpen(false);  // Close the result modal
-              setShowDetailedResults(true); // Open detailed results modal
-            }}
-          >
-            View Result
-          </button>
-          
-          {/* Show Retake Course Button */}
-          <button
-            className="retake-button"
-            onClick={handleRetakeCourse}
-          >
-            Retake Course
-          </button>
-        </>
-      </div>
-    </div>
-  </div>
-)}
 
 
 
@@ -1445,95 +1520,49 @@ const handleFinishQuiz = async () => {
   </div>
 )}
 
-{showCertificateModal && (
-  <div className="certificate-modal-overlay">
-    <div className="certificate-modal">
-      <h2>Course Completion Certificate</h2>
+ {/* Certificate Modal */}
+ {showCertificateModal && (
+        <div className="certificate-modal-overlay">
+          <div className="certificate-modal">
+            <h2>Course Completion Certificate</h2>
+            
+            {/* Certificate layout */}
+            <div className="certificate-content" ref={certificateRef}>
+              {certificateUrl ? (
+                <img
+                  src={certificateUrl}
+                  alt="Certificate Template"
+                  className="certificate-template"
+                />
+              ) : (
+                <p>Loading certificate template...</p>
+              )}
 
-      {/* Certificate layout */}
-      <div className="certificate-content" ref={certificateRef}>
-        {/* Certificate Template Image */}
-        {certificateUrl ? (
-          <img
-            src={certificateUrl}  // Use the fetched certificateUrl
-            alt="Certificate Template"
-            className="certificate-template"
-          />
-        ) : (
-          <p>Loading certificate template...</p>
-        )}
+              {/* Overlay User's Course Title */}
+              <div className="certificate-course-title">
+                {selectedCourse?.courseTitle}
+              </div>
 
-        {/* Overlay User's Course Title */}
-        <div className="certificate-course-title">
-          {selectedCourse?.courseTitle}
+              {/* Overlay User's Full Name */}
+              <div className="certificate-full-name">
+                {fullName}
+              </div>
+
+              {/* Overlay Date */}
+              <div className="certificate-date">
+                Date: {new Date().toLocaleDateString()}
+              </div>
+            </div>
+
+            <div className="certificate-actions">
+              <button onClick={downloadCertificateAsImageWithDesign}>Download as PNG</button>
+              <button onClick={() => setShowCertificateModal(false)}>Close</button>
+            </div>
+          </div>
         </div>
-
-        {/* Overlay User's Full Name */}
-        <div className="certificate-full-name">
-          {fullName}
-        </div>
-
-        {/* Overlay Date */}
-        <div className="certificate-date">
-          Date: {new Date().toLocaleDateString()}
-        </div>
-      </div>
-
-      <div className="certificate-actions">
-      <button onClick={downloadCertificateAsImageWithDesign}>Download as PNG</button>
-
-        <button onClick={() => setShowCertificateModal(false)}>Close</button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
 
-{/* Passed Quiz Modal */}
-{showPassedQuizModal && selectedCourse && passedCourses.includes(selectedCourse.id) && (
-  <div className="result-modal-overlay">
-    <div className="result-modal">
-      
-      {/* Close Button */}
-      <button 
-        className="close-button" 
-        onClick={() => setShowPassedQuizModal(false)} 
-        style={{
-          position: 'absolute',
-          top: '10px',
-          right: '10px',
-          background: 'none',
-          border: 'none',
-          fontSize: '20px',
-          cursor: 'pointer'
-        }}
-      >
-        X
-      </button>
-
-      <h2>{selectedCourse.courseTitle}</h2>
-      <div className="result-modal-content">
-        <img src={verifiedGif} alt="Verified Icon" className="result-icon" />
-        <h3>Congratulations, you passed!</h3>
-        <p>Your Score: {quizScore}</p>
-        <button
-  className="view-result-button"
-  onClick={() => {
-    setShowPassedQuizModal(false); // Close the modal
-    setShowDetailedResults(true); // Show detailed results
-    handleViewResult(); // Call the correct function if needed
-  }}
->
-  View Result
-</button>
-
-        <button className="retake-button" onClick={handleRetakeCourse}>
-          Retake Course
-        </button>
-      </div>
-    </div>
-  </div>
-)}
 
 
 

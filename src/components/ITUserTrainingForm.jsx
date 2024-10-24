@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useRef} from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from "react-bootstrap"; // Assuming you're using react-bootstrap for modal
 import { toast } from "react-toastify"; // For toast notifications
 import BPOLOGO from '../assets/bpo-logo.png'; // Ensure the path is correct
@@ -12,37 +12,25 @@ import CertDefault from '../assets/certdefault.png';
 import LogoutPick from '../assets/logoutpick.png';
 import LogoutDefault from '../assets/logoutdefault.png';
 import { useNavigate } from 'react-router-dom'; // For navigation
-import { updateDoc } from "firebase/firestore";
+import { updateDoc, doc, getDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
+import { signOut } from "firebase/auth";
 import scheduleIcon from "../assets/schedule.png";
-import { collection, onSnapshot, doc, getDoc, getDocs } from "firebase/firestore";
-import { getAuth, signOut } from "firebase/auth";
 
 import './css/ITUserTraining.css';
 
-
 // ITUserTrainingForm Component
-function ITUserTrainingForm({
-  showModal,
-  setShowModal,
-  trainingTitle,
-  setTrainingTitle,
-  trainingDescription,
-  setTrainingDescription,
-  schedule,
-  setSchedule,
-  handleSubmit
-}) {
+function ITUserTrainingForm() {
   const [trainings, setTrainings] = useState([]);
   const [selectedTraining, setSelectedTraining] = useState(null);
   const [isTrainingModalOpen, setIsTrainingModalOpen] = useState(false);
   const [prerequisiteTitle, setPrerequisiteTitle] = useState(null); // For storing the prerequisite certificate title
   const [hasPrerequisiteCertificate, setHasPrerequisiteCertificate] = useState(false); // Track if the user has the certificate
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-
+  const [fullName, setFullName] = useState(''); // Define the fullName state
   const [selectedSection, setSelectedSection] = useState('training');
   const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
-  const auth = getAuth();
+
   
 
   // Real-time updates using onSnapshot
@@ -60,6 +48,31 @@ function ITUserTrainingForm({
 
     // Clean up the listener when the component unmounts
     return () => unsubscribe();
+  }, []);
+
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const userId = auth.currentUser?.uid;
+      if (userId) {
+        try {
+          const userDocRef = doc(db, "Users", userId); // Assuming 'Users' collection contains user data
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setFullName(userData.fullName || 'Anonymous'); // Set the fullName state
+          } else {
+            console.error("No such user data found.");
+            setFullName('Anonymous');
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    fetchUserData();
   }, []);
 
   const handleLogout = () => {
@@ -270,7 +283,7 @@ function ITUserTrainingForm({
       </button>
 
       <div className="content-super">
-        <h1>Hello IT user!</h1>
+      <h1>Hello, {fullName || 'IT user'}!</h1>
 
 
  {/* Main Content */}
