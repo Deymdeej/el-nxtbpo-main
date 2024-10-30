@@ -9,7 +9,7 @@ import CourseDefault from '../assets/coursedefault.png';
 import LogoutDefault from '../assets/logoutdefault.png';
 import './css/ITAdminTraining.css';
 import './css/AdminFormSuper.css';
-
+ 
 const ITAdminTrainingDashboardForm = ({ selectedNav }) => {
   const [showAddModal, setShowAddModal] = useState(false); // For adding new training
   const [showEditModal, setShowEditModal] = useState(false); // For editing existing training
@@ -30,10 +30,10 @@ const [filteredUsers, setFilteredUsers] = useState([]);
 const [currentPage, setCurrentPage] = useState(1);
 const [totalPages, setTotalPages] = useState(0);
 const ITEMS_PER_PAGE = 5; // You can adjust this number as needed
-
-
+ 
+ 
   const navigate = useNavigate();
-
+ 
   // Fetch trainings
   const fetchTrainings = async () => {
     try {
@@ -47,7 +47,7 @@ const ITEMS_PER_PAGE = 5; // You can adjust this number as needed
       console.error("Error fetching trainings: ", error);
     }
   };
-
+ 
   // Fetch available certificates
   const fetchCertificates = async () => {
     try {
@@ -61,81 +61,81 @@ const ITEMS_PER_PAGE = 5; // You can adjust this number as needed
       console.error("Error fetching certificates: ", error);
     }
   };
-
+ 
   useEffect(() => {
     // Fetch data (certificates and trainings) once when component mounts
     const fetchData = async () => {
       await fetchCertificates();
       await fetchTrainings();
     };
-  
+ 
     fetchData(); // Initial fetch
-  
+ 
     // Filter and sort logic inside useEffect
     const filtered = getFilteredUsers(); // Apply filtering and sorting
     setFilteredUsers(filtered); // Update the state with the filtered users
-  
+ 
   }, [searchTerm, sortOrder, enrolledUsers]); // Trigger when search term, sort order, or enrolled users change
-  
+ 
   // Filtering function based on search term and sort order
-
-  
-
-
+ 
+ 
+ 
+ 
   // Convert 24-hour time to 12-hour format
   const formatTimeTo12Hour = (time) => {
     let [hours, minutes] = time.split(":");
     let period = "AM";
     hours = parseInt(hours, 10);
-
+ 
     if (hours >= 12) {
       period = "PM";
       if (hours > 12) hours -= 12;
     } else if (hours === 0) {
       hours = 12;
     }
-
+ 
     return `${hours}:${minutes} ${period}`;
   };
-
+ 
   // Handle AM/PM change
   const handleAmPmChange = (newAmPm) => {
     let [hours, minutes] = trainingTime.split(":");
     hours = parseInt(hours, 10);
-
+ 
     if (newAmPm === "PM" && hours < 12) {
       hours += 12;
     } else if (newAmPm === "AM" && hours >= 12) {
       hours -= 12;
     }
-
+ 
     setTrainingTime(`${hours.toString().padStart(2, "0")}:${minutes}`);
     setAmPm(newAmPm);
   };
-
+ 
   // Handle modal close and reset
 // Handle Add modal close - Do not reset form fields here
 const handleAddModalClose = () => {
   setShowAddModal(false); // Just close the modal
 };
-
+ 
 // Handle Edit modal close - Do not reset form fields here
 const handleEditModalClose = () => {
   setShowEditModal(false); // Just close the modal
 };
-
+ 
 // You can use resetFormFields after a successful form submission, not when closing the modal.
 const handlePageChange = (pageNumber) => {
   setCurrentPage(pageNumber);
 };
-
-
+ 
+ 
 const getPaginatedUsers = () => {
   const start = (currentPage - 1) * ITEMS_PER_PAGE;
   const end = start + ITEMS_PER_PAGE;
   return enrolledUsers.slice(start, end);
 };
-
+ 
   // Handle form reset
   const resetFormFields = () => {
     setTrainingTitle("");
@@ -146,13 +146,13 @@ const getPaginatedUsers = () => {
     setAmPm("AM");
     setErrors({});
   };;
-
-  
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
+ 
+ 
   // Form validation
   const validateForm = () => {
     let formErrors = {};
@@ -162,7 +162,7 @@ const getPaginatedUsers = () => {
     if (!trainingTime) formErrors.trainingTime = "Training time is required";
     return formErrors;
   };
-
+ 
   // Handle form submission to add new training
   const handleAddSubmit = async () => {
     const validationErrors = validateForm();
@@ -189,7 +189,7 @@ const getPaginatedUsers = () => {
       setErrors(validationErrors);
     }
   };
-
+ 
   // Handle form submission to update training
   const handleEditSubmit = async () => {
     const validationErrors = validateForm();
@@ -228,10 +228,10 @@ const getPaginatedUsers = () => {
       }
     }
   };
-
+ 
   const getFilteredUsers = () => {
     let filtered = enrolledUsers;
-  
+ 
     // Apply search filter (check Fullname and Email)
     if (searchTerm) {
       filtered = filtered.filter((user) =>
@@ -239,18 +239,18 @@ const getPaginatedUsers = () => {
         user.email.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-  
+ 
     // Apply sort order
     if (sortOrder === "newest") {
       filtered = filtered.sort((a, b) => new Date(b.enrolledDate) - new Date(a.enrolledDate));
     } else {
       filtered = filtered.sort((a, b) => new Date(a.enrolledDate) - new Date(b.enrolledDate));
     }
-  
+ 
     return filtered;
   };
-  
-
+ 
+ 
   // Handle training card click to open edit modal and fetch enrolled users
   const handleTrainingClick = async (training) => {
     resetFormFields(); // Reset before opening a new one
@@ -265,7 +265,7 @@ const getPaginatedUsers = () => {
     const users = training.enrolledUsers || [];
     setEnrolledUsers(users);
   };
-
+ 
   return (
     <div className="it-admin-training-dashboard-container">
       {/* Sidebar */}
@@ -312,11 +312,11 @@ const getPaginatedUsers = () => {
           Logout
         </div>
       </div>
-
+ 
       {/* Dashboard Content */}
       <div className="it-admin-training-dashboard-content">
         <h2 className="it-admin-training-title">Schedule Training</h2>
-
+ 
         <div className="it-admin-training-grid">
           {/* Existing Training Cards */}
           {trainings.map((training) => (
@@ -333,7 +333,7 @@ const getPaginatedUsers = () => {
               </div>
             </div>
           ))}
-
+ 
           {/* Add Training Button */}
           <div
             className="it-admin-training-add-card"
@@ -347,7 +347,7 @@ const getPaginatedUsers = () => {
           </div>
         </div>
       </div>
-
+ 
       {/* Modal for Adding Training */}
       <Modal show={showAddModal} onHide={handleAddModalClose} centered>
         <Modal.Header>
@@ -370,7 +370,7 @@ const getPaginatedUsers = () => {
                 </Form.Control.Feedback>
               )}
             </Form.Group>
-
+ 
             <Form.Group controlId="trainingDescription" className="mt-3">
               <Form.Label>Description</Form.Label>
               <Form.Control
@@ -387,7 +387,7 @@ const getPaginatedUsers = () => {
                 </Form.Control.Feedback>
               )}
             </Form.Group>
-
+ 
             <Form.Group controlId="trainingDate" className="mt-3">
               <Form.Label>Date</Form.Label>
               <Form.Control
@@ -402,7 +402,7 @@ const getPaginatedUsers = () => {
                 </Form.Control.Feedback>
               )}
             </Form.Group>
-
+ 
             <Form.Group controlId="trainingTime" className="mt-3">
               <Form.Label>Time</Form.Label>
               <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -429,7 +429,7 @@ const getPaginatedUsers = () => {
                 </Form.Control.Feedback>
               )}
             </Form.Group>
-
+ 
             {/* Prerequisite Certificate Dropdown */}
             <Form.Group controlId="prerequisiteCertificate" className="mt-3">
               <Form.Label>Prerequisite Certificate</Form.Label>
@@ -457,7 +457,7 @@ const getPaginatedUsers = () => {
           </Button>
         </Modal.Footer>
       </Modal>
-
+ 
       {/* Modal for Editing Training */}
       <Modal show={showEditModal} onHide={handleEditModalClose} centered>
         <Modal.Header>
@@ -480,7 +480,7 @@ const getPaginatedUsers = () => {
                 </Form.Control.Feedback>
               )}
             </Form.Group>
-
+ 
             <Form.Group controlId="trainingDescription" className="mt-3">
               <Form.Label>Description</Form.Label>
               <Form.Control
@@ -497,7 +497,7 @@ const getPaginatedUsers = () => {
                 </Form.Control.Feedback>
               )}
             </Form.Group>
-
+ 
             <Form.Group controlId="trainingDate" className="mt-3">
               <Form.Label>Date</Form.Label>
               <Form.Control
@@ -512,7 +512,7 @@ const getPaginatedUsers = () => {
                 </Form.Control.Feedback>
               )}
             </Form.Group>
-
+ 
             <Form.Group controlId="trainingTime" className="mt-3">
               <Form.Label>Time</Form.Label>
               <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -539,7 +539,7 @@ const getPaginatedUsers = () => {
                 </Form.Control.Feedback>
               )}
             </Form.Group>
-
+ 
             {/* Prerequisite Certificate Dropdown */}
             <Form.Group controlId="prerequisiteCertificate" className="mt-3">
               <Form.Label>Prerequisite Certificate</Form.Label>
@@ -574,7 +574,7 @@ const getPaginatedUsers = () => {
     <option value="oldest">Sort by: Oldest</option>
   </select>
 </div>
-
+ 
 <div className="it-admin-training-list it-admin-training-list-header">
   <p>Full Name</p>
   <p>Department</p>
@@ -583,7 +583,7 @@ const getPaginatedUsers = () => {
   <p>Email</p>
   <p>Attendance</p>
 </div>
-
+ 
 {enrolledUsers && enrolledUsers.length > 0 ? (
   enrolledUsers.map((user, index) => (
     <div className="it-admin-training-list it-admin-training-list-item" key={index}>
@@ -605,8 +605,8 @@ const getPaginatedUsers = () => {
 ) : (
   <p>No users enrolled yet.</p>
 )}
-
-  
+ 
+ 
    {/* Pagination */}
    <div className="it-admin-training-pagination">
         {[...Array(totalPages)].map((_, pageIndex) => (
@@ -620,10 +620,10 @@ const getPaginatedUsers = () => {
         ))}
       </div>
     </div>
-
-
-
-
+ 
+ 
+ 
+ 
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -641,5 +641,7 @@ const getPaginatedUsers = () => {
     </div>
   );
 };
-
+ 
 export default ITAdminTrainingDashboardForm;
+ 
+ 

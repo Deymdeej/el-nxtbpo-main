@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { db, storage } from "../firebase";
-import { getAuth, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, updateDoc, deleteDoc, onSnapshot, doc, getDocs } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import CustomModal from './CustomModal';
 import './css/ITAdminCoursePage.css';
 import { Button, Modal } from 'react-bootstrap';
-import Switch from "react-switch";
 
 import { auth } from "../firebase";
 import BPOLOGO from '../assets/bpo-logo.png';
@@ -16,7 +15,13 @@ import CourseDefault from '../assets/coursedefault.png';
 import LogoutDefault from '../assets/logoutdefault.png';
 import pdfIcon from '../assets/pdf.png';
 import trashIcon from '../assets/trash.png';
-import editIcon from '../assets/edit.png';
+import editIcon from '../assets/edit.svg';
+import SortIcon from '../assets/filter.svg'
+import addIcon from '../assets/add-course.svg'
+import CloseIcon from '../assets/closebtn.svg'
+import TrainingDefault from '../assets/trainingdefault.png';
+import CertDefault from '../assets/certdefault.png';
+
 
 
 const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav }) => {
@@ -29,17 +34,19 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
   const [questions, setQuestions] = useState([{ question: "", choices: ["", "", "", ""], correctAnswer: "" }]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [errors, setErrors] = useState({});
+  const [isOpen, setIsOpen] = useState(window.innerWidth > 768); // Initialize based on screen size
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isVideoLinkEnabled, setIsVideoLinkEnabled] = useState(false);
-
+  const [selectedFilter, setSelectedFilter] = useState('All'); // Default filter is 'All'
+  const [dropdownOpen, setDropdownOpen] = useState(false); // Controls the dropdown visibility
+  const [selectedSection, setSelectedSection] = useState('course');
+  
   const [certificates, setCertificates] = useState([]);
   const [selectedCertificate, setSelectedCertificate] = useState(''); // Certificate
-  const [questionErrors, setQuestionErrors] = useState([]);
-  const auth = getAuth();
 
   const handleToggleVideoLink = () => {
     setIsVideoLinkEnabled(!isVideoLinkEnabled);
@@ -57,7 +64,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
       }));
       setCourses((prevCourses) => {
         const otherCourses = prevCourses.filter((course) => course.category !== 'General');
-        return [...otherCourses, ...generalCourses];
+        return [...otherCourses, ...generalCourses];      
       });
     });
   
@@ -108,19 +115,34 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
   
     fetchCertificates();
   }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsOpen(true); // Open sidebar on larger screens
+      } else {
+        setIsOpen(false); // Close sidebar on smaller screens
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup event listener when component unmounts
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+ 
   
 
-  const handleLogout = () => {
-    signOut(auth)
-      .then(() => {
-        // Clear local storage or session
-        localStorage.removeItem('user');
-        // Redirect to login page
-        window.location.href = '/login';
-      })
-      .catch((error) => {
-        console.error('Error during logout:', error);
-      });
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   const handleOpenModal = () => {
@@ -139,7 +161,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
   
     setIsModalOpen(true);
   };
-  
   
 
   const handleCloseModal = () => {
@@ -179,8 +200,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
     }));
   };
 
-
-
   const openEditModal = (course) => {
     // Find the certificate for this specific course
     const certificate = certificates.find((cert) => cert.id === course.certificateId);
@@ -203,50 +222,27 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
   };
   
 
-  const handleDeleteFile = (fileName) => {
-    // Ask for confirmation before deleting the PDF
-    const confirmDelete = window.confirm("Are you sure you want to delete this PDF?");
-  
-    if (confirmDelete) {
-      try {
-        // Update the uploadedFiles state to remove the deleted file
-        setUploadedFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
-        window.alert("PDF deleted from the page successfully!");
-      } catch (error) {
-        console.error("Error deleting PDF from the page:", error);
-        window.alert("An error occurred while deleting the PDF from the page. Please try again.");
-      }
-    }
-  };
-  
-  const handleDeleteFileforFirebase = async (pdfUrl) => {
-    // Ask for confirmation before deleting the PDF
+  const handleDeleteFile = async (pdfUrl) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this PDF?");
     
     if (confirmDelete) {
       try {
-        // Create a reference to the file in Firebase Storage
+        // Create a reference to the file to delete
         const storageRef = ref(storage, pdfUrl);
-    
-        // Delete the file from Firebase Storage
+  
+        // Delete the file
         await deleteObject(storageRef);
         window.alert("PDF deleted successfully!");
   
-        // First, update your local state to remove the PDF URL
-        setSelectedCourse((prevCourse) => {
-          const updatedPdfURLs = prevCourse.pdfURLs.filter((url) => url !== pdfUrl);
-          
-          return {
-            ...prevCourse,
-            pdfURLs: updatedPdfURLs
-          };
-        });
+        // Update your state to remove the file locally as well (if needed)
+        setSelectedCourse((prevCourse) => ({
+          ...prevCourse,
+          pdfURLs: prevCourse.pdfURLs.filter((url) => url !== pdfUrl),
+        }));
   
-        // Determine the collection based on the course category
+        // Optionally, update Firestore if you're storing the PDF URLs in a document
         const collectionName = selectedCourse.category === "General" ? "GeneralCourses" : "ITCourses";
         const docRef = doc(db, collectionName, selectedCourse.id);
-  
-        // Update Firestore document to remove the PDF URL from the course
         await updateDoc(docRef, {
           pdfURLs: selectedCourse.pdfURLs.filter((url) => url !== pdfUrl),
         });
@@ -256,8 +252,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
         window.alert("An error occurred while deleting the PDF. Please try again.");
       }
     }
-  }; 
-    
+  };
   
 
   const handleChangeQuestion = (index, event) => {
@@ -284,73 +279,26 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
   };
 
   const handleSubmit = async () => {
-    let validationErrors = {};
-  
-    // Validate if at least one PDF is uploaded
     if (uploadedFiles.length === 0) {
-      alert("Please upload at least one PDF file.");
       setErrors({ pdfFile: "Please upload at least one PDF file." });
       return;
     }
-  
-    // Validate required fields
+
+    let validationErrors = {};
     if (!courseTitle) validationErrors.courseTitle = "Course Title is required.";
     if (!courseDescription) validationErrors.courseDescription = "Course Description is required.";
     if (!category) validationErrors.category = "Category is required.";
     if (!selectedCertificate) validationErrors.selectedCertificate = "Certificate is required.";
-  
-    // Validate quiz questions
-    let quizHasErrors = false;
-    let questionErrors = [];
-  
-    questions.forEach((question, index) => {
-      if (!question.question) {
-        questionErrors.push(`Question ${index + 1} is missing.`);
-        quizHasErrors = true;
-      }
-      question.choices.forEach((choice, cIndex) => {
-        if (!choice) {
-          questionErrors.push(`Choice ${String.fromCharCode(65 + cIndex)} for Question ${index + 1} is missing.`);
-          quizHasErrors = true;
-        }
-      });
-      if (!question.correctAnswer) {
-        questionErrors.push(`Correct answer for Question ${index + 1} is missing.`);
-        quizHasErrors = true;
-      }
-    });
-  
-    // Display error messages for empty quiz fields
-    if (quizHasErrors) {
-      let quizErrorMessage = "Please fill out the following quiz fields:\n";
-      questionErrors.forEach(error => {
-        quizErrorMessage += `- ${error}\n`;
-      });
-      alert(quizErrorMessage);
-      return; // Prevent submission if there are errors
-    }
-  
-    // If there are validation errors for other fields, display an alert and prevent submission
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      
-      let errorMessage = "Please fill out the following fields:\n";
-      if (validationErrors.courseTitle) errorMessage += "- " + validationErrors.courseTitle + "\n";
-      if (validationErrors.courseDescription) errorMessage += "- " + validationErrors.courseDescription + "\n";
-      if (validationErrors.category) errorMessage += "- " + validationErrors.category + "\n";
-      if (validationErrors.selectedCertificate) errorMessage += "- " + validationErrors.selectedCertificate + "\n";
-  
-      alert(errorMessage); // Show an alert with the missing fields
-      return;
-    }
-  
-    // Proceed to file upload and database submission if no errors
+
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
     try {
       const uploadedFileURLs = await Promise.all(
         uploadedFiles.map(async (fileData) => {
           const storageRef = ref(storage, `courses/${fileData.name}`);
           const uploadTask = uploadBytesResumable(storageRef, fileData.file);
-  
+
           return new Promise((resolve, reject) => {
             uploadTask.on(
               "state_changed",
@@ -364,7 +312,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
           });
         })
       );
-  
+
       const collectionName = category === "General" ? "GeneralCourses" : "ITCourses";
       await addDoc(collection(db, collectionName), {
         courseTitle,
@@ -377,16 +325,21 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
         certificateId: selectedCertificate,
         createdAt: new Date(),
       });
-  
+
       window.alert("Course added successfully!");
       handleCloseModal();
     } catch (error) {
       console.error("Error uploading files or adding course:", error);
-      alert("Error uploading files or adding course. Please try again.");
     }
   };
-  
-  
+
+  const handleSectionChange = (section) => {
+    setSelectedSection(section);
+  };
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
+
 
   const handleUpdateCourse = async () => {
     try {
@@ -457,6 +410,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
     setShowCourseModal(false);
     setSelectedCourse(null);
   };
+  
 
   const closeEditModal = () => {
     setShowEditModal(false);
@@ -476,469 +430,560 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
 
   const filteredCourses = courses.filter((course) => {
     const matchesTitle = course.courseTitle.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'All' || course.category === filterCategory;
+    const matchesCategory = selectedFilter === 'All' || course.category === selectedFilter;
     return matchesTitle && matchesCategory;
   });
+  
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
-  return (
-    <div className="admin-dashboard-container">
-      {/* Sidebar */}
-      <div className="sidebar">
-        <div className="header">
-          <img className="logo" alt="BPO Logo" src={BPOLOGO} />
-        </div>
-        <nav className="nav">
-          <div
-            className={`nav-item ${selectedNav === "overview" ? "active" : ""}`}
-            role="button"
-            onClick={() => navigate("/it-admin-dashboard")}
-          >
-            <img src={UserDefault} alt="User" className="nav-icon" />
-            Overview
-          </div>
-          <div
-            className={`nav-item ${selectedNav === "courses" ? "active" : ""}`}
-            role="button"
-            onClick={() => navigate("/it-admin-courses")}
-          >
-            <img src={CourseDefault} alt="Courses" className="nav-icon" />
-            Courses
-          </div>
-          <div
-            className={`nav-item ${selectedNav === "training" ? "active" : ""}`}
-            role="button"
-            onClick={() => navigate("/it-admin-training")}
-          >
-            <img src={UserDefault} alt="Training" className="nav-icon" />
-            Training
-          </div>
-          <div
-            className={`nav-item ${selectedNav === "certificate" ? "active" : ""}`}
-            role="button"
-            onClick={() => navigate("/it-admin-certificates")}
-          >
-            <img src={UserDefault} alt="Certificate" className="nav-icon" />
-            Certificate
-          </div>
-        </nav>
-        <div className="nav-logout" role="button" onClick={handleLogout}>
-          <img src={LogoutDefault} alt="Logout" className="nav-icon" />
-          Logout
-        </div>
+const toggleDropdown = (courseId) => {
+  setActiveDropdown(activeDropdown === courseId ? null : courseId);
+};
+
+const openEditdot = (course) => {
+  // Logic to open the edit modal
+  console.log("Edit course", course);
+};
+
+const confirmDelete = (courseId) => {
+  console.log("Attempting to delete course with ID:", courseId); // Debugging line
+  if (window.confirm("Are you sure you want to delete this course?")) {
+    deleteCourse(courseId);
+  }
+};
+const deleteCourse = async (courseId) => {
+  try {
+    const course = courses.find(c => c.id === courseId); // Find the course by ID
+    if (!course) throw new Error("Course not found");
+ 
+    const collectionName = course.category === "General" ? "GeneralCourses" : "ITCourses";
+    const docRef = doc(db, collectionName, courseId); // Ensure correct collection
+    await deleteDoc(docRef); // Deleting from Firestore
+ 
+    // Update state to remove the course from the list
+    setCourses(prevCourses => prevCourses.filter(course => course.id !== courseId));
+ 
+    window.alert("Course deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting course:", error);
+    window.alert("Failed to delete course. Please try again.");
+  }
+};
+const admintoggleDropdown = () => {
+  setDropdownOpen(!dropdownOpen);
+};
+
+// Handle the selection of a filter category
+const handleFilterSelect = (category) => {
+  setSelectedFilter(category); // Update the selected filter category
+  setDropdownOpen(false); // Close the dropdown after selection
+};
+
+
+return (
+  <div className="admin-super-container">
+    <nav className={`sidebar-super ${isOpen ? 'open-super' : 'closed-super'}`}>
+      <div className="logo-super">
+        <img src={BPOLOGO} alt="Company Logo" />
       </div>
+      <ul className="nav-links-super">
+        <li>
+          <button
+            onClick={() => navigate('/it-admin-dashboard')}
+            className={`nav-button-super ${selectedSection === 'overview' ? 'active-super' : ''}`}
+          >
+            <img src={UserDefault} alt="Overview" className="nav-icon-super" />
+            <span>Overview</span>
+          </button> 
+        </li>
+        <li>
+          <button
+            onClick={() => handleSectionChange('course')}
+            className={`nav-button-super ${selectedSection === 'course' ? 'active-super' : ''}`}
+          >
+            <img src={CourseDefault} alt="Course" className="nav-icon-super" />
+            <span>Course</span>
+          </button>
+        </li>
+        <li>
+          <button
+            onClick={() => navigate('/it-admin-training')}
+            className={`nav-button-super ${selectedSection === 'training' ? 'active-super' : ''}`}
+          >
+            <img src={TrainingDefault} alt="Training" className="nav-icon-super" />
+            <span>Training</span>
+          </button>
+        </li>
+        <li>
+          <button
+            onClick={() => navigate('/it-admin-certificates')}
+            className={`nav-button-super ${selectedSection === 'certificate' ? 'active-super' : ''}`}
+          >
+            <img src={CertDefault} alt="Certificate" className="nav-icon-super" />
+            <span>Certificate</span>
+          </button>
+        </li>
+      </ul>
+      <div className="logout-super">
+        <button className="nav-button-super" onClick={handleLogout}>
+          <img src={LogoutDefault} alt="Logout Icon" className="nav-icon-super" />
+          Logout
+        </button>
+      </div>
+    </nav>
 
-      {/* Main content area */}
-      <div className="container main-content">
-  <div className="row">
+    <button className="hamburger-super" onClick={toggleSidebar}>
+      ☰
+    </button>
+
+     {/* Main content area */}
+     <div className="content-super">
+     <h11>All Courses</h11>
+     {selectedSection === 'course' && (
+  <div className="main-content ">
     <div className="col-md-12">
-      <h4>All Courses</h4>
+      
 
       {/* Search Bar and Filter By Category */}
-      <div className="filter-section">
+      <div className="itadmin-search-filter-container">
+  <div className="itadmin-search-bar-wrapper">
+    <input 
+      type="text" 
+      placeholder="Search course title" 
+      value={searchQuery} 
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="itadmin-search-bar"
+    />
+      </div>
+      <div className="filter-wrapper">
+          <button onClick={admintoggleDropdown} className="filter-button-admin">
+          <span className="filter-label">Filter by: {selectedFilter}</span>
+          <img src={SortIcon} alt="Sort/Filter Icon" className="filter-icon-2" />
+          </button>
+
+          {dropdownOpen && (
+          <div className="dropdown-content">
+          <div onClick={() => handleFilterSelect('All')}>All</div>
+          <div onClick={() => handleFilterSelect('General')}>General</div>
+          <div onClick={() => handleFilterSelect('IT')}>IT</div>
+        </div>
+        )}
+    </div>
+    </div>
+      {/* Courses Grid */}
+      <div className="course-grid-horizontal">
+  {filteredCourses.length === 0 ? (
+    <p1>No courses available</p1>
+  ) : (
+    <>
+      {filteredCourses.map((course) => (
+        <div
+          key={course.id}
+          className="course-card-horizontal"
+          onClick={() => openCourseModal(course)}
+          style={{ cursor: "pointer" }}
+        >
+          <div className="course-card-header">
+            <h5 className="course-title-admin">{course.courseTitle}</h5>
+            <div className="dropdown-container">
+              <img
+                src={editIcon}
+                alt="More options"
+                className="dropdown-toggle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleDropdown(course.id);
+                }}
+              />
+              {activeDropdown === course.id && (
+                <div className="dropdown-menu">
+                  <div
+                    className="dropdown-item edit"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditModal(course);
+                    }}
+                  >
+                    Edit
+                  </div>
+                  <div
+                    className="dropdown-item delete"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevents the dropdown from closing immediately
+                      confirmDelete(course.id); // Calls the delete function with the course id
+                    }}
+                  >
+                    Delete
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <p className="course-description-admin">{course.courseDescription}</p>
+
+          <div className="category-tag-wrapper">
+            <span className="category-tag">{course.category}</span>
+          </div>
+
+          <div className="course-footer">
+            <p className="enrolled-users">
+              Enrolled Users: {enrollmentCounts[course.id] || 0}
+            </p>
+          </div>
+        </div>
+      ))}
+    </>
+  )}
+
+  {/* Add Course Button (Only when courses are available) */}
+  {filteredCourses.length > 0 && (
+    <div className="course-card-horizontal add-course-card" onClick={handleOpenModal}>
+      <div className="add-icon">
+        <img src={addIcon} alt="Add" className="add-course-icon" />
+      </div>
+      <p>Add Course</p>
+    </div>
+  )}
+</div>
+          </div>
+        </div>
+         )}
+         {/* Modal for Course Details */}
+          {selectedCourse && (
+        <Modal show={showCourseModal} onHide={closeCourseModal}>
+        <div className="modal-header-admin">
+        <h7 className="course-title-header-admin">{selectedCourse.courseTitle}</h7>
+        <button className="close-button-admin" onClick={closeCourseModal}>
+        <img src={CloseIcon} alt="Close" />
+        </button>
+      </div>
+
+    <Modal.Body className="modal-body-course">
+      {/* Description */}
+      <p className="description-text">
+        <strong>Description:</strong> {selectedCourse.courseDescription}
+      </p>
+      {/* Category */}
+      <p>
+        <strong>Category:</strong> {selectedCourse.category}
+      </p>
+      {/* Prerequisites */}
+      <p>
+        <strong>Prerequisites:</strong>{' '}
+        {selectedCourse.prerequisites && selectedCourse.prerequisites.length > 0
+          ? selectedCourse.prerequisites.map((prereqId) => {
+              const prereqCourse = courses.find((course) => course.id === prereqId);
+              return prereqCourse ? prereqCourse.courseTitle : 'Unknown';
+            }).join(', ')
+          : 'None'}
+      </p>
+      {/* Quiz Questions */}
+      {selectedCourse.questions?.length > 0 && (
+        <div className="quiz-section">
+          <h5>Quiz Questions:</h5>
+          {selectedCourse.questions.map((question, index) => (
+            <div key={index} style={{ marginBottom: '20px' }}>
+              <h6 className="quiz-question">Question {index + 1}: {question.question}</h6>
+              <div className="choices">
+                {question.choices.map((choice, choiceIndex) => (
+                  <div key={choiceIndex} className="choice-item">
+                    <strong>{String.fromCharCode(65 + choiceIndex)}:</strong> {choice}
+                  </div>
+                ))}
+              </div>
+              <p className="correct-answer"><strong>Correct Answer:</strong> {question.correctAnswer}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {/* PDF View */}
+      {selectedCourse.pdfURLs?.length > 0 && (
+        <div>
+          <h5>PDF View:</h5>
+          {selectedCourse.pdfURLs.map((pdfUrl, index) => (
+            <div key={index} style={{ marginBottom: '20px' }}>
+              <h6>PDF {index + 1}</h6>
+              <iframe
+                src={pdfUrl}
+                title={`PDF Viewer ${index + 1}`}
+                width="90%"
+                height="500px"
+                frameBorder="0"
+                style={{ border: "1px solid #ddd", borderRadius: "8px" }}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+      {/* Video Link */}
+      {selectedCourse.videoLink && (
+        <div style={{ marginTop: '20px' }}>
+          <h5>Video:</h5>
+          <div className="video-container">
+            <iframe
+              width="100%"
+              height="400"
+              src={selectedCourse.videoLink.replace("watch?v=", "embed/")}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+      {/* Certificate Display */}
+      {selectedCourse.certificateFileUrl && (
+        <div style={{ marginTop: '20px' }}>
+          <h5>Certificate:</h5>
+          <p><strong>Title:</strong> {selectedCourse.certificateTitle || "No title available"}</p>
+          {selectedCourse.certificateFileUrl.endsWith('.pdf') ? (
+            <iframe
+              src={selectedCourse.certificateFileUrl}
+              title="Certificate PDF"
+              width="90%"
+              height="500px"
+              frameBorder="0"
+              style={{ border: "1px solid #ddd", borderRadius: "8px" }}
+            />
+          ) : (
+            <img
+              src={selectedCourse.certificateFileUrl}
+              alt="Certificate Image"
+              style={{ width: "90%", height: "auto", border: "1px solid #ddd", borderRadius: "8px" }}
+            />
+          )}
+        </div>
+      )}
+    </Modal.Body>
+
+  </Modal>
+)}
+
+       {/* Modal for Editing Course */}
+{selectedCourse && (
+  <Modal show={showEditModal} onHide={closeEditModal}>
+    {/* Modal Header */}
+    <div className="modal-header-admin">
+    <h13 className="course-edit-header-admin">Edit Course</h13>
+      <button className="close-button-admin" onClick={closeEditModal}>
+        <img src={CloseIcon} alt="Close"/>
+        </button>
+    </div>  
+
+    <Modal.Body>  
+      {/* Course Form */}
+      <div className="it-admin-form-group">
+        <label>Course Title</label>
         <input
           type="text"
-          placeholder="Search course title"
-          className="search-bar"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={courseTitle}
+          onChange={(e) => setCourseTitle(e.target.value)}
+          placeholder="Enter course title"
+          className="form-control"
         />
+      </div>
+
+      <div className="it-admin-form-group">
+        <label>Course Description</label>
+        <textarea
+          value={courseDescription}
+          onChange={(e) => setCourseDescription(e.target.value)}
+          placeholder="Enter course description"
+          className="form-control"
+        />
+      </div>
+
+      <div className="it-admin-form-group">
+        <label>Category</label>
         <select
-          className="filter-select"
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="form-control"
         >
-          <option value="All">Filter By: All</option>
           <option value="General">General</option>
           <option value="IT">IT</option>
         </select>
       </div>
 
-      {/* Courses Grid */}
-      <div className="course-grid-horizontal">
-        {filteredCourses.length === 0 ? (
-          <p>No courses available</p>
-        ) : (
-          filteredCourses.map((course, index) => (
-            <div
-              key={index}
-              className="course-card-horizontal"
-              onClick={() => openCourseModal(course)}
-              style={{ cursor: "pointer" }}
-            >
-              <div className="course-card-header">
-                <h5 className="course-title">{course.courseTitle}</h5>
-              </div>
-              <img
-                src={editIcon}
-                alt="Edit"
-                className="edit-icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openEditModal(course);
-                }}
+      {/* Video Link Section for Editing */}
+      <div className="it-admin-form-group">
+        <label>Video Link</label>
+        <input
+          type="text"
+          value={videoLink}
+          onChange={(e) => setVideoLink(e.target.value)}
+          placeholder="Enter YouTube video link"
+          className="form-control"
+        />
+      </div>
+
+      {/* Existing PDF Files */}
+      {selectedCourse.pdfURLs?.length > 0 && (
+        <div>
+          <h5>Existing PDF Files:</h5>
+          {selectedCourse.pdfURLs.map((pdfUrl, index) => (
+            <div key={index} style={{ marginBottom: '20px' }}>
+              <h6>PDF {index + 1}</h6>
+              <iframe
+                src={pdfUrl}
+                title={`PDF Viewer ${index + 1}`}
+                width="90%"
+                height="300px"
+                frameBorder="0"
+                style={{ border: "1px solid #ddd", borderRadius: "8px" }}
               />
-              <p className="course-description">{course.courseDescription}</p>
-              <span className="category-tag">{course.category}</span>
-              <div className="course-footer">
-                <p>Enrolled Users: {enrollmentCounts[course.id] || 0}</p>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => handleDeleteFile(pdfUrl)}
+              >
+                Delete PDF
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Upload new PDF files */}
+      <div className="it-admin-form-group">
+        <h4>Upload Files</h4>
+        <div className="upload-section">
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={handleFileChange}
+            id="pdfUpload"
+            className="file-input"
+            multiple
+          />
+          <label htmlFor="pdfUpload" className="upload-label">
+            Select files....
+          </label>
+        </div>
+
+        <div className="uploaded-files">
+          {uploadedFiles.map((file, index) => (
+            <div key={index} className="file-info">
+              <img src={pdfIcon} alt="PDF Icon" className="file-type-icon" />
+              <div className="file-details">
+                <span className="file-name">{file.name}</span>
+                <span className="file-size">{(file.size / 1024).toFixed(2)} KB</span>
+                <button className="delete-file-btn" onClick={() => handleDeleteFile(file.name)}>
+                  <img src={trashIcon} alt="Delete" className="trash-icon" />
+                </button>
               </div>
             </div>
-          ))
-        )}
-
-        {/* Add Course Button (Always Visible) */}
-        <div className="course-card-horizontal add-course-card" onClick={handleOpenModal}>
-          <div className="add-icon">+</div>
-          <p>Add Course</p>
+          ))}
         </div>
+      </div>
+
+      {/* Certificate Edit Section */}
+      <div className="it-admin-form-group">
+        <label>Certificate</label>
+        <select
+          value={selectedCertificate}
+          onChange={(e) => setSelectedCertificate(e.target.value)}
+          className="form-control"
+        >
+          <option value="">Select a Certificate</option>
+          {certificates.map((certificate) => (
+            <option key={certificate.id} value={certificate.id}>
+              {certificate.title}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Edit Quiz Questions */}
+      <div className="it-admin-form-group">
+        <h4>Edit Quiz Questions</h4>
+        {selectedCourse.questions.map((question, index) => (
+          <div key={index}>
+            <label>Question {index + 1}:</label>
+            <input
+              type="text"
+              name="question"
+              value={question.question}
+              onChange={(e) => handleChangeQuestion(index, e)}
+              placeholder="Enter question"
+              className="form-control mb-2"
+            />
+
+            <h5>Choices</h5>
+            {question.choices.map((choice, cIndex) => (
+              <div key={cIndex}>
+                <label>{String.fromCharCode(65 + cIndex)}:</label>
+                <input
+                  type="text"
+                  value={choice}
+                  onChange={(e) => handleChangeChoice(index, cIndex, e)}
+                  placeholder={`Choice ${cIndex + 1}`}
+                  className="form-control mb-1"
+                />
               </div>
-            
+            ))}
+
+            <label>Correct Answer</label>
+            <select
+              name="correctAnswer"
+              value={question.correctAnswer}
+              onChange={(e) => handleCorrectAnswerChange(index, e)}
+              className="form-control mb-3"
+            >
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+            </select>
           </div>
-        </div>
+        ))}
+      </div>
+    </Modal.Body>
 
-        {/* Modal for Course Details */}
-        {selectedCourse && (
-          <Modal show={showCourseModal} onHide={closeCourseModal}>
-            <Modal.Body>
-              <p><strong>Description:</strong> {selectedCourse.courseDescription}</p>
-              <p><strong>Category:</strong> {selectedCourse.category}</p>
-              <p><strong>Prerequisites:</strong> 
-                {selectedCourse.prerequisites && selectedCourse.prerequisites.length > 0 ? (
-                  selectedCourse.prerequisites
-                    .map(prereqId => {
-                      const prereqCourse = courses.find(course => course.id === prereqId);
-                      return prereqCourse ? prereqCourse.courseTitle : "Unknown";
-                    })
-                    .join(', ')
-                ) : "None"}
-              </p>
-
-              {/* Quiz Questions */}
-              {selectedCourse.questions?.length > 0 && (
-                <div>
-                  <h5>Quiz Questions:</h5>
-                  {selectedCourse.questions.map((question, index) => (
-                    <div key={index} style={{ marginBottom: '20px' }}>
-                      <h6>Question {index + 1}: {question.question}</h6>
-                      <div>
-                        {question.choices.map((choice, choiceIndex) => (
-                          <div key={choiceIndex}>
-                            <strong>{String.fromCharCode(65 + choiceIndex)}:</strong> {choice}
-                          </div>
-                        ))}
-                      </div>
-                      <p><strong>Correct Answer:</strong> {question.correctAnswer}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* PDF View */}
-              {selectedCourse.pdfURLs?.length > 0 && (
-                <div>
-                  <h5>PDF View:</h5>
-                  {selectedCourse.pdfURLs.map((pdfUrl, index) => (
-                    <div key={index} style={{ marginBottom: '20px' }}>
-                      <h6>PDF {index + 1}</h6>
-                      <iframe
-                        src={pdfUrl}
-                        title={`PDF Viewer ${index + 1}`}
-                        width="90%"
-                        height="500px"
-                        frameBorder="0"
-                        style={{ border: "1px solid #ddd", borderRadius: "8px" }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Display the YouTube video if the video link is available */}
-              {selectedCourse.videoLink && (
-                <div style={{ marginTop: '20px' }}>
-                  <h5>Video:</h5>
-                  <div className="video-container">
-                    <iframe
-                      width="100%"
-                      height="400"
-                      src={selectedCourse.videoLink.replace("watch?v=", "embed/")}
-                      title="YouTube video player"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Display certificate */}
-            
-{/* Display certificate */}
-{selectedCourse.certificateFileUrl && (
-  <div style={{ marginTop: '20px' }}>
-    <h5>Certificate:</h5>
-    <p><strong>Title:</strong> {selectedCourse.certificateTitle || "No title available"}</p>
-
-    {/* If the certificate is a PDF */}
-    {selectedCourse.certificateFileUrl.endsWith('.pdf') ? (
-      <iframe
-        src={selectedCourse.certificateFileUrl}
-        title="Certificate PDF"
-        width="90%"
-        height="500px"
-        frameBorder="0"
-        style={{ border: "1px solid #ddd", borderRadius: "8px" }}
-      />
-    ) : (
-      // If the certificate is an image
-      <img
-        src={selectedCourse.certificateFileUrl}
-        alt="Certificate Image"
-        style={{ width: "90%", height: "auto", border: "1px solid #ddd", borderRadius: "8px" }}
-      />
-    )}
-  </div>
+    <Modal.Footer className="custom-modal-footer">
+  <Button className="update-course update-course-primary" onClick={handleUpdateCourse}>Update</Button>
+</Modal.Footer>
+  </Modal>
 )}
-
-
-
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={closeCourseModal}>Close</Button>
-            </Modal.Footer>
-          </Modal>
-        )}
-
-        {/* Modal for Editing Course */}
-        {selectedCourse && (
-          <Modal show={showEditModal} onHide={closeEditModal}>
-            <Modal.Body>
-              <div className="form-group">
-                <label>Course Title</label>
-                <input
-                  type="text"
-                  value={courseTitle}
-                  onChange={(e) => setCourseTitle(e.target.value)}
-                  placeholder="Enter course title"
-                  className="form-control"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Course Description</label>
-                <textarea
-                  value={courseDescription}
-                  onChange={(e) => setCourseDescription(e.target.value)}
-                  placeholder="Enter course description"
-                  className="form-control"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="form-control"
-                >
-                  <option value="General">General</option>
-                  <option value="IT">IT</option>
-                </select>
-              </div>
-
-              {/* Video Link Section for Editing */}
-              <div className="form-group">
-                <label>Video Link</label>
-                <input
-                  type="text"
-                  value={videoLink}
-                  onChange={(e) => setVideoLink(e.target.value)}
-                  placeholder="Enter YouTube video link"
-                  className="form-control"
-                />
-              </div>
-
-              {/* Existing PDF Files */}
-              {selectedCourse.pdfURLs?.length > 0 && (
-                <div>
-                  <h5>Existing PDF Files:</h5>
-                  {selectedCourse.pdfURLs.map((pdfUrl, index) => (
-                    <div key={index} style={{ marginBottom: '20px' }}>
-                      <h6>PDF {index + 1}</h6>
-                      <iframe
-                        src={pdfUrl}
-                        title={`PDF Viewer ${index + 1}`}
-                        width="90%"
-                        height="300px"
-                        frameBorder="0"
-                        style={{ border: "1px solid #ddd", borderRadius: "8px" }}
-                      />
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDeleteFile(pdfUrl)}
-                      >
-                        Delete PDF
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Upload new PDF files */}
-              <div className="form-group">
-                <h4>Upload New PDF Files</h4>
-                <div className="upload-section">
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    onChange={handleFileChange}
-                    id="pdfUpload"
-                    className="file-input"
-                    multiple
-                  />
-                  <label htmlFor="pdfUpload" className="upload-label">
-                    Select your PDF files or drag and drop
-                  </label>
-                </div>
-
-                <div className="uploaded-files">
-                  {uploadedFiles.map((file, index) => (
-                    <div key={index} className="file-info">
-                      <img src={pdfIcon} alt="PDF Icon" className="file-type-icon" />
-                      <div className="file-details">
-                        <span className="file-name">{file.name}</span>
-                        <span className="file-size">{(file.size / 1024).toFixed(2)} KB</span>
-                        <button className="delete-file-btn" onClick={() => handleDeleteFile(file.name)}>
-                          <img src={trashIcon} alt="Delete" className="trash-icon" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Certificate Edit Section */}
-  {/* Certificate Dropdown */}
-{/* Certificate Dropdown */}
-<div className="form-group">
-  <label>Certificate</label>
-  <select
-    value={selectedCertificate} // This should now reflect the selected certificate's ID
-    onChange={(e) => setSelectedCertificate(e.target.value)} // Update the selected certificate
-    className="form-control"
-  >
-    <option value="">Select a Certificate</option>
-    {certificates.map((certificate) => (
-      <option key={certificate.id} value={certificate.id}>
-        {certificate.title}
-      </option>
-    ))}
-  </select>
-</div>
-
-
-
-
-
-              {/* Edit Quiz Questions */}
-              <div className="form-group">
-                <h4>Edit Quiz Questions</h4>
-                {selectedCourse.questions.map((question, index) => (
-                  <div key={index}>
-                    {/* Display and Edit Question */}
-                    <label>Question {index + 1}:</label>
-                    <input
-                      type="text"
-                      name="question"
-                      value={question.question}
-                      onChange={(e) => handleChangeQuestion(index, e)}
-                      placeholder="Enter question"
-                      className="form-control mb-2"
-                    />
-
-                    {/* Display and Edit Choices */}
-                    <h5>Choices</h5>
-                    {question.choices.map((choice, cIndex) => (
-                      <div key={cIndex}>
-                        <label>{String.fromCharCode(65 + cIndex)}:</label>
-                        <input
-                          type="text"
-                          value={choice}
-                          onChange={(e) => handleChangeChoice(index, cIndex, e)}
-                          placeholder={`Choice ${cIndex + 1}`}
-                          className="form-control mb-1"
-                        />
-                      </div>
-                    ))}
-
-                    {/* Display and Edit Correct Answer */}
-                    <label>Correct Answer</label>
-<select
-  name="correctAnswer"
-  value={question.correctAnswer}  // Make sure this is initialized as an empty string ""
-  onChange={(e) => handleCorrectAnswerChange(index, e)}
-  className={`form-control mb-3 ${errors.questions ? 'is-invalid' : ''}`} // Adding error class if needed
->
-  <option value="">Select Correct Answer</option>  {/* Default placeholder option */}
-  <option value="A">A</option>
-  <option value="B">B</option>
-  <option value="C">C</option>
-  <option value="D">D</option>
-</select>
-{questionErrors[index] && <div className="invalid-feedback">{questionErrors[index]}</div>}  {/* Displaying validation error */}
-
-                  </div>
-                ))}
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="danger" onClick={() => handleDeleteCourse(selectedCourse.id)}>Delete</Button>
-              <Button variant="primary" onClick={handleUpdateCourse}>Update</Button>
-              <Button variant="secondary" onClick={closeEditModal}>Close</Button>
-            </Modal.Footer>
-          </Modal>
-        )}
-
         {/* Modal for Adding New Course */}
         {isModalOpen && (
           <CustomModal isModalOpen={isModalOpen} handleClose={handleCloseModal} handleSubmit={handleSubmit} title="Add New Course">
-            <div className="form-group">
-              <label>Category</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className={`form-control ${errors.category ? 'is-invalid' : ''}`}
+            <div className="it-admin-form-group">
+             <label>Category</label>
+            <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+              className={`form-control ${errors.category ? 'is-invalid' : ''}`}
               >
-                <option value="">Select Category</option>
+              <option value="">Select Category</option>
                 <option value="General">General</option>
-                <option value="IT">IT</option>
-              </select>
-            </div>
-
-            <div className="form-group">
+              <option value="IT">IT</option>
+            </select>
+              </div>
+              <div className="it-admin-form-group">
               <label>Course Title</label>
-              <input
-                type="text"
-                value={courseTitle}
-                onChange={(e) => setCourseTitle(e.target.value)}
-                placeholder="Enter course title"
-                className={`form-control ${errors.courseTitle ? 'is-invalid' : ''}`}
-              />
-            </div>
+                <input
+              type="text"
+              value={courseTitle}
+              onChange={(e) => setCourseTitle(e.target.value)}
+              placeholder="Enter course title"
+              className={`form-control ${errors.courseTitle ? 'is-invalid' : ''}`}
+                     />
+              </div>
 
-            <div className="form-group">
-              <label>Course Description</label>
-              <textarea
+              <div className="it-admin-form-group">
+                  <label>Course Description</label>
+                  <textarea
                 value={courseDescription}
                 onChange={(e) => setCourseDescription(e.target.value)}
                 placeholder="Enter course description"
                 className={`form-control ${errors.courseDescription ? 'is-invalid' : ''}`}
-              />
-            </div>
+                />
+                </div>
 
             {/* Certificate Dropdown */}
-            <div className="form-group">
+            <div className="it-admin-form-group">
               <label>Certificate</label>
               <select
                 value={selectedCertificate}
@@ -955,58 +1000,68 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
             </div>
 
             <div className="upload-container">
-              <h4>Upload PDF</h4>
-              <div className="upload-section">
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handleFileChange}
-                  id="pdfUpload"
-                  className="file-input"
-                  multiple
-                />
-                <label htmlFor="pdfUpload" className="upload-label">
-                  Select your PDF files or drag and drop
-                </label>
-              </div>
+  <h4>Upload Files</h4>
+  <div className="upload-section">
+    <input
+      type="file"
+      accept="application/pdf"
+      onChange={handleFileChange}
+      id="pdfUpload"
+      className="file-input"
+      multiple
+    />
+    <label htmlFor="pdfUpload" className="upload-label">
+      Drop files here to upload, or click here to browse
+    </label>
+  </div>
 
-              <div className="uploaded-files">
-                {uploadedFiles.map((file, index) => (
-                  <div key={index} className="file-info">
-                    <img src={pdfIcon} alt="PDF Icon" className="file-type-icon" />
-                    <div className="file-details">
-                      <span className="file-name">{file.name}</span>
-                      <div className="file-metadata">
-                        <span className="file-size">{(file.size / 1024).toFixed(2)} KB</span>
-                        <span className="dot-separator">•</span>
-                        <span className="status">
-                          <i className="status-icon">✔️</i> Ready
-                        </span>
-                      </div>
-                    </div>
-                    <button className="delete-file-btn" onClick={() => handleDeleteFile(file.name)}>
-                      <img src={trashIcon} alt="Delete" className="trash-icon" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
+  {/* Uploaded files table structure */}
+  <div className="uploaded-files-section">
+    <h4>Files ready to upload</h4>
+    <table className="files-table">
+      <thead>
+        <tr>
+          <th>File name</th>
+          <th>File size</th> {/* New column for file size */}
+          <th></th> {/* Empty column for delete icon */}
+        </tr>
+      </thead>
+      <tbody>
+        {uploadedFiles.map((file, index) => (
+          <tr key={index} className="file-row">
+            <td>{file.name}</td>
+            <td>{(file.size / 1024).toFixed(2)} KB</td> {/* Display file size in KB */}
+            <td>
+              <button className="delete-file-pdf" onClick={() => handleDeleteFile(file.name)}>
+                <img src={trashIcon} alt="Delete" className="delete-icon" />
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
 
             {/* Video Link Input */}
             <div>
-              <div className="form-group">
-                <label>
-                  <Switch
-                    onChange={handleToggleVideoLink}
-                    checked={isVideoLinkEnabled}
-                    className="react-switch"
-                  />
-                  {" "} Add Video Link
-                </label>
-              </div>
-
+            <div className="it-admin-form-group-switch">
+            <div className="switch-container">
+                        <input
+                        type="checkbox"
+                        id="toggle-switch"
+                        className="switch-input"
+                          checked={isVideoLinkEnabled}
+                        onChange={handleToggleVideoLink}
+                          />
+                        <label htmlFor="toggle-switch" className="switch-label">
+                        <span className="switch-button"></span>
+                        </label>
+                        <span className="switch-text">Add Video Link</span>
+                        </div>
+            </div>
               {isVideoLinkEnabled && (
-                <div className="form-group">
+                <div className="it-admin-form-group">
                   <label>Video Link</label>
                   <input
                     type="text"
@@ -1019,12 +1074,12 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
               )}
             </div>
 
-            <div className="form-group">
-              <label>Prerequisite Course</label>
+            <div className="it-admin-form-group">
+              <label22>Prerequisite Course</label22>
               <select
                 value={prerequisites.length > 0 ? prerequisites[0] : ""}
                 onChange={(e) => setPrerequisites(e.target.value ? [e.target.value] : [])}
-                className="form-control"
+                className="form-control-prerequisite"
               >
                 <option value="">Choose your course</option>
                 {courses.map((course) => (
@@ -1035,59 +1090,65 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
               </select>
             </div>
 
-            <div className="form-group">
-              <h4>Quiz Questions</h4>
-              {questions.map((question, index) => (
-                <div key={index} className="mb-4">
-                  <input
-                    type="text"
-                    name="question"
-                    value={question.question}
-                    onChange={(e) => handleChangeQuestion(index, e)}
-                    placeholder="Enter question"
-                    className="form-control mb-2"
+            <div className="quiz-section">
+            <h4>Add Quiz Questions</h4>
+            {questions.map((question, index) => (
+            <div key={index} className="quiz-question">
+            <div className="question-number">Question {index + 1}</div>
+            <input
+          type="text"
+          name="question"
+          value={question.question}
+          onChange={(e) => handleChangeQuestion(index, e)}
+          placeholder="Enter question"
+          className="form-control-addquestions"
                   />
                   <h5>Choices</h5>
-                  <div className="row">
-                    {question.choices.map((choice, cIndex) => (
-                      <div className="col-6" key={cIndex}>
-                        <label>{String.fromCharCode(65 + cIndex)}. </label>
-                        <input
-                          type="text"
-                          value={choice}
-                          onChange={(e) => handleChangeChoice(index, cIndex, e)}
-                          placeholder={`Choice ${cIndex + 1}`}
-                          className="form-control mb-1"
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  <label>Correct Answer</label>
-                  <select
-                    name="correctAnswer"
-                    value={question.correctAnswer}
-                    onChange={(e) => handleCorrectAnswerChange(index, e)}
-                    className="form-control mb-3"
-                  >
-                    <option value=""></option>
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                    <option value="D">D</option>
-                  </select>
-                </div>
-              ))}
-              <Button variant="secondary" onClick={handleAddQuestion} className="mt-2">
-                Add another question
-              </Button>
+        <div className="choices">
+          {question.choices.map((choice, cIndex) => (
+            <div key={cIndex} className="choice">
+              <label>{String.fromCharCode(65 + cIndex)}.</label>
+              <input
+                type="text"
+                value={choice}
+                onChange={(e) => handleChangeChoice(index, cIndex, e)}
+                placeholder={`Choice ${cIndex + 1}`}
+                className="form-control-choices"
+              />
             </div>
+                    ))}
 
+                   </div>
+                   <label24>Correct Answer</label24>
+<select
+  name="correctAnswer"
+  value={question.correctAnswer || ''} // Ensure it defaults to an empty value if no answer is selected
+  onChange={(e) => handleCorrectAnswerChange(index, e)}
+  className="form-control-correctanswers"
+>
+  <option value="" disabled>Select Correct Answer</option> {/* Blank option */}
+  <option value="A">A</option>
+  <option value="B">B</option>
+  <option value="C">C</option>
+  <option value="D">D</option>
+</select>
+</div>
+))}
+    <Button variant="secondary" onClick={handleAddQuestion} className="addquestion-button">
+  Add another question
+    </Button>
+      </div>
           </CustomModal>
         )}
       </div>
-    </div>
-  );
+
+
+    
+
+
+    
+  </div>
+);
 };
 
 export default ITAdminCoursePage;

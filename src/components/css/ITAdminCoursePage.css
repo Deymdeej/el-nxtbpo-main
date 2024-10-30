@@ -1,1134 +1,1257 @@
 /* Sidebar Styling */
-.sidebar {
-    background-color: #f8f9fa; /* Original sidebar background */
-    padding: 20px;
-    width: 250px; /* Adjust width */
-    height: 100vh;
-    position: fixed;
-    transition: width 0.3s ease; /* Smooth transition for sidebar */
+.admin-sidebar {
+  background-color: #f8f9fa; /* Original sidebar background */
+  padding: 20px;
+  width: 250px; /* Adjust width */
+  height: 100vh;
+  position: fixed;
+  transition: width 0.3s ease; /* Smooth transition for sidebar */
 }
-
-.sidebar .nav-item {
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+ 
+.admin-sidebar .nav-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
 }
-
-.sidebar .nav-item:hover {
-    background-color: #90EE90; /* Light green color on hover */
-    color: white; /* Optional: text color change on hover */
+ 
+.admin-sidebar .nav-item:hover {
+  background-color: #90EE90; /* Light green color on hover */
+  color: white; /* Optional: text color change on hover */
 }
-
+ 
 /* Header and logo styling */
 .header {
-    margin-bottom: 40px;
+  margin-bottom: 40px;
 }
-
+ 
 .logo {
-    width: 150px;
-    height: auto;
+  width: 150px;
+  height: auto;
 }
-
+ 
 .nav-item.active {
-    background-color: #007bff;
-    color: white;
+  background-color: #007bff;
+  color: white;
 }
-
+ 
 .nav-logout {
-    margin-top: auto;
-    padding: 15px;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
+  margin-top: auto;
+  padding: 15px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
-
+ 
 .nav-logout:hover {
-    background-color: #90EE90;
-    color: white;
+  background-color: #90EE90;
+  color: white;
 }
-
+ 
 /* Main content styling */
-.main-content {
-    margin-left: 270px; /* Adjust margin-left to account for sidebar */
-    padding: 20px;
-    transition: margin-left 0.3s ease;
+.it-admin-main-content {
+  margin-left: 270px; /* Adjust margin-left to account for sidebar */
+  padding: 20px;
+  transition: margin-left 0.3s ease;
 }
-
+ 
 h4 {
-    color: #333;
-    font-weight: 600;
+  color: #333;
+  font-weight: 600;
+  font-size: 18px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
-
+h5 {
+  color: #333;
+  font-weight: 600;
+  font-size: 18px;
+  margin-top: 15px;
+  margin-bottom: 5px;
+}
+ 
 /* Course card styling */
-
-
-.search-bar {
-    padding: 8px;
-    font-size: 14px;
-    width: 250px;
-    margin-right: 10px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    margin-bottom: 50px;
-    margin-top: 20px;
+ 
+ 
+.itadmin-search-filter-container {
+display: flex;
+align-items: center;
 }
-
-.filter-select {
-    padding: 8px;
-    font-size: 14px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+ 
+.itadmin-search-bar-wrapper {
+position: relative;
+display: flex;
+align-items: center;
+margin-right: 20px;
+ 
 }
-
+ 
+.itadmin-search-bar {
+padding: 10px 40px 10px 20px;
+border: 1px solid #ccc;
+border-radius: 6px;
+font-size: 14px;
+width: 300px; /* Adjust width as needed */
+outline: none;
+margin-top: 30px;
+}
+ 
+.itadmin-search-bar::placeholder {
+color: #a0a0a0;
+font-size: 14px;
+}
+ 
+.filter-wrapper {
+position: relative;
+margin-top: 20px;
+right: 10px;
+}
+ 
+.filter-button-admin {
+padding: 10px 15px;
+background-color: white;
+border: 1px solid #ccc;
+border-radius: 6px;
+cursor: pointer;
+display: flex;
+align-items: center;
+}
+ 
+.filter-label {
+font-size: 14px;
+color: #a0a0a0;
+margin-right: 5px;
+}
+ 
+.filter-icon-2 {
+width: 16px;
+height: 16px;
+}
+ 
+.dropdown-content {
+position: absolute;
+top: 40px;
+left: 0;
+background-color: white;
+border: 1px solid #ccc;
+border-radius: 6px;
+padding: 10px;
+box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+z-index: 1000;
+}
+ 
+.dropdown-content div {
+padding: 8px;
+cursor: pointer;
+font-size: 14px;
+color: #333;
+}
+ 
+.dropdown-content div:hover {
+background-color: #f0f0f0;
+}
+ 
 .nav-icon {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
 }
-
+ 
 .nav-item {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
-
+ 
 /* Sidebar Styling */
 .sidebar {
-    background-color: #f8f9fa; /* Original sidebar background */
-    padding: 20px;
-    width: 200px;
-    height: 100vh;
-    position: fixed;
+  background-color: #f8f9fa; /* Original sidebar background */
+  padding: 20px;
+  width: 200px;
+  height: 100vh;
+  position: fixed;
 }
-
+ 
 .sidebar .nav-item {
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
 }
-
+ 
 .sidebar .nav-item:hover {
-    background-color: #90EE90; /* Light green color on hover */
-    color: white; /* Optional: text color change on hover */
+  background-color: #90EE90; /* Light green color on hover */
+  color: white; /* Optional: text color change on hover */
 }
-
+ 
 .sidebar .nav-item .icon-container {
-    margin-right: 10px;
+  margin-right: 10px;
 }
-
+ 
 .sidebar .nav-logout {
-    margin-top: auto;
-    padding: 15px;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+  margin-top: auto;
+  padding: 15px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
 }
-
+ 
 .sidebar .nav-logout:hover {
-    background-color: #90EE90; /* Light green color on hover */
-    color: white; /* Optional: text color change on hover */
+  background-color: #90EE90; /* Light green color on hover */
+  color: white; /* Optional: text color change on hover */
 }
-
+ 
 .header {
-    margin-bottom: 40px;
+  margin-bottom: 40px;
 }
-
+ 
 .logo {
-    width: 150px;
-    height: auto;
+  width: 150px;
+  height: auto;
 }
-
+ 
 .nav {
-    width: 100%;
+  width: 100%;
 }
-
+ 
 .nav-item {
-    display: flex;
-    align-items: center;
-    padding: 15px 20px;
-    width: 100%;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
-
+ 
 .nav-item:hover {
-    background-color: #f0f0f0;
+  background-color: #f0f0f0;
 }
-
+ 
 .nav-item.active {
-    background-color: #d3e0ff;
+  background-color: #d3e0ff;
 }
-
+ 
 .nav-item .icon-container {
-    margin-right: 15px;
+  margin-right: 15px;
 }
-
+ 
 .icon-container img {
-    width: 25px;
-    height:
-    25px;
+  width: 25px;
+  height:
+  25px;
 }
-
+ 
 .nav-logout {
-    margin-top: auto;
-    padding: 15px 20px;
-    width: 100%;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+  margin-top: auto;
+  padding: 15px 20px;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
-
+ 
 .nav-logout:hover {
-    background-color: #f8d7da;
+  background-color: #f8d7da;
 }
-
+ 
 .nav-logout.active {
-    background-color: #f5c6cb;
+  background-color: #f5c6cb;
 }
-
+ 
 .main-content {
-    margin-left: 240px;
-    padding: 20px;
+  margin-left: 240px;
+  padding: 20px;
 }
-
-/* Handle text styling */
-h4 {
-    color: #333;
-    font-weight: 600;
-}
-
+ 
 .add-course-box {
-    background-color: #4CAF50;
-    color: white;
-    padding: 20px;
-    text-align: center;
-    border-radius: 8px;
-    cursor: pointer;
+  background-color: #4CAF50;
+  color: white;
+  padding: 20px;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
 }
-
+ 
 .add-course-box:hover {
-    background-color: #45a049;
+  background-color: #45a049;
 }
-
+ 
 .course-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
 }
-
+ 
 .course-card {
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    width: calc(50% - 20px);
-    transition: box-shadow 0.3s ease;
-    cursor: pointer;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  width: calc(50% - 20px);
+  transition: box-shadow 0.3s ease;
+  cursor: pointer;
 }
-
+ 
 .course-card:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-
+ 
 .course-icon {
-    font-size: 30px;
+  font-size: 30px;
 }
-
+ 
 .course-title {
-    font-size: 18px;
-    font-weight: 600;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 5px;
 }
-
-.course-description {
-    font-size: 14px;
-    color: #666;
-}
-
+ 
 .course-enrollments {
-    margin-top: 10px;
-    font-size: 12px;
-    color: #888;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #888;
 }
-
+ 
 /* General Styling for Course Cards */
 .course-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
 }
-
-.course-card {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 15px;
-    width: 100%;
-    max-width: 250px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
+ 
 .course-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
 }
-
+ 
 .course-title {
-    font-size: 18px;
-    font-weight: bold;
-    white-space: nowrap; /* Prevent text from wrapping */
-    overflow: hidden; /* Hide overflow content */
-    text-overflow: ellipsis; /* Add ellipsis for overflowed text */
-} 
-
-
-.course-description {
-    font-size: 14px;
-    color: #555;
-    white-space: nowrap; /* Prevent text from wrapping */
-    overflow: hidden; /* Hide overflow content */
-    text-overflow: ellipsis; /* Add ellipsis for overflowed text */
+  font-size: 18px;
+  font-weight: bold;
+  white-space: nowrap; /* Prevent text from wrapping */
+  overflow: hidden; /* Hide overflow content */
+  text-overflow: ellipsis; /* Add ellipsis for overflowed text */
 }
-
-/* Adjusting the width of the course card */
-.course-card-horizontal {
-    width: calc(50% - 20px); /* Adjust width as needed */
-    max-width: 300px; /* Set a maximum width */
+ 
+.course-description-admin {
+text-align: justify;
+display: -webkit-box;
+-webkit-line-clamp: 5; /* Limit to 4 lines */
+-webkit-box-orient: vertical;
+overflow: hidden;
+text-overflow: ellipsis;
+word-break: break-word;
+margin-bottom: 35px;
+font-size: 14px;
 }
-
-.course-description {
-    font-size: 0.9em;
-    color: #333;
-    margin-bottom: 15px;
-}
-
+ 
 .category-badge {
-    background-color: #28a745;
-    color: white;
-    font-size: 0.8em;
-    border-radius: 12px;
-    padding: 5px 10px;
-    display: inline-block;
-    margin-top: 10px;
+  background-color: #28a745;
+  color: white;
+  font-size: 0.8em;
+  border-radius: 12px;
+  padding: 5px 10px;
+  display: inline-block;
+  margin-top: 10px;
 }
-
+ 
 .category-badge.it {
-    background-color: #007bff;
+  background-color: #007bff;
 }
-
+ 
 .category-badge.hr {
-    background-color: #ffc107;
+  background-color: #ffc107;
 }
-
+ 
 .category-badge.all {
-    background-color: #6c757d;
+  background-color: #6c757d;
 }
-
+ 
 .admin-dashboard-container {
-    display: flex;
-    background-color: #efefef;
-    min-height: 100vh; /* Ensures the background covers the entire viewport */
-
+  display: flex;
+  background-color: #efefef;
+  min-height: 100vh; /* Ensures the background covers the entire viewport */
+ 
 }
-
+ 
 .sidebar {
-    width: 250px;
-    background-color: #f8f9fa;
+  width: 250px;
+  background-color: #f8f9fa;
 }
-
+ 
 .header {
-    padding: 20px;
+  padding: 20px;
 }
-
+ 
 .nav {
-    padding: 20px;
+  padding: 20px;
 }
-
+ 
 .nav-item {
-    padding: 10px;
-    cursor: pointer;
+  padding: 10px;
+  cursor: pointer;
 }
-
+ 
 .nav-item.active {
-    background-color: #007bff;
-    color: white;
+  background-color: #007bff;
+  color: white;
 }
-
+ 
 .nav-logout {
-    padding: 10px;
-    cursor: pointer;
-    color: red;
+  padding: 10px;
+  cursor: pointer;
+  color: red;
 }
-
+ 
 /* Main content area */
 .main-content {
-    padding: 20px;
-    flex-grow: 1;
-    display: flex; /* Use flexbox for alignment */
-    flex-direction: column; /* Stack items vertically */
-    align-items: flex-start; /* Align items to the top left */
-    margin-left: 0; /* Remove left margin to fit content */
-    margin-top: 0; /* Remove top margin to fit content */
+  padding: 20px;
+  flex-grow: 1;
+  display: flex; /* Use flexbox for alignment */
+  flex-direction: column; /* Stack items vertically */
+  align-items: flex-start; /* Align items to the top left */
+  margin-left: 0; /* Remove left margin to fit content */
+  margin-top: 0; /* Remove top margin to fit content */
 }
-
+ 
 /* Course grid adjustments */
 .course-grid-horizontal {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: flex-start; /* Align items to the start */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: flex-start; /* Align items to the start */
+  margin-top: 30px;
 }
-
-
+ 
+ 
 /* CSS for the course grid layout */
 .course-grid-horizontal {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
 }
-
+ 
 .course-card-horizontal {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 16px;
-    width: 200px; /* Adjust width as needed */
-    text-align: left;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    background-color: #fff;
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 20px;
+  width: 100%; /* Adjust width as needed */
+  max-width: 300px;
+  text-align: left;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  background-color: #fff;
 }
-
+ 
 .course-card-horizontal:hover {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
-
+ 
 .add-course-card {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 2px dashed #ccc;
-    border-radius: 4px;
-    padding: 16px;
-    width: 200px;
-    text-align: center;
-    background-color: #f9f9f9;
-    cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed #ccc;
+  border-radius: 4px;
+  padding: 16px;
+  width: 200px;
+  text-align: center;
+  background-color: #f9f9f9;
+  cursor: pointer;
 }
-
+ 
 .add-course-card:hover {
-    background-color: #e6e6e6;
+  background-color: #e6e6e6;
 }
-
+ 
 .course-title {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
-
-.course-description {
-    font-size: 14px;
-    margin-bottom: 8px;
-}
-
+ 
 .category-tag {
-    display: block;
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 8px;
+background-color: green;
+color: white;
+padding: 6px 10px;
+border-radius: 5px;
+width: fit-content; /* Keeps the width of the category box tight around the text */
+font-size: 14px; /* Adjust font size to your preference */
+font-weight: bold;
 }
-
+.category-tag-wrapper {
+position: absolute;
+bottom: 60px; /* This will fix the position from the bottom */
+left: 20px;   /* Adjust the distance from the left as needed */
+margin-bottom: 10px;
+}
+ 
 .course-footer {
-    font-size: 14px;
-    color: #333;
+  font-size: 14px;
+  color: #333;
+  margin-top: 10px;
+ 
 }
-
+ 
 .add-icon {
-    font-size: 24px;
-    color: #666;
+  font-size: 24px;
+  color: #666;
+  margin-bottom: 10px;
 }
-
+.add-course-icon{
+width: 30px;
+height: 30px;
+}
+ 
 .add-course-card p {
-    font-size: 14px;
-    color: #666;
+  font-size: 14px;
+  color: #666;
 }
-
+ 
 /* Modal Overlay Styling */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Background overlay effect */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Dark semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  overflow-y: auto;
 }
-
-/* Modal Content Styling */
 .modal-container {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    max-width: 700px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: white; /* Ensures the background of the modal is not transparent */
+  border-radius: 8px;
+  padding: 30px;
+  width: 95%;
+  max-width: 950px;
+  max-height: 98vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Adds a shadow for better visibility */
 }
-
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 30px;
+  width: 95%;
+  max-width: 950px;
+  max-height: 95vh;
+  height: 100%;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+.col-md-12 h10{
+font-size: 20px;
+font-weight: bold;
+}
+.course-grid-horizontal p1{
+font-size: 18px;
+ 
+}
 /* Modal Buttons */
 .button-group {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
 }
-
+ 
 .cancel-button {
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
 }
-
+ 
 .save-button {
-    background-color: #4CAF50;
-    border: 1px solid #45a049;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
+  background-color: #4CAF50;
+  border: 1px solid #45a049;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
 }
-
-/* Scrollable Modal Content */
-.modal-content {
-    max-height: 80vh;
-    overflow-y: auto;
+ 
+/* label category for adding courses */
+.label5 {
+font-size: 12px;
+font-weight: 400;
+ 
 }
-
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0, 0, 0, 0.6);
+display: flex;
+justify-content: center;
+align-items: center;
+z-index: 1000;
+overflow-y: auto;
 }
-
-.modal-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 600px;
-    width: 100%;
-    position: relative;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
+ 
 h2 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: bold;
+  margin: 15px;
+  font-size: 24px;
+  font-weight: bold;
 }
-
-.close-button {
-    font-size: 24px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #888;
+ 
+/* Close button in the top-right corner */
+.close-button-admin {
+  margin-bottom: 80px;
+  left: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
 }
-
-.modal-body {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.course-edit-header-admin{
+  margin: 0;
+  margin-top: 60px;
+  font-size: 24px;
+  font-weight: bold;
 }
-
-.form-group {
-    display: flex;
-    flex-direction: column;
+ 
+.close-button-admin:hover {
+color: red;
 }
-
+ 
+.close-button-admin img {
+width: 32px;
+height: 32px;
+ 
+}
+.it-admin-form-group {
+  display: flex;
+  flex-direction: column;
+}
+.it-admin-form-group{
+  margin-top: 10px;
+  position: relative;
+  margin-bottom: 10px;
+  top: 10px
+}
+.it-admin-form-group label22 {
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: 500;
+}
+ 
 .form-control {
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    font-size: 14px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  position: relative;
+  top: 10px;
+  margin-bottom: 10px;
 }
-
+ 
 .file-upload-container {
-    border: 2px dashed #ccc;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    background-color: #f9f9f9;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  background-color: #f9f9f9;
 }
-
+ 
+ 
 .file-upload-container:hover {
-    background-color: #f1f1f1;
+  background-color: #f1f1f1;
 }
-
+ 
 .file-upload-instruction {
-    font-size: 14px;
-    color: #888;
+  font-size: 14px;
+  color: #888;
 }
-
+ 
 .browse-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    margin-top: 10px;
-    border-radius: 5px;
-    cursor: pointer;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  margin-top: 10px;
+  border-radius: 5px;
+  cursor: pointer;
 }
-
+ 
+/* Modal Buttons */
 .button-group {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 20px;
 }
-
+ 
 .cancel-button {
-    background-color: #f8d7da;
-    color: #721c24;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
-
+ 
 .save-button {
-    background-color: #28a745;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  background-color: #28a745;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
-
-.close-button {
-    background-color: transparent;
-    border: none;
-    font-size: 20px;
-    font-weight: bold;
-    color: #333;
-    cursor: pointer;
-}
-
-.close-button:hover {
-    color: red;
-}
-
-/* Modal Body */
+ 
+/* Scrollable Modal Body */
 .modal-body {
-    padding: 20px 0;
-    font-size: 16px;
+  max-height: 530px; /* Adjust as needed */
+  overflow-y: auto; /* Enables vertical scroll */
+  padding-right: 15px;
+  padding-left: 15px;
+  padding-bottom: 15px;
 }
-
-/* Modal Footer */
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+ 
+/* Add smooth scrollbar if needed */
+.modal-body::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
 }
-
+ 
+.category, .prerequisites {
+  margin-bottom: 15px; /* Add space between description, category, and prerequisites */
+}
+.description{
+  width: 90%; /* Control the width of the description */
+  word-wrap: break-word; /* Ensure long words break into the next line */
+  text-align: justify; /* Justify the text for proper alignment */
+  margin-right: 10px; /* Add spacing on the right side */
+  margin-top: 10px; /* Space from the top */
+  margin-bottom: 20px; /* Add margin at the bottom to separate from the next content */
+  line-height: 1.5; /* Control line height for better readability */
+}
+.limited-text {
+  margin-bottom: 20px; /* Ensure the description text has spacing below it */
+}
 /* Buttons */
 .btn {
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    border: none;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+padding: 10px 20px;
+font-size: 16px;
+background-color: #f8d7da;
+color: #721c24;
+border: none;
+border-radius: 5px;
+cursor: pointer;
 }
-
+ 
+.addquestion-button{
+color: #86D293;
+ 
+}
 /* Close Button */
 .btn-secondary {
-    background-color: #f8d7da;
-    color: #721c24;
+  background-color: #f8d7da;
+  color: #fb610f;
 }
-
+ 
 .btn-secondary:hover {
-    background-color: #f5c6cb;
+  background-color: #f5c6cb;
 }
-
+ 
 /* Submit Button */
 .btn-primary {
-    background-color: #4CAF50;
-    color: white;
+  background-color: #4CAF50;
+  color: white;
 }
-
+ 
 .btn-primary:hover {
-    background-color: #45a049;
+  background-color: #45a049;
 }
-
+ 
 /* Hover Effects for All Buttons */
 .btn:hover {
-    transform: scale(1.05);
-    opacity: 0.9;
+  transform: scale(1.05);
+  opacity: 0.9;
 }
-
+ 
 .upload-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
-  }
-  
-  h4 {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-  }
-  
-  .upload-area {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-top: 20px;
-  }
-  
-  /* Adjusting the upload section size and alignment */
-  .upload-section {
-    border: 2px dashed #d3c1f4;
-    border-radius: 10px;
-    padding: 40px;
-    text-align: center;
-    background-color: #f9f7ff;
-    width: 60%; /* Adjust the size of the upload box */
-    position: relative;
-  }
-  
-  .upload-section input[type="file"] {
-    opacity: 0;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    cursor: pointer;
-  }
-  
-  .upload-section .upload-label {
-    font-size: 16px;
-    color: #6e6e6e;
-    margin: 0;
-  }
-  
-  .upload-section .upload-icon {
-    font-size: 30px;
-    color: #8e72ff;
-    margin-bottom: 10px;
-  }
-  
-  .upload-section .browse-btn {
-    background-color: #4a90e2;
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 15px;
-  }
-  
-  .upload-section .browse-btn:hover {
-    background-color: #357abd;
-  }
-  
-  /* Uploaded files list */
-  .uploaded-files {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .file-info {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 15px 20px; /* Adjust padding */
-    margin-bottom: 10px;
-    background-color: #fff;
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow */
-    width: 100%;
-  }
-  
-  .file-type-icon {
-    width: 24px; /* PDF icon size */
-    height: 24px;
-    margin-right: 15px;
-  }
-  
-  .file-details {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex-grow: 1;
-  }
-  
-  .file-name {
-    font-size: 16px;
-    font-weight: 500;
-    color: #000;
-    margin-bottom: 4px;
-  }
-  
-  .file-metadata {
-    display: flex;
-    align-items: center;
-    font-size: 13px; /* Smaller text for metadata */
-    color: #6e6e6e;
-  }
-  
-  .file-size {
-    color: #999;
-  }
-  
-  .dot-separator {
-    margin: 0 5px;
-    color: #ccc;
-  }
-  
-  .status {
-    display: flex;
-    align-items: center;
-    color: #28a745;
-  }
-  
-  .status-icon {
-    margin-right: 5px;
-  }
-  
-  .delete-file-btn {
-    background-color: transparent;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-  }
-  
-  .trash-icon {
-    width: 18px; /* Trash icon size */
-    height: 18px;
-  }
-  
-  .delete-file-btn:hover .trash-icon {
-    filter: brightness(0.8); /* Hover effect */
-  }
-  
-  
-  
-  .file-info {
-    transition: opacity 0.3s ease-in-out;
-  }
-  
-  .file-info.removing {
-    opacity: 0;
-  }
-  
-
-  /* Toggle Switch */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 25px;
-  }
-  
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.4s;
-    border-radius: 25px;
-  }
-  
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 19px;
-    width: 19px;
-    border-radius: 50%;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: 0.4s;
-  }
-  
-  input:checked + .slider {
-    background-color: #2196F3;
-  }
-  
-  input:checked + .slider:before {
-    transform: translateX(25px);
-  }
-  
-
-  /* Toggle Switch */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 25px;
-  }
-  
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.4s;
-    border-radius: 25px;
-  }
-  
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 19px;
-    width: 19px;
-    border-radius: 50%;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: 0.4s;
-  }
-  
-  input:checked + .slider {
-    background-color: #2196F3;
-  }
-  
-  input:checked + .slider:before {
-    transform: translateX(25px);
-  }
-  
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+ 
+.col-md-12 h7 {
+  font-size: 25px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+ 
+.upload-area {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 20px;
+}
+ 
+ 
+/* Adjusting the upload section size and alignment */
+.upload-section {
+  border: 2px dashed #d3c1f4;
+  border-radius: 10px;
+  padding: 40px;
+  text-align: center;
+  background-color: #f9f7ff;
+  width: 60%; /* Adjust the size of the upload box */
+  position: relative;
+  margin-left: 180px;
+  margin-top: 20px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+.files-table th, .files-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+/* Add margin bottom to the table header */
+.files-table th {
+padding-bottom: 10px; /* Adjust the value as needed */
+}
+/* Optionally, you can add margin to the entire table for better spacing */
+.files-table {
+margin-bottom: 20px; /* Adds space below the entire table */
+ 
+}
+.uploaded-files-section {
+  margin-top: 20px;
+}
+ 
+.upload-section .upload-label {
+  font-size: 16px;
+  color: #6e6e6e;
+  margin: 0;
+}
+ 
+.upload-section .upload-icon {
+  font-size: 30px;
+  color: #8e72ff;
+  margin-bottom: 10px;
+}
+ 
+.upload-section .browse-btn {
+  background-color: #4a90e2;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+ 
+.upload-section .browse-btn:hover {
+  background-color: #357abd;
+}
+ 
+/* Uploaded files list */
+.uploaded-files {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.delete-file-pdf{
+  width: 24px;
+  height: 24px;
+}
+ 
+.file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px; /* Adjust padding */
+  margin-bottom: 10px;
+  background-color: #fff;
+  border-radius: 10px; /* Rounded corners */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow */
+  width: 100%;
+}
+ 
+.file-type-icon {
+  width: 24px; /* PDF icon size */
+  height: 24px;
+  margin-right: 15px;
+}
+ 
+.file-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+}
+ 
+.file-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 4px;
+}
+ 
+.file-metadata {
+  display: flex;
+  align-items: center;
+  font-size: 13px; /* Smaller text for metadata */
+  color: #6e6e6e;
+}
+ 
+.file-size {
+  color: #999;
+}
+ 
+.dot-separator {
+  margin: 0 5px;
+  color: #ccc;
+}
+ 
+.status {
+  display: flex;
+  align-items: center;
+  color: #28a745;
+}
+ 
+.status-icon {
+  margin-right: 5px;
+}
+ 
+.delete-file-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+ 
+.trash-icon {
+  width: 18px; /* Trash icon size */
+  height: 18px;
+}
+ 
+.delete-file-btn:hover .trash-icon {
+  filter: brightness(0.8); /* Hover effect */
+}
+ 
+.file-info {
+  transition: opacity 0.3s ease-in-out;
+}
+ 
+.file-info.removing {
+  opacity: 0;
+}
+ 
 /* for the click on data */
 /* Modal overlay background */
 .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Dark semi-transparent background */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-  
-  /* Modal content box */
-  .modal-content {
-    background-color: white;
-    padding: 30px;
-    border-radius: 10px;
-    width: 85%; /* Make modal width larger */
-    max-width: 1200px; /* Set a maximum width */
-    max-height: 90vh; /* Ensure modal doesn't take up too much vertical space */
-    overflow-y: auto; /* Scroll if content exceeds modal height */
-  }
-  
-  /* Modal header */
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .modal-header h5 {
-    font-size: 24px; /* Larger title font */
-    font-weight: bold;
-  }
-  
-  /* Modal body */
-  .modal-body {
-    font-size: 16px; /* Increase text size for better readability */
-    line-height: 1.5;
-    margin-bottom: 20px;
-  }
-  
-  /* Modal footer */
-  .modal-footer {
-    display: flex;
-    justify-content: flex-end;
-  }
-  
-  .btn {
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #f8d7da;
-    color: #721c24;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .btn:hover {
-    background-color: #f5c6cb;
-  }
-  
-  
-
-  
-
-  .course-card-horizontal {
-    position: relative;
-    padding: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    background-color: white;
-    overflow: hidden; /* Hide overflow content */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Dark semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
-  .edit-icon {
-    position: absolute;
-    top: 10px;    /* Adjust to position the icon from the top */
-    right: 10px;  /* Adjust to position the icon from the right */
-    width: 24px;  /* Smaller size for the icon */
-    height: 24px; /* Smaller size for the icon */
-    cursor: pointer;
-  }
-  
-  .course-title {
-    font-size: 18px;
-    font-weight: bold;
-  }
-  
-  .course-description {
-    font-size: 14px;
-    color: #555;
-  }
-  
-  .category-tag {
-    font-size: 12px;
-    color: #888;
-  }
-  
-  .course-footer {
-    margin-top: 10px;
-    font-size: 12px;
-    color: #333;
-  }
-
-  
-  .video-container {
-    position: relative;
-    width: 100%;
-    padding-bottom: 56.25%; /* 16:9 aspect ratio */
-    height: 0;
-    overflow: hidden;
-    border-radius: 10px;
+/* Modal Header Styling */
+.modal-header-admin {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 15px;
 }
-
+ 
+.course-title-header-admin {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 60px;
+}
+ 
+.btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+ 
+.btn:hover {
+  background-color: #f5c6cb;
+}
+ 
+.edit-icon {
+  position: absolute;
+  top: 10px;    /* Adjust to position the icon from the top */
+  right: 10px;  /* Adjust to position the icon from the right */
+  width: 24px;  /* Smaller size for the icon */
+  height: 24px; /* Smaller size for the icon */
+  cursor: pointer;
+}
+ 
+.course-title-admin{
+  margin-bottom: 5px;
+  font-size: 18px;
+  font-weight: bold;
+}
+ 
+.course-footer {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #333;
+}
+.video-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  border-radius: 10px;
+}
+ 
 .video-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-} 
-
-
-.main-content {
-    margin-left: 0x; /* Adjusted margin-left to fit the new sidebar width */
-    padding: 20px;
-    transition: margin-left 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
 }
-
-
+ 
+ 
+.main-content {
+  margin-left: 0x; /* Adjusted margin-left to fit the new sidebar width */
+  padding: 20px;
+  transition: margin-left 0.3s ease;
+}
+ 
+ 
 .admin-dashboard-container {
-    display: flex; /* Ensure that the sidebar and main content are aligned properly */
-  }
-  
-  .sidebar {
-    width: 250px; /* Set a fixed width for the sidebar */
-    flex-shrink: 0; /* Prevent the sidebar from shrinking */
-  }
-  
-  .main-content {
-    flex-grow: 1; /* Allow the main content to grow and take available space */
-    margin-left: 20px; /* Add a margin to separate the main content from the sidebar */
-    padding: 20px;
-  }
-  
-  .course-grid-horizontal {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start; /* Ensure that the cards align correctly */
-    gap: 20px; /* Space between cards */
-  }
-  
-  .course-card-horizontal {
-    flex: 0 1 calc(25% - 20px); /* Adjust the width of each card */
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    background-color: white;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    cursor: pointer;
-    
-  }
-  
-  .course-card-horizontal:hover {
-    transform: translateY(-5px); /* Hover effect */
-  }
-  
-  .add-course-card {
-    flex: 0 1 calc(25% - 20px); /* Same size as other cards */
-    border: 2px dashed #ccc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 150px;
-    cursor: pointer;
-    transition: border 0.2s ease;
-  }
-  
-  .add-course-card:hover {
-    border-color: #888; /* Hover effect for add course */
-  }
-  
+  display: flex; /* Ensure that the sidebar and main content are aligned properly */
+}
+ 
+.admin-sidebar {
+  width: 250px; /* Set a fixed width for the sidebar */
+  flex-shrink: 0; /* Prevent the sidebar from shrinking */
+}
+ 
+.main-content {
+  flex-grow: 1; /* Allow the main content to grow and take available space */
+  margin-left: 20px; /* Add a margin to separate the main content from the sidebar */
+  padding: 20px;
+}
+ 
+.course-grid-horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start; /* Ensure that the cards align correctly */
+  gap: 20px; /* Space between cards */
+}
+ 
+.course-card-horizontal {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: white;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  width: 257px;
+  height: 357px;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+ 
+}
+ 
+.course-card-horizontal:hover {
+  transform: translateY(-5px); /* Hover effect */
+}
+ 
+.add-course-card {
+  border: 2px dashed #ccc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 257px;
+  height: 357px;
+  cursor: pointer;
+  transition: border 0.2s ease;
+}
+ 
+.add-course-card:hover {
+  border-color: #888; /* Hover effect for add course */
+}
+.course-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 15px;
+  padding-bottom: 5px;
+  position: relative;
+}
+ 
+.dropdown-container {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 1;
+ 
+}
+ 
+.dropdown-toggle {
+  width: 15px; /* Ensure the icon stays at a reasonable size */
+  height: 15px;
+  cursor: pointer;
+  object-fit: contain;  
+}
+ 
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 100px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+ 
+.dropdown-item {
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+ 
+.dropdown-item.edit:hover {
+  background-color: #28a745; /* Green hover for Edit */
+  color: white;
+}
+ 
+.dropdown-item.delete:hover {
+  background-color: #dc3545; /* Red hover for Delete */
+  color: white;
+}
+/* Add spacing between Description, Category, and Prerequisites */
+.modal-body p {
+margin-bottom: 10px; /* Adjust this value to control spacing */
+}
+ 
+.modal-body strong {
+display: block; /* Ensure labels like Description, Category, and Prerequisites are on separate lines */
+margin-bottom: 5px; /* Add spacing after each label */
+}
+ 
+/* Extra spacing specifically between major sections */
+.modal-body h5 {
+margin-top: 20px; /* Add spacing above Quiz Questions, PDF View, etc. */
+}
+ 
+/* Optional: Ensure consistent line height for better readability */
+.modal-body {
+line-height: 1.5;
+}
+/* Apply justification to the description text */
+.modal-body .description-text {
+text-align: justify;
+font-size: 16px;
+margin-bottom: 15px; /* Add margin for spacing */
+line-height: 1.4; /* Adjust line-height for readability */
+word-break: break-word; /* Breaks words to prevent overflow */
+}
+/* Style for the Quiz Questions header */
+.quiz-section h5 {
+color: black;
+font-weight: bold;
+}
+ 
+/* Add margin between each choice */
+.choices .choice-item {
+margin-bottom: 10px; /* Adjust for more or less space between choices */
+}
+ 
+/* Add margin and styling for Correct Answer */
+.correct-answer {
+margin-top: 15px;
+font-weight: bold;
+color: black;
+}
+.quiz-question {
+font-weight: bold;
+margin-bottom: 15px; /* Adds space between the question and choices */
+}
+/* Modal Footer Styling */
+.custom-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 5px;
+  border-top: 2px solid #ddd;
+  margin-top: 15px;
+}
+.update-course-primary{
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+ 
+}
+.update-course {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 5px;
+}
+ 
+.update-course:hover {
+background-color: #0056b3; /* Darker blue on hover */
+}
+ 
+.close-course {
+background-color: #f8d7da; /* Light red background for Close */
+color: #721c24; /* Dark red text */
+border: none;
+padding: 10px 20px;
+font-size: 14px;
+font-weight: bold;
+border-radius: 5px;
+cursor: pointer;
+}
+ 
+.close-course:hover {
+background-color: #f5c6cb; /* Slight hover effect */
+}
+.enrolled-users {
+font-size: 13px;
+font-weight: bold; /* Makes "Enrolled Users" bold */
+display: inline-block; /* Aligns next to category */
+margin-bottom: 10px; /* Adds spacing from the bottom */
+}

@@ -69,15 +69,36 @@
   z-index: 100; /* Ensure it is above the content */
 }
 
-/* Main content area (where "HEAD ADMIN" is located) */
 .content-super {
-  margin-left: 250px;
+  margin-left: 250px; /* Leaves space for a sidebar */
   padding: 20px;
-  width: 100%;
+  width: calc(100vw - 250px); /* Ensures the content takes up the full width of the viewport minus the sidebar */
   background-color: #EFEFEF; /* Light gray background for content area */
   min-height: 100vh; /* Ensures the full height of the content area is covered */
+  box-sizing: border-box; /* Ensures padding is included within the width/height */
+  overflow-x: hidden; /* Prevents horizontal scroll */
   transition: margin-left 0.3s ease-in-out;
 }
+
+.content-super h11 {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.content-super p {
+  font-size: 16px;
+  margin-bottom: 10px;
+  margin-top: 5px;
+}
+
+@media screen and (max-width: 768px) {
+  .content-super {
+    margin-left: 0; /* Removes margin on smaller screens */
+    width: 100vw; /* Full width on smaller screens */
+  }
+}
+
+
 
 /* When sidebar is closed */
 .sidebar-super:not(.open-super) {

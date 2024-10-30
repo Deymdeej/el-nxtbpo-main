@@ -154,7 +154,8 @@ function ITUserTrainingForm() {
     }
 
     setIsTrainingModalOpen(true); // Open the modal for enrolling in the training
-  };
+};
+
 
   const handleModalClose = () => {
     setIsTrainingModalOpen(false);
@@ -165,15 +166,16 @@ function ITUserTrainingForm() {
   const handleEnrollTraining = async () => {
     if (selectedTraining) {
       try {
+        // Reference to the specific training document in Firestore
         const trainingDocRef = doc(db, "trainings", selectedTraining.id);
         const trainingDocSnap = await getDoc(trainingDocRef);
   
         if (trainingDocSnap.exists()) {
-          const currentData = trainingDocSnap.data();
-          const currentUserId = auth.currentUser?.uid;
+          const currentData = trainingDocSnap.data(); // Get current training data
+          const currentUserId = auth.currentUser?.uid; // Get the current user's ID
   
-          // Fetch user details from the 'users' collection
-          const userDocRef = doc(db, "Users", currentUserId); // Assuming you have a 'users' collection
+          // Fetch user details from the 'Users' collection in Firestore
+          const userDocRef = doc(db, "Users", currentUserId);
           const userDocSnap = await getDoc(userDocRef);
   
           if (!userDocSnap.exists()) {
@@ -181,43 +183,50 @@ function ITUserTrainingForm() {
             return;
           }
   
-          const userData = userDocSnap.data();
-          const userFullName = userData.fullName || "Anonymous"; // Handle case where full name is missing
-          const userDepartment = userData.department || "Unknown"; // Handle case where department is missing
-          const userEmail = userData.email || "No Email"; // Handle case where email is missing
-          const enrollmentDate = new Date().toISOString(); // Get current date
+          const userData = userDocSnap.data(); // Get the user's data
+          const userFullName = userData.fullName || "Anonymous"; // Handle missing full name
+          const userDepartment = userData.department || "Unknown"; // Handle missing department
+          const userEmail = userData.email || "No Email"; // Handle missing email
+          const enrollmentDate = new Date().toISOString(); // Get current date in ISO format
   
-          if (!hasPrerequisiteCertificate) {
+          // Ensure the user has the prerequisite certificate, if applicable
+          if (!hasPrerequisiteCertificate && selectedTraining.prerequisiteCertificate) {
             toast.error("You do not have the required prerequisite certificate.");
             return;
           }
   
-          // Check if the user is already enrolled
+          // Check if the user is already enrolled in the training
           if (currentData.enrolledUsers && currentData.enrolledUsers.some(user => user.userId === currentUserId)) {
             toast.warn("You have already enrolled in this training.");
             setIsTrainingModalOpen(false); // Close the modal
             return;
           }
   
-          // Create the enrollment object
+          // Create the enrollment object with all required details
           const newEnrollment = {
             userId: currentUserId,
             fullName: userFullName,
             department: userDepartment,
             email: userEmail,
-            enrolledDate: enrollmentDate
+            enrolledDate: enrollmentDate,
+            category: selectedTraining.category || "General", // Get category from training or default to "General"
+            attendance: "absent", // Default attendance status to 'absent'
+            prerequisiteCertificate: selectedTraining.prerequisiteCertificate || null // Store prerequisite certificate if any
           };
   
-          // Add the user to the list of enrolled users
+          // Add the new enrollment to the list of enrolled users
           const updatedEnrolledUsers = currentData.enrolledUsers
             ? [...currentData.enrolledUsers, newEnrollment]
             : [newEnrollment];
   
+          // Update the Firestore document with the new list of enrolled users
           await updateDoc(trainingDocRef, { enrolledUsers: updatedEnrolledUsers });
   
-          // Show success modal after successful enrollment
+          // Show the success modal after the enrollment is saved successfully
           setIsTrainingModalOpen(false);
           setIsSuccessModalOpen(true);
+        } else {
+          toast.error("Training data not found.");
         }
       } catch (error) {
         console.error("Error enrolling in training: ", error);
@@ -225,6 +234,9 @@ function ITUserTrainingForm() {
       }
     }
   };
+  
+
+
   const handleSuccessModalClose = () => {
     setIsSuccessModalOpen(false);
   };
@@ -294,22 +306,26 @@ function ITUserTrainingForm() {
         <div className="IT-User-training-schedule-section">
           <h3>Schedule Training</h3>
           <div className="IT-User-training-cards-container">
-            {trainings.length > 0 ? (
-              trainings.map((training) => (
-                <div key={training.id} className="IT-User-training-card">
-                  <div className="IT-User-training-title">{training.trainingTitle}</div>
-                  <div className="IT-User-training-datetime">
-                    <span>{new Date(training.trainingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                    <span>{convertTo12Hour(training.trainingTime)}</span>
-                  </div>
-                  <button className={`IT-User-training-enroll-btn ${training.enrolledUsers?.length > 0 ? 'IT-User-training-enrolled' : 'IT-User-training-enroll-now'}`} onClick={() => handleEnrollNowClick(training)}>
-                    {training.enrolledUsers?.length > 0 ? 'Enrolled' : 'Enroll Now!'}
-                  </button>
-                </div>
-              ))
-            ) : (
-              <p>No trainings available</p>
-            )}
+          {trainings.length > 0 ? (
+  trainings.map((training) => (
+    <div key={training.id} className="IT-User-training-card">
+      <div className="IT-User-training-title">{training.trainingTitle}</div>
+      <div className="IT-User-training-datetime">
+        <span>{new Date(training.trainingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+        <span>{convertTo12Hour(training.trainingTime)}</span>
+      </div>
+      <button 
+        className={`IT-User-training-enroll-btn ${training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'IT-User-training-enrolled' : 'IT-User-training-enroll-now'}`} 
+        onClick={() => handleEnrollNowClick(training)}
+      >
+        {training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'Enrolled' : 'Enroll Now!'}
+      </button>
+    </div>
+  ))
+) : (
+  <p>No trainings available</p>
+)}
+
           </div>
         </div>
       </div>
@@ -345,22 +361,21 @@ function ITUserTrainingForm() {
         </div>
       )}
 
-      {/* Success Modal after enrollment */}
-      {isSuccessModalOpen && (
-        <div className="IT-user-training-success-modal">
-          <div className="IT-user-training-success-modal-content">
-            <div className="IT-user-training-success-modal-body">
-              <img src={scheduleIcon} alt="Success Illustration" className="IT-user-training-success-modal-image" />
-              <h3 className="IT-user-training-success-title">You're all set!</h3>
-              <p>You secured a slot for this training.</p>
-            </div>
-            <div className="IT-user-training-success-modal-footer">
-              <button className="IT-user-training-success-ok-button" onClick={handleSuccessModalClose}>Okay</button>
-            </div>
-          </div>
-        </div>
-      )}
-   
+{isSuccessModalOpen && (
+  <div className="IT-user-training-success-modal">
+    <div className="IT-user-training-success-modal-content">
+      <div className="IT-user-training-success-modal-body">
+        <img src={scheduleIcon} alt="Success Illustration" className="IT-user-training-success-modal-image" />
+        <h3 className="IT-user-training-success-title">You're all set!</h3>
+        <p>You secured a slot for this training.</p>
+      </div>
+      <div className="IT-user-training-success-modal-footer">
+        <button className="IT-user-training-success-ok-button" onClick={handleSuccessModalClose}>Okay</button>
+      </div>
+    </div>
+  </div>
+)}
+
 
 
 

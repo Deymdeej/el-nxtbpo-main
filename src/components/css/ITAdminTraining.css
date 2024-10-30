@@ -4,30 +4,30 @@
     background-color: #f8f9fa;
     min-height: 100vh;
 }
-
+ 
 .it-admin-training-sidebar {
     background-color: #f4f4f4;
     padding: 20px;
     height: 100vh;
     width: 250px;
 }
-
+ 
 .it-admin-training-logo {
     width: 150px;
     margin-bottom: 40px;
 }
-
+ 
 .it-admin-training-nav {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
-
+ 
 .it-admin-training-header img {
     width: 150px;
     margin-bottom: 40px;
 }
-
+ 
 .it-admin-training-nav-item {
     display: flex;
     align-items: center;
@@ -40,23 +40,23 @@
     transition: background-color 0.3s ease;
     gap: 10px;
 }
-
+ 
 .it-admin-training-nav-item:hover {
     background-color: #90EE90; /* Light green hover effect */
     color: white; /* Text color change on hover */
 }
-
+ 
 .it-admin-training-nav-item.active {
     background-color: #007bff;
     color: white;
 }
-
+ 
 .it-admin-training-nav-icon {
     width: 20px;
     height: 20px;
     margin-right: 10px;
 }
-
+ 
 .it-admin-training-nav-logout {
     margin-top: auto;
     padding: 15px;
@@ -67,31 +67,31 @@
     border-radius: 5px;
     transition: background-color 0.3s ease;
 }
-
+ 
 .it-admin-training-nav-logout:hover {
     background-color: #f8d7da;
     color: #721c24;
 }
-
+ 
 /* Main Content */
 .it-admin-training-dashboard-content {
     flex-grow: 1;
     padding: 40px;
     background-color: #f8f9fa;
 }
-
+ 
 .it-admin-training-title {
     font-size: 24px;
     font-weight: 600;
     margin-bottom: 40px;
 }
-
+ 
 /* Training Cards */
 .it-admin-training-grid {
     display: flex;
     gap: 20px;
 }
-
+ 
 .it-admin-training-card,
 .it-admin-training-add-card {
     background-color: #e0e0e0; /* Light gray background */
@@ -105,25 +105,25 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: light shadow */
     cursor: pointer;
 }
-
+ 
 .it-admin-training-card h3 {
     font-size: 16px;
     font-weight: 600;
     margin: 0;
     color: #000; /* Black text for the title */
 }
-
+ 
 .it-admin-training-card p {
     font-size: 14px;
     color: #444; /* Dark gray text for the description */
     margin: 5px 0 0 0;
 }
-
+ 
 .it-admin-training-card:hover,
 .it-admin-training-add-card:hover {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
-
+ 
 .it-admin-training-add-card {
     display: flex;
     flex-direction: column;
@@ -131,12 +131,12 @@
     align-items: center;
     border: 2px dashed #e5e5e5;
 }
-
+ 
 .it-admin-training-add-icon {
     font-size: 36px;
     color: #666;
 }
-
+ 
 .it-admin-training-time {
     margin-top: 20px;
     font-size: 14px;
@@ -145,12 +145,12 @@
     justify-content: space-between;
     font-size: 12px; /* Smaller text for time and date */
 }
-
+ 
 .it-admin-training-time p {
     margin: 0;
     color: #000; /* Black text for the date and time */
 }
-
+ 
 /* Modal Styling */
 .it-admin-training-modal-overlay {
     position: fixed;
@@ -163,7 +163,7 @@
     justify-content: center;
     align-items: center;
 }
-
+ 
 .it-admin-training-modal-container {
     background-color: white;
     border-radius: 10px;
@@ -172,20 +172,20 @@
     max-width: 90%;
     text-align: center;
 }
-
+ 
 .it-admin-training-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
 }
-
+ 
 .it-admin-training-modal-header h2 {
     margin: 0;
     font-size: 24px;
     font-weight: 600;
 }
-
+ 
 .it-admin-training-modal-close-btn {
     font-size: 24px;
     background: none;
@@ -193,17 +193,17 @@
     cursor: pointer;
     color: #888;
 }
-
+ 
 .it-admin-training-modal-close-btn:hover {
     color: red;
 }
-
+ 
 .it-admin-training-modal-body {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
-
+ 
 .it-admin-training-modal-body input[type="text"],
 .it-admin-training-modal-body textarea,
 .it-admin-training-modal-body input[type="date"],
@@ -215,7 +215,7 @@
     border: 1px solid #e5e5e5;
     background-color: #f9f9f9;
 }
-
+ 
 .it-admin-training-modal-body input[type="text"]:focus,
 .it-admin-training-modal-body textarea:focus,
 .it-admin-training-modal-body input[type="date"]:focus,
@@ -224,18 +224,14 @@
     background-color: white;
     outline: none;
 }
-
-
-
-
-
+ 
 .it-admin-training-list {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Control the size of each column */
     gap: 20px; /* Add space between each column */
     align-items: center; /* Vertically aligns the content */
   }
-  
+ 
   .it-admin-training-list-header {
     font-weight: bold;
     background-color: #f3f3f3; /* Optional for distinction */
@@ -244,7 +240,7 @@
     grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Match with content rows */
     align-items: center;
   }
-  
+ 
   .it-admin-training-list-item {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Match with header */
@@ -252,15 +248,13 @@
     border-bottom: 1px solid #ddd;
     align-items: center;
   }
-  
  
-  
   .attendance-section {
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
-  
+ 
   .it-admin-training-attendance-button {
     background-color: #28a745;
     border: none;
@@ -268,9 +262,6 @@
     padding: 5px 10px;
     cursor: pointer;
   }
-  
-
-
 
   .it-admin-training-attendance-dropdown {
     padding: 8px;
@@ -282,20 +273,29 @@
     cursor: pointer;
     width: 100px; /* Set a width */
   }
-  
+ 
   .it-admin-training-attendance-dropdown option {
     color: black; /* Black text for options */
     background-color: white; /* White background for options */
   }
+ 
+.modal-title-edit-training{
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 60px;
+}
+.trainingTitle Label{
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
 
-
-
-
-
-
-
-
-
+ 
+ 
   /* Container holding both search and sort elements */
 .it-admin-training-search-bar-container {
     display: flex;
@@ -304,7 +304,7 @@
     margin-bottom: 20px;
     gap: 20px; /* Space between search and dropdown */
   }
-  
+ 
   /* Search input */
   .it-admin-training-search-input {
     padding: 10px 15px;
@@ -317,18 +317,18 @@
     outline: none;
     transition: background-color 0.2s ease;
   }
-  
+ 
   .it-admin-training-search-input::placeholder {
     color: #c0c0c0;
     font-size: 14px;
   }
-  
+ 
   /* On focus, change the background */
   .it-admin-training-search-input:focus {
     background-color: #fff;
     border-color: #d1d1d1;
   }
-  
+ 
   /* Search icon next to input */
   .it-admin-training-search-icon {
     position: absolute;
@@ -338,7 +338,7 @@
     color: #888;
     font-size: 18px;
   }
-  
+ 
   /* Sort dropdown */
   .it-admin-training-sort-dropdown {
     padding: 10px 15px;
@@ -351,15 +351,15 @@
     outline: none;
     appearance: none;
   }
-  
+ 
   .it-admin-training-sort-dropdown:focus {
     background-color: #fff;
     border-color: #d1d1d1;
   }
-  
+ 
   /* Flexbox layout for the search input and the search icon */
   .search-wrapper {
     position: relative;
     display: inline-block;
   }
-  
+ 
