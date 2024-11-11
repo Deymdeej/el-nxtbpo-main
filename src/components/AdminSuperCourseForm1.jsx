@@ -23,7 +23,7 @@ import addIcon from '../assets/add-course.svg'
 import CloseIcon from '../assets/closebtn.svg'
 import TrainingDefault from '../assets/trainingdefault.png';
 import CertDefault from '../assets/certdefault.png';
-const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav }) => {
+const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selectedNav }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [courseTitle, setCourseTitle] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
@@ -1258,4 +1258,4 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav 
   );
 };
 
-export default ITAdminCoursePage;
+export default AdminSuperCourseForm1;

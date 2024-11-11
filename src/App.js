@@ -19,6 +19,8 @@ import { auth, db } from "./firebase";
 import { doc, getDoc } from "firebase/firestore";
 import Spinner from "react-bootstrap/Spinner";
 import ITUserCertificate from "./components/ITUserCertificate";
+import AdminSuperCourseForm1 from "./components/AdminSuperCourseForm1"
+import AdminCoursePage from "./components/AdminCoursePage"
  
 function App() {
   const [user, setUser] = useState(null);
@@ -150,6 +152,14 @@ function App() {
 <Route
                 path="/admin"
                 element={user && role === "admin" ? <AdminPage /> : <Navigate to="/login" />}
+              />
+<Route
+                path="/adminSuperCourse"
+                element={user && role === "admin" ? <AdminSuperCourseForm1 /> : <Navigate to="/login" />}
+              />
+<Route
+                path="/ADMINCOURSE"
+                element={user && role === "admin" ? <AdminCoursePage /> : <Navigate to="/login" />}
               />
 <Route
                 path="/adminresults"

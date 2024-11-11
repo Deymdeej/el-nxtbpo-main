@@ -190,31 +190,25 @@
     font-weight: bold;
   }
   
-  .IT-user-course-course-description {
-    font-size: 14px;
-    margin-top: 35px; 
-    margin-bottom: 15px; 
+  .IT-user-course-course-description, .p22 {
     text-align: justify;
     display: -webkit-box;
-    -webkit-line-clamp: 6; 
+    -webkit-line-clamp: 8; /* Limit to 4 lines */
     -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis; 
-    line-height: 1.5; 
-    word-wrap: break-word; 
+    text-overflow: ellipsis;
     word-break: break-word;
-    color: #666;
-    margin-bottom: 10px;
-    word-wrap: break-word; /* Ensures long text wraps properly */
-    line-height: 1.5; /* Adds a bit more space between lines */
+    margin-top: 10px;
+    margin-bottom: auto;
+    font-size: 14px;
   }
-  
+
   .IT-user-course-category-text {
     font-size: 14px;
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     position: absolute;
-    bottom: 65px;
+    bottom: 60px;
     left: 20px;
     text-align: left;
   }
@@ -285,12 +279,20 @@
     border-radius: 10px; /* Rounded image */
   }
   
-  .IT-user-course-description {
+  .IT-user-course-description p{
     font-size: 16px;
-    margin-top: 10px; 
-    margin-bottom: 20px; 
     text-align: justify;
     line-height: 1.5; 
+    margin-top: -20px;
+    margin-bottom: 20px;
+  }
+
+  .IT-user-course-description, .p28 {
+    font-size: 16px;
+    text-align: justify;
+    line-height: 1.5; 
+    margin-top: -20px;
+    margin-bottom: 20px;
   }
   
   .IT-user-course-details {
@@ -403,26 +405,14 @@
     z-index: 1000;
     background-color: rgba(0, 0, 0, 0.5); /* Background overlay */
   }
+
   
-  .IT-user-course-mycourse-content {
-    padding: 10px;
-  }
-  
-  .IT-user-course-mycourse-header {
-    padding: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #ffffff;
-  }
-  
-  .IT-user-course-mycourse-title {
-    margin: 0;
-  }
+
+
   
   
   .IT-user-course-mycourse-body {
-    margin-top: 20px;
+    margin-top: 0px;
   }
   
   .IT-user-course-mycourse-footer {
@@ -497,20 +487,7 @@
   .next-button:hover {
     background-color: #0056b3;
   }
-  .close-button {
-    background-color: black;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    position: absolute;
-    top: 10px;    /* Adjust to fit inside the container */
-    right: 10px;  /* Adjust to fit inside the container */
-    z-index: 10;  /* Ensure it's above other modal content */
-  }
-  
+
 
  /* Quiz Modal Overlay */
  .quiz-modal-overlay {
@@ -775,15 +752,8 @@
   z-index: 1000;
 }
 
-.result-modal {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 400px; /* Adjust this to your desired width */
-  width: 100%;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-} 
+
+
 
 
 .congrats-modal-overlay {
@@ -941,14 +911,7 @@
   color: red;
 }
 
-.close-button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+
 
 
 
@@ -968,7 +931,20 @@
 }
 
 /* Modal Container Styles */
-.IT-user-course-mycourse-content,
+.IT-user-course-mycourse-content{
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 0;
+  width: 95%;
+  max-width: 950px;
+  max-height: 95vh;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
 .IT-user-course-next-content {
   width: 80%;
   max-width: 900px;
@@ -979,10 +955,21 @@
   max-height: 90%;
 }
 
-/* Modal Header */
-.IT-user-course-mycourse-header,
+.IT-user-course-mycourse-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px; /* Add padding to create space within the header */
+  background-color: #64BAA9; /* Background color for full width */
+  width: 100%; /* Make the header cover the full width of the modal */
+  color: white; /* Optional: Set text color to ensure visibility */
+  box-sizing: border-box; /* Ensures padding does not exceed width */
+  border-top-left-radius: 8px; /* Match modal's border-radius if rounded */
+  border-top-right-radius: 8px;
+}
+
 .IT-user-course-next-header {
-  padding: 5px;
+  padding: 2px 5px;
   border-bottom: 1px solid #ccc;
   background-color: #ffffff;
   flex-shrink: 0;
@@ -991,19 +978,18 @@
 
 .IT-user-course-mycourse-title {
   font-weight: bold;
-  font-size: 22px;
+  font-size: 24px;
+  margin: 0;
+
 }
 
 /* Modal Close Button */
-.IT-user-course-mycourse-close-button,
-.close-button {
-  margin-bottom: 50px;
-  left: 10px;
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
+.IT-user-course-mycourse-close-button{
+width: 32px;
+height: 32px;
 }
+
+
 
 /* Modal Body */
 .IT-user-course-mycourse-body,
@@ -1013,13 +999,6 @@
   flex-grow: 1;
 }
 
-/* Description Section */
-.IT-user-course-description {
-  margin-top: -20px;
-  margin-bottom: 20px;
-}
-
-.IT-user-course-mycourse-pdf-container,
 .IT-user-course-mycourse-resource-container {
   margin-top: 20px;
   display: flex;
@@ -1027,6 +1006,7 @@
 }
 .IT-user-course-mycourse-pdf-container h4 {
   font-size: 16px;
+  margin-top: 20px;
 }
 
 
@@ -1078,7 +1058,8 @@
 
 /* Video Container */
 .IT-user-course-next-video-container {
-  margin-top: 20px;
+  margin-top: -10px;
+  margin-left: -20px;
 }
 
 .IT-user-course-next-video-container iframe {
@@ -1109,17 +1090,20 @@
 }
 
 .certificate-modal {
+  position: relative;
   background-color: white;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
+  max-width: 900px;
+  max-height: 690px;
   width: 90%;
   text-align: center;
 }
 
 .certificate-content {
   margin-top: 20px;
+  display: flex;
 }
 
 .certificate-template {
@@ -1195,15 +1179,6 @@
   font-size: 13px;
 }
 
-.certificate-actions {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.certificate-actions button {
-  margin-right: 10px;
-}
-  
 
 
 .IT-user-course-my-courses-section {
@@ -1226,10 +1201,8 @@
   padding: 10px ; /* Add padding around the title */
   right: 30px;
   margin-top: 20px;
-
-}
-.IT-user-course-my-courses-section h2 {
   font-size: 22px;
+
 }
 
 .IT-user-course-my-courses-section .courses-list {
@@ -1303,16 +1276,18 @@
 .it-useravailable-course-container p {
   text-align: justify;
   display: -webkit-box;
-  -webkit-line-clamp: 4; /* Limit to 4 lines */
+  -webkit-line-clamp: 9;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
   word-break: break-word;
-  margin-bottom: 110px;
+  margin-bottom: 58px;
   font-size: 14px;
   padding-right: 10px;
-  max-height: calc(1.5em * 4);
+  max-height: calc(1.5em* 9);
 }
+
+
 
 .it-user-available-course-card {
     border: 1px solid #ddd;
@@ -1346,21 +1321,20 @@
   font-weight: bold;
   margin-bottom: 5px;
   position: absolute;
-  bottom: 50px;
+  bottom: 65px;
   left: 20px;
   text-align: left;
 }
 
 
 .it-user-available-category-label {
-  background-color: #347928;
+  background-color: green;
   color: white;
-  padding: 5px 10px;
-  border-radius: 2px;
-  font-size: 12px;
-  position: absolute; 
-  bottom: 20px; 
-  left: 20px; 
+  padding: 6px 10px;
+  border-radius: 5px;
+  width: fit-content;
+  font-size: 14px;
+  font-weight: bold; 
 }
    
 
@@ -1389,3 +1363,149 @@
   word-wrap: break-word; /* Ensures long text wraps properly */
   line-height: 1.5; /* Adds a bit more space between lines */
 }
+
+
+
+
+
+
+
+/* vincent kyle mesiona */
+
+.result-modal-content p1{
+  font-size: bold;
+}
+.IT-user-course-passed-header{
+  padding: 5px;
+  flex-shrink: 0;
+}
+.result-modal {
+  position: relative;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  max-height: 600px;
+  width: 100%;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.result-modal button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 5px;
+  transition: all 0.3s ease;
+}
+
+/* View Result Button */
+.view-result-button {
+  background-color: #4CAF50; /* Green */
+  color: white;
+}
+
+.view-result-button:hover {
+  background-color: #45a049;
+}
+
+
+.IT-user-course-passed-footer{
+  padding: 10px;
+  flex-shrink: 0;
+  margin-top: 15px;
+}
+
+/* Next Page Button */
+.next-page-button {
+  background-color: #0024db; /* Blue */
+  color: white;
+  margin-left: 170px;
+ 
+}
+
+.next-page-button:hover {
+  background-color: #243486;
+}
+
+/* Retake Button */
+.retake-button {
+  background-color: #f39c12; /* Orange */
+  color: white;
+}
+
+.download-button{
+  background-color: #0056b3; /* Orange */
+  color: white;
+}
+
+.retake-button:disabled {
+  background-color: #d3d3d3; /* Light Gray */
+  cursor: not-allowed;
+}
+
+.retake-button:hover:not(:disabled) {
+  background-color: #e67e22;
+}
+
+.close-button.top-right {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #000000;
+  font-weight: bold;
+}
+.close-button.top-rightcert {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  background-color: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #000000;
+  font-weight: bold;
+}
+
+.close-button.top-rightcert:hover {
+  color: #c0392b;
+}
+
+
+.close-button.top-right:hover {
+  color: #c0392b;
+}
+
+.result-icon{
+  max-width: 200px; /* Adjust this to your desired width */
+  max-height: 200px;
+  margin-left: 130px;
+  align-items: center;
+}
+.congrats-modal img{
+  width: 100px; /* Adjust the size as needed */
+  height: 100px;
+  margin-bottom: 20px;
+  margin-left: 180px;
+}
+.certificate-actions {
+  margin-top: 5px;
+  text-align: center;
+}
+
+.certificate-actions button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 5px;
+  transition: all 0.3s ease;
+}
+  

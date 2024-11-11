@@ -1,12 +1,12 @@
 /* Sidebar */
 .it-admin-training-dashboard-container {
     display: flex;
-    background-color: #f8f9fa;
+    background-color: #efefef;
     min-height: 100vh;
 }
  
 .it-admin-training-sidebar {
-    background-color: #f4f4f4;
+    background-color: #ffffff;
     padding: 20px;
     height: 100vh;
     width: 250px;
@@ -23,11 +23,92 @@
     gap: 20px;
 }
  
-.it-admin-training-header img {
-    width: 150px;
-    margin-bottom: 40px;
+.it-admin-training-header-modal{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 10px;
 }
- 
+.it-admin-edit-training-header-modal{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 10px;
+}
+.it-admin-training-footer-modal {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 2px solid #ddd;
+  margin-top: 15px;
+}
+.btn-submit-addtraining {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 15px;
+  padding: 10px 20px;
+}
+.btn-submit-addtraining:hover {
+  background-color:#007bff;
+}
+.btn-update-edittraining{
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 15px;
+  padding: 10px 20px;
+}
+.btn-update-edittraining:hover {
+  background-color:#007bff;
+}
+.it-admin-training-modal {
+  padding: 1rem;
+}
+
+.it-admin-training-title-add .form-label,
+.it-admin-training-description-add .form-label,
+.it-admin-training-trainingdate-add .form-label,
+.it-admin-training-trainingtime-add .form-label,
+.it-admin-training-preqrequisite-add .form-label { 
+
+  position: relative;
+  margin-bottom: 10px;
+  top: 10px;
+  display: flex;
+  flex-direction: column;
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+
+}
+.it-admin-training-title-add .form-control,
+.it-admin-training-description-add textarea,
+.it-admin-training-trainingdate-add input,
+.it-admin-training-trainingtime-add input,
+.it-admin-training-preqrequisite-add select {
+  width: 100%;
+  padding: 15px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  font-size: 14px;
+  background-color: #f7f7f7;
+  transition: all 0.3s;
+
+}
 .it-admin-training-nav-item {
     display: flex;
     align-items: center;
@@ -75,9 +156,7 @@
  
 /* Main Content */
 .it-admin-training-dashboard-content {
-    flex-grow: 1;
-    padding: 40px;
-    background-color: #f8f9fa;
+    padding: 20px;
 }
  
 .it-admin-training-title {
@@ -88,22 +167,38 @@
  
 /* Training Cards */
 .it-admin-training-grid {
-    display: flex;
+    grid-template-columns: repeat(4, 1fr); /* Limit to 4 cards per row */
+    margin-top: 20px;
+    display: grid;
     gap: 20px;
 }
  
-.it-admin-training-card,
+.it-admin-training-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: white;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  width: 257px;
+  height: 357px;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+}
 .it-admin-training-add-card {
-    background-color: #e0e0e0; /* Light gray background */
-    border-radius: 10px; /* Rounded corners */
-    padding: 15px;
     width: 250px; /* Adjust the width */
     height: 150px; /* Adjust the height */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: light shadow */
-    cursor: pointer;
+    border-radius: 10px; /* Rounded corners */
+    background-color: white;
+    border: 2px dashed #ccc;
+
+}
+.it-admin-training-add-card:hover {
+  background-color: #e6e6e6;
+  transform: translateY(-2px); /* Slightly lift the card */
+  border-color: #666; /* Change border color on hover */
 }
  
 .it-admin-training-card h3 {
@@ -119,9 +214,10 @@
     margin: 5px 0 0 0;
 }
  
-.it-admin-training-card:hover,
-.it-admin-training-add-card:hover {
+.it-admin-training-card:hover{
+    border-color: #666; /* Change border color on hover */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px); /* Slightly lift the card */
 }
  
 .it-admin-training-add-card {
@@ -129,7 +225,6 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border: 2px dashed #e5e5e5;
 }
  
 .it-admin-training-add-icon {
@@ -145,7 +240,7 @@
     justify-content: space-between;
     font-size: 12px; /* Smaller text for time and date */
 }
- 
+
 .it-admin-training-time p {
     margin: 0;
     color: #000; /* Black text for the date and time */
@@ -184,6 +279,10 @@
     margin: 0;
     font-size: 24px;
     font-weight: 600;
+}
+.it-admin-training-closebutton {
+  width: 24px;
+  height: 24px;
 }
  
 .it-admin-training-modal-close-btn {
@@ -293,7 +392,14 @@
   margin-bottom: 10px;
   margin-top: 10px;
 }
-
+.it-admin-training-search-bar-container-attendance{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  gap: 20px; /* Space between search and dropdown */
+}
  
  
   /* Container holding both search and sort elements */
@@ -362,4 +468,54 @@
     position: relative;
     display: inline-block;
   }
- 
+  .three-dot-icon-training {
+    width: 15px;
+    height: 15px;
+    position: absolute;
+    cursor: pointer;
+  }
+  .dropdown-menu {
+    position: absolute;
+    top: 0; /* Adjust as needed */
+    z-index: 10; /* Ensure it's on top of other elements */
+    width: auto; /* Ensure it's sized properly within the card */
+    max-width: 200px; /* Adjust this as needed */
+    right: 5px; /* Align it better */
+  }
+  
+  .dropdown-item {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .dropdown-item:hover {
+    background-color: #f0f0f0;
+  }
+.it-admin-training-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 15px;
+  padding-bottom: 5px;
+  position: relative;
+}
+.it-admin-title-training{
+  margin-bottom: 5px;
+  font-size: 18px;
+  font-weight: bold;
+}
+.it-admin-training-attendance-dropdown {
+  display: inline-block;
+  width: auto;
+  padding: 5px;
+}
+.it-admin-training-container {
+  width: 100%;       /* Ensure it takes up the full width */
+  max-width: 1200px; /* You can adjust this value based on the desired max size */
+  margin: 0 auto;    /* Center the container */
+  padding: 20px;     /* Add padding to give space inside the container */
+  height: 100%;      /* Ensure it expands vertically */
+  min-height: 600px; /* Set a minimum height to ensure it's tall enough */
+  box-sizing: border-box; /* Includes padding and borders in element's total width/height */
+}

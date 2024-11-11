@@ -330,7 +330,6 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
                     <div className="certificate-details">
                       <h4>{certificate.title || 'Certificate Title'}</h4>
                       <span className="course-category-badge">{certificate.category || 'Course Category'}</span>
-                      <p>{formatDate(certificate.dateUploaded) || 'N/A'}</p>
                     </div>
                   </div>
                 ))}
@@ -393,14 +392,7 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
               onChange={(e) => setCourseCategory(e.target.value)}
               placeholder="Enter course category"
             />
-
-            <label>Date Uploaded:</label>
-            <input
-              type="date"
-              value={dateUploaded}
-              onChange={(e) => setDateUploaded(e.target.value)}
-            />
-          </div>
+            </div>
 
           {/* File Input */}
           <div className="admin-certificate-file-upload-box" onClick={() => document.getElementById('fileInput').click()}>
@@ -471,13 +463,6 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
         value={courseCategory}
         onChange={(e) => setCourseCategory(e.target.value)}
         placeholder="Enter course category"
-      />
-
-      <label>Date Uploaded:</label>
-      <input
-        type="date"
-        value={dateUploaded}
-        onChange={(e) => setDateUploaded(e.target.value)}
       />
     </div>
 

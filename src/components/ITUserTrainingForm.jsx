@@ -294,39 +294,52 @@ function ITUserTrainingForm() {
         ☰
       </button>
 
-      <div className="content-super">
-      <h1>Hello, {fullName || 'IT user'}!</h1>
 
+      
+
+      <div className="content-super">
+      <h1 style={{ fontSize: '22px', marginLeft: '25px' }}>
+        <strong><span style={{ color: '#48887B' }}>Hello</span></strong>, <em>{fullName || 'IT user'}</em>!
+      </h1>
 
  {/* Main Content */}
 {selectedSection === 'training' && (
        
-      <div className="IT-User-training-content">
-        <h2>Schedule</h2>
-        <div className="IT-User-training-schedule-section">
-          <h3>Schedule Training</h3>
-          <div className="IT-User-training-cards-container">
-          {trainings.length > 0 ? (
-  trainings.map((training) => (
-    <div key={training.id} className="IT-User-training-card">
-      <div className="IT-User-training-title">{training.trainingTitle}</div>
-      <div className="IT-User-training-datetime">
-        <span>{new Date(training.trainingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-        <span>{convertTo12Hour(training.trainingTime)}</span>
-      </div>
-      <button 
-        className={`IT-User-training-enroll-btn ${training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'IT-User-training-enrolled' : 'IT-User-training-enroll-now'}`} 
-        onClick={() => handleEnrollNowClick(training)}
-      >
-        {training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'Enrolled' : 'Enroll Now!'}
-      </button>
-    </div>
-  ))
-) : (
-  <p>No trainings available</p>
-)}
+      <div className="IT-user-course-my-courses-section">
+        
+        <div className="IT-user-course-course-container">
+          <h2>Schedule Training</h2>
+          
+          <div className="IT-user-course-course-container">
+  {trainings.length > 0 ? (
+    trainings.map((training) => (
+      <div key={training.id} className="IT-User-training-card">
+        <div className="IT-User-training-title">{training.trainingTitle}</div>
 
-          </div>
+        {/* Training Description */}
+        <div className="IT-User-training-description">
+          {training.trainingDescription || "No description available"}
+        </div>
+
+        <div className="IT-User-training-datetime">
+          <span>{new Date(training.trainingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+          &nbsp;
+          <span>{convertTo12Hour(training.trainingTime)}</span>
+        </div>
+
+        <button 
+          className={`IT-User-training-enroll-btn ${training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'IT-User-training-enrolled' : 'IT-User-training-enroll-now'}`} 
+          onClick={() => handleEnrollNowClick(training)}
+        >
+          {training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'Enrolled' : 'Enroll Now!'}
+        </button>
+      </div>
+    ))
+  ) : (
+    <p>No trainings available</p>
+  )}
+</div>
+
         </div>
       </div>
        )}
@@ -334,7 +347,7 @@ function ITUserTrainingForm() {
       {/* Side Modal for training details */}
       {isTrainingModalOpen && selectedTraining && (
         <div className={`IT-user-training-side-modal ${isTrainingModalOpen ? 'open' : ''}`}>
-          <div className="IT-user-training-side-modal-content">
+          
             <div className="IT-user-training-side-modal-header">
               <h2>{selectedTraining.trainingTitle}</h2>
               <button className="IT-user-training-side-modal-close-button" onClick={handleModalClose}>X</button>
@@ -342,8 +355,9 @@ function ITUserTrainingForm() {
 
             <div className="IT-user-training-side-modal-body">
               <img src={TrainingIllustration} alt="Training Illustration" className="IT-user-training-side-modal-image" />
-              <p>{selectedTraining.trainingDescription}</p>
+              
               <div className="IT-user-training-side-modal-details">
+              <p>{selectedTraining.trainingDescription}</p>
                 <h4>Prerequisite: <span className="IT-user-training-prerequisite">{prerequisiteTitle || "None"}</span></h4>
                 <h5>Category: <span className="IT-user-training-category">{selectedTraining.category || "General"}</span></h5>
               </div>
@@ -357,7 +371,7 @@ function ITUserTrainingForm() {
                 ENROLL TRAINING
               </button>
             </div>
-          </div>
+          
         </div>
       )}
 

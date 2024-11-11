@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase"; // Ensure db and auth are imported
 import { useNavigate, Link } from "react-router-dom"; // For redirection and linking
 import { collection, getDocs } from "firebase/firestore"; // Firestore methods
-import "./css/AdminForm.css"; // Custom CSS for styling
+import "./css/AdminFormSuper.css"; // Custom CSS for styling
 
 function UserPage() {
   const navigate = useNavigate();

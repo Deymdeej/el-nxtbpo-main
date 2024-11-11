@@ -28,7 +28,7 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import UserDefault from '../assets/userdefault.png';
 import {  uploadString} from "firebase/storage"; 
-
+import CloseIcon from '../assets/closebtn.svg'
 
 
 
@@ -79,6 +79,7 @@ const [fullName, setFullName] = useState(''); // Initialize fullName with an emp
 const certificateRef = useRef(null);
 const [certificateUrl, setCertificateUrl] = useState(null);
 const [courseTitle, setCourseTitle] = useState("");
+const [timeLeft, setTimeLeft] = useState(null);
 
 
 
@@ -343,7 +344,7 @@ const handleDownloadCertificate = async () => {
     const img = new Image();
     img.src = URL.createObjectURL(blob);
 
-    img.onload = () => {
+    img.onload = async () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
@@ -352,22 +353,42 @@ const handleDownloadCertificate = async () => {
       // Draw the background image
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      // Set font and style for course title (larger font size)
-      ctx.font = "bold 30px Arial"; // Increased font size for course title
+      // Set font and style for course title
+      ctx.font = "bold 30px Arial";
       ctx.fillStyle = "#2C5F2D";
       ctx.textAlign = "center";
       ctx.fillText(courseTitle, canvas.width * 0.7, canvas.height * 0.27);
 
-      // Set font and style for user's name (even larger font size)
-      ctx.font = "bold 45px Arial"; // Further increased font size for user's full name
+      // Set font and style for user's name
+      ctx.font = "bold 45px Arial";
       ctx.fillText(userName, canvas.width * 0.7, canvas.height * 0.4);
 
       // Set font and style for date
       ctx.font = "15px Arial";
       ctx.fillText(`Date: ${currentDate}`, canvas.width * 0.7, canvas.height * 0.58);
 
-      // Convert the canvas to a data URL and initiate download
+      // Convert the canvas to a data URL
       const imgData = canvas.toDataURL("image/png");
+
+      // Upload certificate image to Firebase Storage
+      const storageRef = ref(storage, `certificateResults/${userId}_${selectedCourse.id}.png`);
+      await uploadString(storageRef, imgData, 'data_url');
+
+      // Get the download URL of the uploaded image
+      const downloadUrl = await getDownloadURL(storageRef);
+
+      // Store the certificate information in Firestore
+      const certificateResultRef = doc(db, "certificateResult", `${userId}_${selectedCourse.id}`);
+      await setDoc(certificateResultRef, {
+        userId,
+        courseId: selectedCourse.id,
+        courseTitle: selectedCourse.courseTitle,
+        userName: fullName,
+        date: currentDate,
+        certificateUrl: downloadUrl, // Store the download URL
+      });
+
+      // Download the certificate for the user
       const link = document.createElement('a');
       link.href = imgData;
       link.download = `${userName}_${courseTitle}_Certificate.png`;
@@ -375,8 +396,10 @@ const handleDownloadCertificate = async () => {
       link.click();
       document.body.removeChild(link);
 
-      // Revoke the object URL to free memory
+      // Clean up URL
       URL.revokeObjectURL(img.src);
+
+      toast.success("Certificate downloaded and saved successfully!");
     };
 
     img.onerror = () => {
@@ -388,7 +411,6 @@ const handleDownloadCertificate = async () => {
     alert("An error occurred while downloading the certificate. Please try again.");
   }
 };
-
 
 
 
@@ -570,7 +592,11 @@ const fetchQuizData = async (courseId) => {
         pdfURLs: enrollmentData.pdfURLs || [],
         videoLink: enrollmentData.videoLink || "",
         certificateId: enrollmentData.certificateId || null,
+        quizDuration: enrollmentData.quizDuration || 10,  // Default to 10 minutes if not specified
       });
+  
+      // Initialize the timer countdown for the quiz
+      setTimeLeft(enrollmentData.quizDuration * 60); // Convert minutes to seconds
   
       // Fetch the quiz result for the specific course
       const quizResultRef = doc(db, "QuizResults", `${userId}_${course.id}`);
@@ -590,11 +616,32 @@ const fetchQuizData = async (courseId) => {
       console.error("Error fetching enrollment details:", error.message);
       toast.error("Failed to fetch enrollment details.");
     }
+  };
+
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timerId = setInterval(() => {
+        setTimeLeft((prevTime) => prevTime - 1);
+      }, 1000);
+  
+      return () => clearInterval(timerId); // Cleanup interval on component unmount
+    } else if (timeLeft === 0) {
+      handleFinishQuiz(); // Auto-submit when time is up
+    }
+  }, [timeLeft]);
+  
+
+const formatTime = (time) => {
+  const minutes = Math.floor(time / 60);
+  const seconds = time % 60;
+  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 };
 
-
-
-
+useEffect(() => {
+  if (isQuizContentModalOpen && selectedCourse && selectedCourse.quizDuration) {
+    setTimeLeft(selectedCourse.quizDuration * 60); // Initialize time in seconds from Firebase `quizDuration`
+  }
+}, [isQuizContentModalOpen, selectedCourse]);
   
   
 const handleRetakeCourse = async () => {
@@ -684,7 +731,7 @@ const handleRetakeCourse = async () => {
 
   const handleEnrollCourse = async () => {
     if (!selectedCourse || !userId) {
-      toast.error("No course selected or user not authenticated");
+      toast.error("No course selected or user not authenticated.");
       return;
     }
   
@@ -696,10 +743,32 @@ const handleRetakeCourse = async () => {
     }
   
     try {
-      const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`); // Create a unique enrollment document based on user ID and course ID
+      // Fetch full course details from Firebase to ensure we get the latest data
+      const courseDocRef = doc(db, selectedCourse.category === 'IT' ? "ITCourses" : "GeneralCourses", selectedCourse.id);
+      const courseSnapshot = await getDoc(courseDocRef);
   
-      const courseCertificateId = selectedCourse.certificateId || null; // Assuming that certificateId might exist in the selectedCourse object
+      if (!courseSnapshot.exists()) {
+        toast.error("Failed to fetch course details. Please try again.");
+        return;
+      }
   
+      const courseData = courseSnapshot.data();
+  
+      // Create an object that combines selectedCourse with additional details from Firestore
+      const courseDataWithDetails = {
+        ...selectedCourse,
+        quizDuration: courseData.quizDuration || 1,
+        questions: courseData.questions || [],
+        pdfURLs: courseData.pdfURLs || [],
+        videoLink: courseData.videoLink || "",
+        certificateId: courseData.certificateId || null,
+      };
+  
+      // Update selectedCourse with full details for local state use
+      setSelectedCourse(courseDataWithDetails);
+  
+      // Store enrollment details in Firestore, including quiz details
+      const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
       await setDoc(enrollmentRef, {
         userId,
         courseId: selectedCourse.id,
@@ -707,25 +776,29 @@ const handleRetakeCourse = async () => {
         courseDescription: selectedCourse.courseDescription,
         category: selectedCourse.category,
         prerequisites: selectedCourse.prerequisites || "None",
-        questions: selectedCourse.questions || [], // Add questions if available
-        pdfURLs: selectedCourse.pdfURLs || [], // Add PDFs if available
-        videoLink: selectedCourse.videoLink || "",
-        certificateId: courseCertificateId, // Store certificateId if present
+        questions: courseData.questions || [],
+        quizDuration: courseData.quizDuration || 1,
+        pdfURLs: courseData.pdfURLs || [],
+        videoLink: courseData.videoLink || "",
+        certificateId: courseData.certificateId || null,
         enrolledDate: new Date(),
       });
   
       toast.success(`You have been successfully enrolled in ${selectedCourse.courseTitle}!`);
   
-      // Do not yet add the course to `myCourses` here, we'll do this later when the quiz starts
-  
-      // Optional: Close the modal after enrollment and reset the state
+      // Close modals after enrollment
       setIsAvailableCoursesModalOpen(false);
-      setShowConfirmModal(false); // Close confirmation modal
+      setShowConfirmModal(false);
+  
+      // Optionally update local enrolled courses state
+      setEnrolledCourses((prev) => [...prev, selectedCourse.id]);
+  
     } catch (error) {
       console.error("Error enrolling in course:", error);
       toast.error("Failed to enroll in the course. Please try again.");
     }
   };
+  
   
   
   
@@ -844,66 +917,51 @@ const handleAnswerSelect = (questionIndex, answer) => {
   
   
   
-  const handleAvailableCoursesClick = async (course) => {
-    try {
-      const collectionName = course.category === "IT" ? "ITCourses" : "GeneralCourses";
-      const courseDocRef = doc(db, collectionName, course.id);
-      const courseSnapshot = await getDoc(courseDocRef);
-  
-      if (!courseSnapshot.exists()) {
-        toast.error("Course details not found.");
-        return;
-      }
-  
-      const fullCourseData = courseSnapshot.data();
-      
-      // Fetch prerequisite course IDs
-      const prerequisiteIds = fullCourseData.prerequisites || [];
-  
-      // Fetch the titles of the prerequisite courses
-      const prerequisiteTitles = await Promise.all(
-        prerequisiteIds.map(async (prereqId) => {
-          const prereqCourseRef = doc(db, "ITCourses", prereqId);
-          const prereqCourseSnap = await getDoc(prereqCourseRef);
-          if (prereqCourseSnap.exists()) {
-            return prereqCourseSnap.data().courseTitle;
-          }
-          return "Unknown Course"; // Fallback for missing data
-        })
-      );
-  
-      // Check if the user has passed the prerequisites by looking into QuizResults
-      const prerequisiteResults = await Promise.all(
+const handleAvailableCoursesClick = async (course) => {
+  try {
+    const collectionName = course.category === "IT" ? "ITCourses" : "GeneralCourses";
+    const courseDocRef = doc(db, collectionName, course.id);
+    const courseSnapshot = await getDoc(courseDocRef);
+
+    if (!courseSnapshot.exists()) {
+      toast.error("Course details not found.");
+      return;
+    }
+
+    const fullCourseData = courseSnapshot.data();
+    const prerequisiteIds = fullCourseData.prerequisites || [];
+
+    const prerequisiteTitles = await Promise.all(
+      prerequisiteIds.map(async (prereqId) => {
+        const prereqCourseRef = doc(db, "ITCourses", prereqId);
+        const prereqCourseSnap = await getDoc(prereqCourseRef);
+        return prereqCourseSnap.exists() ? prereqCourseSnap.data().courseTitle : "Unknown Course";
+      })
+    );
+
+    setSelectedCourse({
+      ...course,
+      prerequisites: prerequisiteTitles.length > 0 ? prerequisiteTitles : "None",
+      prerequisiteResults: await Promise.all(
         prerequisiteIds.map(async (prereqId) => {
           const quizResultRef = doc(db, "QuizResults", `${userId}_${prereqId}`);
           const quizResultSnap = await getDoc(quizResultRef);
-  
-          if (quizResultSnap.exists()) {
-            const quizResultData = quizResultSnap.data();
-            return quizResultData.passed; // Return true if passed
-          }
-          return false; // Return false if no quiz result exists
+          return quizResultSnap.exists() ? quizResultSnap.data().passed : false;
         })
-      );
-  
-      // Set the prerequisiteTitles and prerequisiteResults in the state
-      setSelectedCourse({
-        ...course,
-        prerequisites: prerequisiteTitles.length > 0 ? prerequisiteTitles : "None",
-        prerequisiteResults, // Store the results for later use
-        questions: fullCourseData.questions || [],
-        pdfURLs: fullCourseData.pdfURLs || [],
-        videoLink: fullCourseData.videoLink || "",
-        certificateId: fullCourseData.certificateId || null,
-      });
-  
-      setIsAvailableCoursesModalOpen(true); // Open the modal with course details
-    } catch (error) {
-      console.error("Error fetching course details:", error);
-      toast.error("Failed to fetch course details.");
-    }
-  };
-  
+      ),
+      questions: fullCourseData.questions || [],
+      pdfURLs: fullCourseData.pdfURLs || [],
+      videoLink: fullCourseData.videoLink || "",
+      certificateId: fullCourseData.certificateId || null,
+      quizDuration: fullCourseData.quizDuration || "Not specified",  // Add quiz duration
+    });
+
+    setIsAvailableCoursesModalOpen(true); // Open the modal with course details
+  } catch (error) {
+    console.error("Error fetching course details:", error);
+    toast.error("Failed to fetch course details.");
+  }
+};
   
   
   
@@ -1216,7 +1274,9 @@ const handleShowCertificate = async () => {
       </button>
 
       <div className="content-super">
-  <h1>Hello, {fullName || 'IT user'}!</h1>
+      <h1 style={{ fontSize: '22px', marginLeft: '25px' }}>
+        <strong><span style={{ color: '#48887B' }}>Hello</span></strong>, <em>{fullName || 'IT user'}</em>!
+      </h1>
 
         {selectedSection === 'courses' && (
           <>
@@ -1233,8 +1293,8 @@ const handleShowCertificate = async () => {
                       style={{ cursor: "pointer" }} // Optional: Change cursor to indicate it's clickable
                     >
                       <h3>{course.courseTitle}</h3>
-                      <p className="IT-user-course-course-description">{course.courseDescription}</p>
-                      <div className="IT-user-course-category-text">Category</div>
+                      <p22 className="IT-user-course-course-description">{course.courseDescription}</p22>
+                      <div className="IT-user-course-category-text">Category:</div>
                       <div className="IT-user-course-category-label">{course.category}</div>
                     </div>
                   ))
@@ -1260,7 +1320,7 @@ const handleShowCertificate = async () => {
         <p className="it-user-available-course-description">
           {course.courseDescription}
         </p>
-        <div className="it-user-available-category-text">Category</div>
+        <div className="it-user-available-category-text">Category:</div>
         <div className="it-user-available-category-label">{course.category}</div>
       </div>
     ))
@@ -1273,37 +1333,42 @@ const handleShowCertificate = async () => {
           </>
         )}
         
-
         {/* My Courses Modal */}
         {isMyCoursesModalOpen && selectedCourse && !passedCourses.includes(selectedCourse.id) && (
   <div className="IT-user-course-modal-overlay">
     <div className="IT-user-course-mycourse-content">
-      
+     
       {/* Modal Header */}
       <div className="IT-user-course-mycourse-header">
         <h2 className="IT-user-course-mycourse-title">
           {selectedCourse.courseTitle}
         </h2>
-        <button className="IT-user-course-mycourse-close-button" onClick={() => setIsMyCoursesModalOpen(false)}>X</button>
+        <button className="IT-user-course-mycourse-close-button" onClick={() => setIsMyCoursesModalOpen(false)}><img src={CloseIcon} alt="Close"/></button>
       </div>
-
+ 
       {/* Modal Body */}
       <div className="IT-user-course-mycourse-body">
         <p className="IT-user-course-description">
           <strong>Description:</strong> {selectedCourse.courseDescription}
         </p>
-
-        {/* Display PDF Preview */}
-        {Array.isArray(selectedCourse.pdfURLs) && selectedCourse.pdfURLs.length > 0 && (
-          <div className="IT-user-course-mycourse-pdf-container">
-            <h4>PDF Resource:</h4>
+        <p><strong>Quiz Duration:</strong> {selectedCourse.quizDuration} minutes</p>
+ 
+      {/* Modal Body */}
+      <div className="IT-user-course-next-body">
+        {selectedCourse.videoLink ? (
+          <div className="IT-user-course-next-video-container">
+            <h4>Video Resource:</h4>
             <iframe
-              src={selectedCourse.pdfURLs[0]}
-              title="PDF Preview"
+              src={convertToEmbedUrl(selectedCourse.videoLink)}
+              title={selectedCourse.courseTitle}
+              allowFullScreen
             />
           </div>
+        ) : (
+          <p>No video resource available.</p>
         )}
-
+      </div>
+ 
         {/* Downloadable PDF Section */}
         {Array.isArray(selectedCourse.pdfURLs) && selectedCourse.pdfURLs.length > 0 && (
           <div className="IT-user-course-mycourse-resource-container">
@@ -1322,7 +1387,7 @@ const handleShowCertificate = async () => {
           </div>
         )}
       </div>
-
+ 
       {/* Modal Footer */}
       <div className="IT-user-course-mycourse-footer">
         <button onClick={handleNextClick}>Next</button>
@@ -1330,19 +1395,19 @@ const handleShowCertificate = async () => {
     </div>
   </div>
 )}
-
-
+ 
+ 
 {/* Next Modal */}
 {isNextModalOpen && selectedCourse && (
   <div className="IT-user-course-modal-overlay">
     <div className="IT-user-course-next-content">
       <button onClick={() => setIsNextModalOpen(false)} className="close-button">X</button>
-      
+     
       {/* Modal Header */}
       <div className="IT-user-course-next-header">
         <h2>{selectedCourse.courseTitle}</h2>
       </div>
-
+ 
       {/* Modal Body */}
       <div className="IT-user-course-next-body">
         {selectedCourse.videoLink ? (
@@ -1358,7 +1423,7 @@ const handleShowCertificate = async () => {
           <p>No video resource available.</p>
         )}
       </div>
-
+ 
       {/* Modal Footer */}
       <div className="IT-user-course-next-footer">
         <button onClick={handleQuizStartClick}>Next Page ➔</button>
@@ -1366,33 +1431,34 @@ const handleShowCertificate = async () => {
     </div>
   </div>
 )}
-
-
+ 
+ 
 {isQuizModalOpen && (
   <div className="quiz-modal-overlay">
     <div className="quiz-modal-content">
       <button onClick={() => setIsQuizModalOpen(false)} className="quiz-close-button">X</button>
-      <img 
-        src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg" 
-        alt="Quiz Icon" 
-        className="quiz-icon" 
+      <img
+        src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg"
+        alt="Quiz Icon"
+        className="quiz-icon"
       />
       <h2 className="quiz-title">Ready for quiz</h2>
       <p className="quiz-description">
         Test yourself on the skills in this course for what you already know!
       </p>
       <p className="quiz-questions">{numberOfQuestions} Questions Only</p>
+      <p className="quiz-duration">Quiz Duration: {selectedCourse.quizDuration} minutes</p> {/* Display quiz duration here */}
       <p className="quiz-attempts">{attemptsUsed}/{maxAttempts} Attempts</p>
-
+ 
       {/* Disable start button if max attempts are reached */}
-      <button 
-        className="quiz-start-button" 
-        onClick={handleStartQuiz} 
+      <button
+        className="quiz-start-button"
+        onClick={handleStartQuiz}
         disabled={attemptsUsed >= maxAttempts}
       >
         Start Quiz
       </button>
-
+ 
       {/* Show message if attempts are exhausted */}
       {attemptsUsed >= maxAttempts && (
         <p style={{ color: 'red' }}>Maximum attempts reached. You cannot retake the quiz.</p>
@@ -1400,14 +1466,15 @@ const handleShowCertificate = async () => {
     </div>
   </div>
 )}
-
-
-
-{isQuizContentModalOpen && quizData && (
+ 
+ 
+{isQuizContentModalOpen && quizData && quizData.questions && (
   <div className="quiz-content-modal-overlay">
     <div className="quiz-content-modal">
       <h2>{selectedCourse.courseTitle}</h2>
-      {quizData.questions[currentQuestion] && (
+      <p>Time Left: {formatTime(timeLeft)}</p> {/* Display the timer here */}
+     
+      {quizData.questions.length > 0 && quizData.questions[currentQuestion] ? (
         <div>
           <h3>{quizData.questions[currentQuestion].question}</h3>
           <ul>
@@ -1427,6 +1494,7 @@ const handleShowCertificate = async () => {
               </li>
             ))}
           </ul>
+          {/* Display current question number and total number of questions */}
           <p>{currentQuestion + 1} of {quizData.questions.length} Questions</p>
           <button
             className="quiz-next-button"
@@ -1442,6 +1510,8 @@ const handleShowCertificate = async () => {
             {currentQuestion < quizData.questions.length - 1 ? "Next Question" : "Finish Quiz"}
           </button>
         </div>
+      ) : (
+        <p>Loading questions...</p>
       )}
     </div>
   </div>
@@ -1450,12 +1520,22 @@ const handleShowCertificate = async () => {
 
 
 
-
+{/* Vincent Kyle Mesiona*/}
 
 
 {isResultModalOpen && quizResult && selectedCourse && (
   <div className="result-modal-overlay" style={{ zIndex: 1 }}>
     <div className="result-modal">
+      {/* Close Button at the top right */}
+      <div className="IT-user-course-passed-footer">
+      <button
+        className="close-button top-right"
+        onClick={() => setIsResultModalOpen(false)} // Close the modal
+      >
+        ✕
+      </button>
+      </div>
+      
       <h2>{selectedCourse.courseTitle || "Course Title"}</h2>
       <div className="result-modal-content">
         {/* If the quiz is passed, show the passed modal */}
@@ -1463,32 +1543,9 @@ const handleShowCertificate = async () => {
           <>
             <img src={verifiedGif} alt="Verified Icon" className="result-icon" />
             <h3>Congratulations, you passed {selectedCourse.courseTitle}!</h3>
-            <p>Your Score: {quizResult.score}/{quizResult.totalQuestions}</p>
+            <p1><strong>Your Score: {quizResult.score}/{quizResult.totalQuestions}</strong></p1>
 
-            {/* Show View Result Button */}
-            <button
-              className="view-result-button"
-              onClick={() => {
-                setIsResultModalOpen(false);
-                setShowDetailedResults(true); // Open the detailed result view
-              }}
-            >
-              View Result
-            </button>
-
-            {/* Next Page Button to show congrats modal */}
-            <button
-              className="next-page-button"
-              onClick={async () => {
-                setIsResultModalOpen(false); // Close result modal
-                setShowCongratsModal(true);  // Show congrats modal
-                await handleNextPageAfterPass();  // Save quiz progress or move to certification
-              }}
-            >
-              Next Page
-            </button>
-
-            {/* Show Retake Course Button */}
+            <div className="IT-user-course-passed-footer">
             <button
               className="retake-button"
               onClick={handleRetakeCourse}
@@ -1496,13 +1553,19 @@ const handleShowCertificate = async () => {
               Retake Course
             </button>
 
-            {/* Close Button */}
+            
             <button
-              className="close-button"
-              onClick={() => setIsResultModalOpen(false)} // Close the modal
+              className="next-page-button"
+              onClick={async () => {
+                setIsResultModalOpen(false);
+                setShowCongratsModal(true);
+                await handleNextPageAfterPass();
+              }}
             >
-              Close
+              Next Page
             </button>
+            </div>
+
           </>
         ) : (
           <>
@@ -1510,60 +1573,38 @@ const handleShowCertificate = async () => {
             <h3>You didn't pass {selectedCourse.courseTitle}. A little more effort is needed.</h3>
             <p>Your Score: {quizResult.score}/{quizResult.totalQuestions}</p>
 
-            {/* Show View Result Button */}
+          
+            
             <button
-              className="view-result-button"
-              onClick={() => {
-                setIsResultModalOpen(false);
-                setShowDetailedResults(true);
+              className="retake-button"
+              onClick={async () => {
+                if (attemptsUsed < maxAttempts) {
+                  const newAttemptsUsed = attemptsUsed + 1;
+                  setAttemptsUsed(newAttemptsUsed);
+
+                  try {
+                    const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
+                    await updateDoc(enrollmentRef, {
+                      quizAttempts: newAttemptsUsed,
+                    });
+
+                    setCurrentQuestion(0);
+                    setQuizScore(0);
+                    setSelectedAnswers([]);
+
+                    setIsResultModalOpen(false);
+                    setIsQuizModalOpen(true);
+                  } catch (error) {
+                    console.error("Error retaking quiz:", error);
+                    toast.error("Failed to retake the quiz. Please try again.");
+                  }
+                } else {
+                  toast.error("No more attempts left for this quiz.");
+                }
               }}
+              disabled={attemptsUsed >= maxAttempts}
             >
-              View Result
-            </button>
-{/* Retake Quiz Button */}
-<button
-  className="retake-button"
-  onClick={async () => {
-    if (attemptsUsed < maxAttempts) {
-      // Increment the attempt count
-      const newAttemptsUsed = attemptsUsed + 1; // Increase attempt count locally for the new retake
-      setAttemptsUsed(newAttemptsUsed);
-
-      try {
-        // Update the attempt count in Firestore
-        const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
-        await updateDoc(enrollmentRef, {
-          quizAttempts: newAttemptsUsed,  // Update the quizAttempts count
-        });
-
-        // Reset quiz state for a fresh start
-        setCurrentQuestion(0);
-        setQuizScore(0);
-        setSelectedAnswers([]);  // Reset selected answers
-
-        // Close the result modal and open the "Ready for Quiz" modal
-        setIsResultModalOpen(false);
-        setIsQuizModalOpen(true);  // Open the "Ready for Quiz" modal
-
-      } catch (error) {
-        console.error("Error retaking quiz:", error);
-        toast.error("Failed to retake the quiz. Please try again.");
-      }
-    } else {
-      toast.error("No more attempts left for this quiz.");
-    }
-  }}
-  disabled={attemptsUsed >= maxAttempts}
->
-  {attemptsUsed >= maxAttempts ? "No More Attempts" : "Retake Quiz"}
-</button>
-
-            {/* Close Button */}
-            <button
-              className="close-button"
-              onClick={() => setIsResultModalOpen(false)} // Close the modal
-            >
-              Close
+              {attemptsUsed >= maxAttempts ? "No More Attempts" : "Retake Quiz"}
             </button>
           </>
         )}
@@ -1575,8 +1616,7 @@ const handleShowCertificate = async () => {
 
 
 
-
-
+{/* Vincent Kyle Mesiona*/}
 
 
 
@@ -1657,12 +1697,23 @@ const handleShowCertificate = async () => {
 )}
 
 
+
+{/* Vincent Kyle Mesiona*/}
+
 {showCertificateModal && (
           <div className="certificate-modal-overlay">
             <div className="certificate-modal">
               <h2>Course Completion Certificate</h2>
-
+              
              {/* Certificate Content with Background from Firebase */}
+             
+      <button
+        className="close-button top-rightcert"
+        onClick={() => setShowCertificateModal(false)} // Close the modal
+      >
+        ✕
+      </button>
+  
 <div
   className="certificate-content"
   ref={certificateRef}
@@ -1727,15 +1778,20 @@ const handleShowCertificate = async () => {
 </div>
 
 
+ 
+
               {/* Download Buttons */}
               <div className="certificate-actions">
-  <button onClick={handleDownloadCertificate}>Download as PNG</button>
-  <button onClick={() => setShowCertificateModal(false)}>Close</button>
+
+  <button  className="download-button" onClick={handleDownloadCertificate}>Download as PNG</button>
+  
 </div>
             </div>
           </div>
         )}
 
+
+      {/* Vincent Kyle Mesiona*/}
 
 
 
@@ -1758,7 +1814,7 @@ const handleShowCertificate = async () => {
 
       <div className="IT-user-course-modal-body">
         <img src={Category_IT} alt="Course visual" className="IT-user-course-modal-image" />
-        <p>{selectedCourse.courseDescription}</p>
+        <p23>{selectedCourse.courseDescription}</p23>
         <div className="IT-user-course-course-details">
           <h4>Prerequisite: <span className="IT-user-course-prerequisite">
             {Array.isArray(selectedCourse.prerequisites) && selectedCourse.prerequisites.length > 0
@@ -1767,6 +1823,7 @@ const handleShowCertificate = async () => {
           </span></h4>
 
           <h5>Category: <span className="IT-user-course-category">{selectedCourse.category}</span></h5>
+          <h5>Quiz Duration: <span>{selectedCourse.quizDuration} minutes</span></h5>
         </div>
       </div>
 

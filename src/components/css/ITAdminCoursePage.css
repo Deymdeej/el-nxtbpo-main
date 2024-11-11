@@ -52,7 +52,7 @@
  
 /* Main content styling */
 .it-admin-main-content {
-  margin-left: 270px; /* Adjust margin-left to account for sidebar */
+  margin-left: 250px; /* Adjust margin-left to account for sidebar */
   padding: 20px;
   transition: margin-left 0.3s ease;
 }
@@ -334,7 +334,7 @@ background-color: #f0f0f0;
   text-overflow: ellipsis; /* Add ellipsis for overflowed text */
 }
  
-.course-description-admin {
+.p69 {
 text-align: justify;
 display: -webkit-box;
 -webkit-line-clamp: 5; /* Limit to 4 lines */
@@ -342,7 +342,8 @@ display: -webkit-box;
 overflow: hidden;
 text-overflow: ellipsis;
 word-break: break-word;
-margin-bottom: 35px;
+margin-top: 10px;
+margin-bottom: auto;
 font-size: 14px;
 }
  
@@ -432,19 +433,6 @@ font-size: 14px;
   flex-wrap: wrap;
 }
  
-.course-card-horizontal {
-  position: relative;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 20px;
-  width: 100%; /* Adjust width as needed */
-  max-width: 300px;
-  text-align: left;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  background-color: #fff;
-}
- 
 .course-card-horizontal:hover {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
@@ -486,13 +474,6 @@ position: absolute;
 bottom: 60px; /* This will fix the position from the bottom */
 left: 20px;   /* Adjust the distance from the left as needed */
 margin-bottom: 10px;
-}
- 
-.course-footer {
-  font-size: 14px;
-  color: #333;
-  margin-top: 10px;
- 
 }
  
 .add-icon {
@@ -614,16 +595,12 @@ h2 {
  
 /* Close button in the top-right corner */
 .close-button-admin {
-  margin-bottom: 80px;
-  left: 10px;
   background: none;
   border: none;
   font-size: 24px;
   cursor: pointer;
 }
 .course-edit-header-admin{
-  margin: 0;
-  margin-top: 60px;
   font-size: 24px;
   font-weight: bold;
 }
@@ -633,8 +610,8 @@ color: red;
 }
  
 .close-button-admin img {
-width: 32px;
-height: 32px;
+width: 24px;
+height: 24px;
  
 }
 .it-admin-form-group {
@@ -719,7 +696,7 @@ height: 32px;
  
 /* Scrollable Modal Body */
 .modal-body {
-  max-height: 530px; /* Adjust as needed */
+  max-height: 600px; /* Adjust as needed */
   overflow-y: auto; /* Enables vertical scroll */
   padding-right: 15px;
   padding-left: 15px;
@@ -872,11 +849,17 @@ margin-bottom: 20px; /* Adds space below the entire table */
   flex-direction: column;
   width: 100%;
 }
+.togglebuttonpdf-icon{
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  object-fit: contain;
+}
 .delete-file-pdf{
   width: 24px;
   height: 24px;
 }
- 
+
 .file-info {
   display: flex;
   align-items: center;
@@ -890,8 +873,8 @@ margin-bottom: 20px; /* Adds space below the entire table */
 }
  
 .file-type-icon {
-  width: 24px; /* PDF icon size */
-  height: 24px;
+  width: 32px; /* PDF icon size */
+  height: 32px;
   margin-right: 15px;
 }
  
@@ -941,11 +924,13 @@ margin-bottom: 20px; /* Adds space below the entire table */
   cursor: pointer;
   display: flex;
   align-items: center;
+  position: absolute;
+  right: 10px; /* Adjust this as needed */
 }
  
 .trash-icon {
-  width: 18px; /* Trash icon size */
-  height: 18px;
+  width: 24px; /* Trash icon size */
+  height: 24px;
 }
  
 .delete-file-btn:hover .trash-icon {
@@ -980,14 +965,13 @@ margin-bottom: 20px; /* Adds space below the entire table */
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid #ddd;
-  margin-bottom: 15px;
+  padding-bottom: 10px;
 }
  
 .course-title-header-admin {
   margin: 0;
   font-size: 24px;
   font-weight: bold;
-  margin-top: 60px;
 }
  
 .btn {
@@ -1160,17 +1144,16 @@ margin-bottom: 20px; /* Adds space below the entire table */
 }
 /* Add spacing between Description, Category, and Prerequisites */
 .modal-body p {
-margin-bottom: 10px; /* Adjust this value to control spacing */
+margin-bottom: 15px; /* Adjust this value to control spacing */
 }
  
 .modal-body strong {
-display: block; /* Ensure labels like Description, Category, and Prerequisites are on separate lines */
 margin-bottom: 5px; /* Add spacing after each label */
 }
  
 /* Extra spacing specifically between major sections */
 .modal-body h5 {
-margin-top: 20px; /* Add spacing above Quiz Questions, PDF View, etc. */
+margin-top: 30px; /* Add spacing above Quiz Questions, PDF View, etc. */
 }
  
 /* Optional: Ensure consistent line height for better readability */
@@ -1181,6 +1164,7 @@ line-height: 1.5;
 .modal-body .description-text {
 text-align: justify;
 font-size: 16px;
+margin-top: 15px;
 margin-bottom: 15px; /* Add margin for spacing */
 line-height: 1.4; /* Adjust line-height for readability */
 word-break: break-word; /* Breaks words to prevent overflow */
@@ -1250,8 +1234,110 @@ cursor: pointer;
 background-color: #f5c6cb; /* Slight hover effect */
 }
 .enrolled-users {
-font-size: 13px;
+font-size: 14px;
 font-weight: bold; /* Makes "Enrolled Users" bold */
 display: inline-block; /* Aligns next to category */
 margin-bottom: 10px; /* Adds spacing from the bottom */
+}
+.more-options-btn{
+  width: 15px;
+  height: 15px;
+
+}
+
+.pdf-display-container {
+  margin-top: 20px;
+}
+
+.pdf-file-card {
+  display: flex;
+  align-items: center;
+  background-color: #f9f9f9;
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 15px;
+  width: 90%;
+  justify-content: space-between;
+}
+
+.pdf-file-details {
+  display: flex;
+  align-items: center;
+}
+
+.pdf-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.pdf-file-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.pdf-file-size {
+  font-size: 12px;
+  color: #888;
+}
+.pdf-file-options{
+  width: 15px;
+  height: 15px;
+}
+.pdf-options-menu {
+  position: relative;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.15);
+  padding: 5px 0;
+  min-width: 100px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.pdf-options-menu button {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  text-align: left;
+  color: #333;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pdf-options-menu button:hover {
+  background-color: #f0f0f0;
+}
+/* Specific style for the 'View' button */
+.view-pdf-btn {
+  background-color: #007bff;  /* Blue */
+  color: white;
+  z-index: 20;
+}
+
+.view-pdf-btn:hover {
+  background-color: #0056b3;  /* Darker blue */
+}
+
+/* Specific style for the 'Delete' button */
+.delete-pdf-btn {
+  background-color: #dc3545;  /* Red */
+  color: white;
+}
+
+.delete-pdf-btn:hover {
+  background-color: #c82333;  /* Darker red */
 }
