@@ -1,0 +1,382 @@
+/* Main layout for the IT User training dashboard */
+.IT-User-training-layout {
+  display: flex; /* Aligns sidebar and main content side by side */
+  height: 100vh; /* Full viewport height */
+  background-color: #f9f9f9; /* Background color */
+}
+
+/* Sidebar styling */
+.IT-User-training-sidebar {
+  width: 250px; /* Fixed width for the sidebar */
+  background-color: white; /* White background for sidebar */
+  padding: 20px; /* Padding around the sidebar content */
+  display: flex; /* Flexbox for arranging content */
+  flex-direction: column; /* Arrange sidebar content vertically */
+  justify-content: space-between; /* Space between content and logout */
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Light shadow for sidebar */
+}
+
+/* Sidebar logo */
+.IT-User-training-logo {
+  width: 100%; /* Full width for the logo */
+  margin-bottom: 20px; /* Space below the logo */
+}
+
+/* Sidebar menu */
+.IT-User-training-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Add space between menu items */
+  font-family: sans-serif;
+  font-size: 1rem;
+}
+
+/* Individual menu items */
+.IT-User-training-item {
+  display: flex;
+  align-items: center;
+  padding: 0.7rem 1rem; /* Adds padding for better spacing */
+  border-radius: 8px; /* Rounded corners */
+  transition: all 0.3s ease; /* Smooth transition on hover */
+  cursor: pointer; /* Pointer cursor on hover */
+  color: #4a5568; /* Default text color */
+  font-weight: 500; /* Slightly bold text */
+}
+
+.IT-User-training-item.active {
+  background-color: #57db8b; /* Green background for active item */
+  color: white; /* White text when active */
+}
+
+.IT-User-training-item img {
+  width: 20px; /* Icon size */
+  margin-right: 10px; /* Space between icon and text */
+}
+
+/* Logout button */
+.IT-User-training-logout {
+  display: flex;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  color: #4a5568;
+  font-size: 0.9rem; /* Slightly smaller font for logout */
+  margin-top: auto; /* Push logout to the bottom */
+}
+
+.IT-User-training-logout img {
+  width: 20px;
+  margin-right: 10px;
+}
+
+/* Main content area */
+.IT-User-training-content {
+  padding: 40px; /* Padding around content */
+  width: calc(100% - 250px); /* Adjust width to account for sidebar */
+  box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+/* Header (h2) styling */
+.IT-User-training-content h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333; /* Dark grey for header */
+  margin-bottom: 30px; /* Space below header */
+}
+/* Subheader (h3) styling */
+.IT-User-training-content h3 {
+  font-size: 1.5rem; /* Slightly smaller than h2 */
+  font-weight: 600; /* Semi-bold font weight */
+  color: #333; /* Dark grey color */
+  margin-bottom: 20px; /* Space below the h3 */
+  letter-spacing: 0.5px; /* Add slight letter-spacing for readability */
+
+
+  padding-bottom: 5px; /* Space below text to the underline */
+}
+
+/* Schedule section */
+.IT-User-training-schedule-section {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 20px; /* Space between section title and cards */
+}
+
+/* Training cards container */
+/* Container for the training cards */
+.IT-User-training-cards-container {
+  display: flex;
+  gap: 30px; /* Space between cards */
+  justify-content: flex-start; /* Align the cards to the left */
+}
+
+/* Individual training card */
+.IT-User-training-card {
+  border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    width: 257px;
+    height: 357px;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    position: relative;
+}
+
+/* Hover effect for the card */
+.IT-User-training-card:hover {
+  transform: translateY(-5px); /* Slight upward movement on hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+}
+
+/* Training title styling */
+.IT-User-training-title {
+  font-size: 18px; /* Font size for title */
+  font-weight: bold;
+  color: #000; /* Black color for better contrast */
+  margin-bottom: 10px; /* Space below the title */
+}
+
+/* Button styling for enroll */
+.IT-User-training-enroll-btn {
+  padding: 6px;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  text-align: center;
+  width: 120px; /* Fixed width for button */
+  background-color: #00650a; /* Blue background for the button */
+  transition: background-color 0.3s ease;
+  margin: 0 auto 15px auto; /* Centers button and adds bottom margin */
+  margin-bottom: -6px;
+  display: block; /* Ensures margin auto works */
+}
+
+/* Hover effect for the button */
+.IT-User-training-enroll-btn:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* Date and time container */
+.IT-User-training-datetime {
+  position: absolute;
+bottom: 60px; /* This will fix the position from the bottom */
+left: 20px;   /* Adjust the distance from the left as needed */
+margin-bottom: 10px;
+}
+
+/* Date styling */
+.IT-User-training-datetime span:first-child {
+  font-weight: bold;
+  font-size: 12px;
+  margin-right: 6px;
+}
+
+/* Time styling */
+.IT-User-training-datetime span:last-child {
+  font-size: 12px;
+  color: #666; /* Lighter color for the time */
+}
+  
+
+.IT-User-training-description {
+  text-align: justify;
+display: -webkit-box;
+-webkit-line-clamp: 5; /* Limit to 4 lines */
+-webkit-box-orient: vertical;
+overflow: hidden;
+text-overflow: ellipsis;
+word-break: break-word;
+margin-top: 10px;
+margin-bottom: auto;
+font-size: 14px;
+}
+
+
+@media (max-width: 768px) {
+  .IT-User-training-cards-container {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Smaller columns on smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .IT-User-training-cards-container {
+    grid-template-columns: 1fr; /* Single column layout on very small screens */
+  }
+}
+
+.IT-user-training-side-modal {
+  position: fixed;
+  top: 0;
+  right: -400px; /* Initially hidden outside of the viewport */
+  width: 400px;
+  height: 100%;
+  background-color: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+  transition: right 0.4s ease-in-out;
+  z-index: 1000;
+}
+
+.IT-user-training-side-modal.open {
+  right: 0; /* Slide the modal into view */
+}
+
+.IT-user-training-side-modal-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+}
+
+.IT-user-training-side-modal-header {
+  background-color: #4baea0; /* Matching the green color */
+    color: white;
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.IT-user-training-side-modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.IT-user-training-side-modal-close-button {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+}
+
+.IT-user-training-side-modal-body {
+  padding: 20px;
+  flex-grow: 1;
+}
+
+.IT-user-training-side-modal-image {
+  width: 100%;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.IT-user-training-side-modal-details h4,
+.IT-user-training-side-modal-details h5 {
+  margin: 10px 0;
+}
+
+.IT-user-training-side-modal-footer {
+  display: flex;
+    justify-content: center;
+    margin-top: 160px;
+}
+
+
+.IT-user-training-side-modal-enroll-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.IT-user-training-side-modal-enroll-button:hover {
+  background-color: #0056b3;
+}
+
+
+/* Success Modal Container */
+/* Modal Background: 
+   Centers the modal content with a dark overlay */
+   .IT-user-training-success-modal {
+    position: fixed; /* Ensure the modal is fixed while scrolling */
+    top: 0;
+    left: 0;
+    width: 100%; /* Full-screen width */
+    height: 100%; /* Full-screen height */
+    display: flex;
+    justify-content: center; /* Horizontally center the modal */
+    align-items: center; /* Vertically center the modal */
+    background-color: rgba(0, 0, 0, 0.5); /* Dark background for overlay */
+    z-index: 1000;
+  }
+  
+  /* Modal Content Box:
+     Creates a rectangular-shaped modal with consistent padding */
+ .IT-user-training-success-modal-content {
+    background-color: white; /* White background for the modal */
+    padding: 2rem; /* Add padding inside the modal */
+    border-radius: 12px; /* Slight rounded corners */
+    text-align: center; /* Center the content inside */
+    width: 350px; /* Set the width of the modal */
+    height: 500px; /* Set the height to make it more rectangular */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+    border: 2px solid #3b82f6; /* Add a blue border to match the button */
+    display: flex; /* Enables flexbox */
+    flex-direction: column; /* Stack the content vertically */
+    justify-content: center; /* Vertically center the content */
+    align-items: center; /* Horizontally center the content */
+    margin-bottom: 2rem; /* Space between content and footer */
+}
+
+
+  
+  /* Success Image */
+  .IT-user-training-success-modal-image {
+    width: 100px; /* Set fixed width for the image */
+    height: auto;
+    margin-bottom: 1.5rem; /* Space below the image */
+    display: block; /* Ensure it's treated as a block-level element */
+    margin-left: auto; /* Automatically adjust left margin */
+    margin-right: auto; /* Automatically adjust right margin */
+}
+
+
+  
+  /* Modal Title */
+  .IT-user-training-success-title {
+    font-size: 1.5rem; /* Large, bold title */
+    font-weight: bold;
+    color: #111827;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Modal Description */
+  .IT-user-training-success-description {
+    font-size: 1rem;
+    color: #6b7280; /* Light gray color for description */
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Button Styling:
+     Styles the confirmation button */
+     .IT-user-training-success-ok-button {
+      background-color: #3b82f6; /* Bright blue background */
+      color: white;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+      margin-top: 1.5rem; /* Adds space above the button */
+  }
+  
+  
+  /* Button Hover Effect */
+  .IT-user-training-success-ok-button:hover {
+    background-color: #2563eb; /* Darker blue on hover */
+  }
+  

@@ -1,0 +1,341 @@
+/* Modal Overlay */
+.itadminmodal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+/* Modal Container */
+.itadminmodal-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 30px;
+  width: 95%;
+  max-width: 950px;
+  max-height: 98vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Modal Header */
+.itadminmodal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 15px;
+}
+
+.itadminmodal-header h5 {
+  margin: 0;
+  margin-top: 60px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.itadminmodal-close-btn {
+  margin-bottom: 80px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.itadminmodal-close-btn:hover {
+  color: red;
+}
+
+/* Modal Body */
+.itadminmodal-body {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0 10px;
+}
+
+/* Modal Footer */
+.itadminmodal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 2px solid #ddd;
+  margin-top: 15px;
+}
+
+/* Buttons */
+.itadminmodal-btn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.itadminmodal-btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.itadminmodal-btn-secondary {
+  background-color: #ccc;
+  color: black;
+  border: none;
+  border-radius: 5px;
+}
+.itadminmodal-close-btn {
+  width: 32px;
+  height: 32px;
+
+}
+
+.itadminmodal-btn:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+/* Styling for the form fields */
+.it-admin-form-group {
+  margin-bottom: 30px;
+}
+
+.it-admin-form-group label {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+  display: block;
+  margin-bottom: 10px;
+  margin-top: 10px;
+
+}
+.it-admin-form-group-switch label{
+  font-size: 18px;
+  font-weight: 500;
+  margin-top: 2px;
+  margin-right: 5px;
+}
+
+.it-admin-form-group input, 
+.it-admin-form-group select, 
+.it-admin-form-group textarea {
+  width: 100%;
+  padding: 15px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  font-size: 14px;
+  background-color: #f7f7f7;
+  transition: all 0.3s;
+}
+
+.it-admin-form-group input:focus, 
+.it-admin-form-group select:focus, 
+.it-admin-form-group textarea:focus {
+  border-color: #007bff;
+  background-color: #fff;
+  outline: none;
+}
+
+/* File Upload Section */
+.upload-section {
+  border: 3px dashed #ddd; /* Larger border */
+  padding: 40px; /* Increased padding to make the rectangle bigger */
+  border-radius: 8px;
+  text-align: center;
+  background-color: #f9f9f9;
+  width: 80%; /* Adjust the width to take up 80% of the container */
+  min-height: 200px; /* Increase height to create a bigger rectangle */
+  margin: 20px auto; /* This centers the element horizontally and adds margin on top */
+  display: flex;
+  align-items: center; /* Vertically centers content */
+  justify-content: center; /* Horizontally centers content */
+  box-sizing: border-box;
+}
+
+.upload-section:hover {
+  border-color: #007bff;
+}
+
+.upload-section input[type="file"] {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  cursor: pointer;
+}
+
+.upload-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.upload-icon {
+  font-size: 24px;
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.uploaded-files {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.uploaded-files .file-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #f7f7f7;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.uploaded-files .file-info .file-name {
+  color: #333;
+}
+
+.uploaded-files .file-info .file-status {
+  color: #28a745;
+}
+
+.uploaded-files .file-info .delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.uploaded-files .file-info .delete-btn img {
+  width: 18px;
+  height: 18px;
+}
+
+/* Video Link Switch */
+.video-link-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.video-link-section input {
+  flex-grow: 1;
+}
+
+.quiz-section {
+  margin-top: 20px;
+}
+
+.quiz-section input, .quiz-section select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    margin-top: 8px;
+    margin-bottom: 20px;
+    resize: vertical; /* Allows vertical resizing */
+}
+.choice label{
+  font-size: 18px;
+  font-weight: bold;
+}
+.quiz-section input:focus, .quiz-section select:focus {
+  border-color: #007bff;
+  background-color: #fff;
+}
+label24{
+  font-size: 18px;
+  font-weight: bold;
+}
+.quiz-question {
+  margin-bottom: 25px;
+  margin-top: 20px;
+}
+.question-number{
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.correct-answer-section {
+  margin-bottom: 20px;
+}
+
+/* Save Button */
+.save-button {
+  background-color: #007bff;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.save-button:hover {
+  background-color: #0056b3;
+}
+.switch-container {
+  display: flex;
+  align-items: center;
+}
+
+.switch-input {
+  display: none;
+}
+
+.switch-label {
+  position: relative;
+  display: inline-block;
+  width: 60px; /* Adjust the width as needed */
+  height: 30px; /* Adjust the height as needed */
+  background-color: #ccc;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.switch-label .switch-button {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease-in-out;
+}
+
+.switch-input:checked + .switch-label {
+  background-color: #a6e23b; /* Green color when toggled */
+}
+
+.switch-input:checked + .switch-label .switch-button {
+  transform: translateX(30px); /* Adjust based on the switch width */
+}
+
+.switch-text {
+  margin-top: 5px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+}
+
