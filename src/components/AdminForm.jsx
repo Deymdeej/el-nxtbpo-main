@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase';
 import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { updateDoc } from 'firebase/firestore'; // Add this import
 import './css/AdminFormSuper.css';
 import BPOLOGO from '../assets/bpo-logo.png';
 import UserDefault from '../assets/userdefault.png';
@@ -77,12 +78,23 @@ function AdminForm() {
     setIsModalOpen(true);
   };
 
-  const handleSaveUser = (updatedUser) => {
-    console.log('User saved:', updatedUser);
-    // Add your logic to save the updated user here
-    setIsModalOpen(false);
+  const handleSaveUser = async (updatedUser) => {
+    try {
+      // Reference the specific document for the user and update it
+      const userRef = doc(db, 'Users', updatedUser.id);
+      await updateDoc(userRef, {
+        fullName: updatedUser.fullName,
+        department: updatedUser.department,
+        role: updatedUser.role,
+      });
+      console.log('User updated:', updatedUser);
+      
+      // Close the modal after saving
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error updating user: ', error);
+    }
   };
-
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
@@ -165,12 +177,13 @@ function AdminForm() {
             >
               ✎
             </button>
-            <button
+            
+            <button2
               onClick={() => handleDeleteUser(user.id)}
               className="icon-button-super delete-icon-super"
             >
               🗑
-            </button>
+            </button2>
           </td>
         </tr>
       ))
@@ -209,8 +222,8 @@ function AdminForm() {
                     <input
                       type="radio"
                       value="Admin"
-                      checked={editingUser.role === 'Admin'}
-                      onChange={() => setEditingUser({ ...editingUser, role: 'Admin' })}
+                      checked={editingUser.role === 'admin'}
+                      onChange={() => setEditingUser({ ...editingUser, role: 'admin' })}
                     />
                     Admin
                   </label>
@@ -218,8 +231,8 @@ function AdminForm() {
                     <input
                       type="radio"
                       value="User"
-                      checked={editingUser.role === 'User'}
-                      onChange={() => setEditingUser({ ...editingUser, role: 'User' })}
+                      checked={editingUser.role === 'user'}
+                      onChange={() => setEditingUser({ ...editingUser, role: 'user' })}
                     />
                     User
                   </label>

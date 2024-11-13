@@ -3,10 +3,11 @@ import { db, auth, storage } from "../firebase"; // Include Firebase storage
 import { collection, addDoc, getDocs, doc, getDoc, query, where } from "firebase/firestore"; // Firestore methods
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; // Firebase Storage methods
 import { toast } from "react-toastify"; // For feedback
-import ITAdminDashboardForm from "./ITAdminDashboardForm"; // Import the separated form
+import ITAdminCoursePage from "./AdminSuperCourseForm1"; // Import the form
 
-function ITAdminDashboard() {
+function ITAdminCoursePage1() {
   const [courses, setCourses] = useState([]);
+  const [certificates, setCertificates] = useState([]); // State for certificates
   const [enrollmentCounts, setEnrollmentCounts] = useState({});
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
@@ -66,7 +67,17 @@ function ITAdminDashboard() {
       }
     };
 
+    const fetchCertificates = async () => {
+      const certificatesSnapshot = await getDocs(collection(db, "Certificates"));
+      const fetchedCertificates = certificatesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setCertificates(fetchedCertificates);
+    };
+
     fetchCoursesAndEnrollments();
+    fetchCertificates(); // Call the function to fetch certificates
   }, []);
 
   const handleAddQuestion = () => {
@@ -79,7 +90,6 @@ function ITAdminDashboard() {
     newQuestions[index][name] = value;
     setQuestions(newQuestions);
   };
-  
 
   const handleChangeChoice = (qIndex, cIndex, event) => {
     const newQuestions = [...questions];
@@ -209,7 +219,7 @@ function ITAdminDashboard() {
   };
 
   return (
-    <ITAdminDashboardForm
+    <ITAdminCoursePage
       showModal={showModal}
       setShowModal={setShowModal}
       showCourseDetailsModal={showCourseDetailsModal}
@@ -237,8 +247,10 @@ function ITAdminDashboard() {
       handlePrerequisiteChange={handlePrerequisiteChange}
       pdfFile={pdfFile}
       handlePdfChange={handlePdfChange}
+      setCourses={setCourses}
+      certificates={certificates} // Pass certificates to the ITAdminCoursePage
     />
   );
 }
 
-export default ITAdminDashboard;
+export default ITAdminCoursePage1;

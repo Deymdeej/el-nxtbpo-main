@@ -54,7 +54,7 @@ const ITUser = ({
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false); // New state for quiz modal
   const [quizData, setQuizData] = useState(null); // State for quiz data
   const [numberOfQuestions, setNumberOfQuestions] = useState(0); // To hold the number of questions
-  const [attemptsUsed, setAttemptsUsed] = useState(0); // To hold the number of attempts used
+  
   const [maxAttempts, setMaxAttempts] = useState(2); // Max attempts for the quiz
   const [currentQuestion, setCurrentQuestion] = useState(0); // State to track the current question
   const [isQuizContentModalOpen, setIsQuizContentModalOpen] = useState(false); // New state for the quiz content modal
@@ -80,14 +80,37 @@ const certificateRef = useRef(null);
 const [certificateUrl, setCertificateUrl] = useState(null);
 const [courseTitle, setCourseTitle] = useState("");
 const [timeLeft, setTimeLeft] = useState(null);
-
-
+const initialAttempts = 0;
 
 const navigate = useNavigate();
 
+const [canStartAfterDelay, setCanStartAfterDelay] = useState(false);
+const [attemptsUsed, setAttemptsUsed] = useState(initialAttempts); // Replace initialAttempts with the starting value of attempts
+ 
+useEffect(() => {
+  let timer;
+  if (attemptsUsed >= maxAttempts) {
+    timer = setTimeout(() => {
+      setCanStartAfterDelay(true);
+      setAttemptsUsed(0); // Reset the attempts after 1 minute
+    }, 60000); // 1 minute delay (60000 ms)
+  }
+  return () => clearTimeout(timer); // Cleanup the timer when the component unmounts
+}, [attemptsUsed, maxAttempts]);
 
 
 
+useEffect(() => {
+  let timer;
+  if (attemptsUsed >= maxAttempts) {
+    // Start a timer when max attempts are reached
+    timer = setTimeout(() => {
+      setCanStartAfterDelay(true); // Allow the user to start the quiz
+      setAttemptsUsed(0); // Reset attempts after 1 minute
+    }, 60000); // 1 minute duration (60000 ms)
+  }
+  return () => clearTimeout(timer); // Clean up timer on component unmount
+}, [attemptsUsed, maxAttempts]);
 
 
 
@@ -526,9 +549,10 @@ const fetchCertificateTemplate = async (certificateId) => {
 
 
 const handleNextClick = () => {
-  setIsMyCoursesModalOpen(false);
-  setIsNextModalOpen(true);
+  setIsMyCoursesModalOpen(false); // Close My Courses modal
+  setIsQuizModalOpen(true); // Open Quiz modal (use the setter function)
 };
+
 const handleCloseQuizModal = () => {
   setIsQuizModalOpen(false); // Close the quiz modal
 };
@@ -1067,13 +1091,22 @@ const handleShowCertificate = async () => {
 
   
 
-  const handleQuizStartClick = () => {
-    if (selectedCourse) {
+const handleQuizStartClick = () => {
+
+  if (selectedCourse) {
+
       fetchQuizDataFromEnrollment(selectedCourse.id); // Fetch quiz data from the enrollment
-    }
-    setIsNextModalOpen(false); // Close the next modal
-    setIsQuizModalOpen(true); // Open quiz modal
-  };
+
+  }
+
+  setTimeLeft(selectedCourse.quizDuration * 60); // Start timer only when starting the quiz
+
+  setIsNextModalOpen(false); // Close the next modal
+
+  setIsQuizModalOpen(true); // Open quiz modal
+
+};
+
 
   
   
@@ -1333,42 +1366,45 @@ const handleShowCertificate = async () => {
           </>
         )}
         
-        {/* My Courses Modal */}
-        {isMyCoursesModalOpen && selectedCourse && !passedCourses.includes(selectedCourse.id) && (
+        {isMyCoursesModalOpen && selectedCourse && (
   <div className="IT-user-course-modal-overlay">
     <div className="IT-user-course-mycourse-content">
-     
       {/* Modal Header */}
       <div className="IT-user-course-mycourse-header">
         <h2 className="IT-user-course-mycourse-title">
           {selectedCourse.courseTitle}
         </h2>
-        <button className="IT-user-course-mycourse-close-button" onClick={() => setIsMyCoursesModalOpen(false)}><img src={CloseIcon} alt="Close"/></button>
+        <button 
+          className="IT-user-course-mycourse-close-button" 
+          onClick={() => setIsMyCoursesModalOpen(false)}
+        >
+          <img src={CloseIcon} alt="Close" />
+        </button>
       </div>
- 
+
       {/* Modal Body */}
       <div className="IT-user-course-mycourse-body">
         <p className="IT-user-course-description">
-          <strong>Description:</strong> {selectedCourse.courseDescription}
+          <strong1>Description:</strong1> {selectedCourse.courseDescription}
         </p>
         <p><strong>Quiz Duration:</strong> {selectedCourse.quizDuration} minutes</p>
- 
-      {/* Modal Body */}
-      <div className="IT-user-course-next-body">
-        {selectedCourse.videoLink ? (
-          <div className="IT-user-course-next-video-container">
-            <h4>Video Resource:</h4>
-            <iframe
-              src={convertToEmbedUrl(selectedCourse.videoLink)}
-              title={selectedCourse.courseTitle}
-              allowFullScreen
-            />
-          </div>
-        ) : (
-          <p>No video resource available.</p>
-        )}
-      </div>
- 
+
+        {/* Video Resource */}
+        <div className="IT-user-course-next-body">
+          {selectedCourse.videoLink ? (
+            <div className="IT-user-course-next-video-container">
+              <h4>Video Resource:</h4>
+              <iframe
+                src={convertToEmbedUrl(selectedCourse.videoLink)}
+                title={selectedCourse.courseTitle}
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <p>No video resource available.</p>
+          )}
+        </div>
+
         {/* Downloadable PDF Section */}
         {Array.isArray(selectedCourse.pdfURLs) && selectedCourse.pdfURLs.length > 0 && (
           <div className="IT-user-course-mycourse-resource-container">
@@ -1377,7 +1413,13 @@ const handleShowCertificate = async () => {
               const fileName = decodeURIComponent(pdfUrl).split('/').pop().split('?')[0];
               return (
                 <div key={index} className="pdf-item">
-                  <a href={pdfUrl} download target="_blank" rel="noopener noreferrer" className="pdf-link">
+                  <a 
+                    href={pdfUrl} 
+                    download 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="pdf-link"
+                  >
                     <img src={PdfIcon} alt="PDF Icon" className="IT-user-course-pdf-icon" />
                     <span className="pdf-filename">{fileName}</span>
                   </a>
@@ -1387,14 +1429,33 @@ const handleShowCertificate = async () => {
           </div>
         )}
       </div>
- 
+
       {/* Modal Footer */}
-      <div className="IT-user-course-mycourse-footer">
-        <button onClick={handleNextClick}>Next</button>
-      </div>
+{/* Modal Footer */}
+<div className="IT-user-course-mycourse-footer">
+  <button
+    onClick={() => {
+      if (quizResult) {
+        // Close the Result Modal if it is open
+        setIsResultModalOpen(false);
+        
+        // If there is a quiz result, close the current modal and open the Congrats modal
+        setIsMyCoursesModalOpen(false);
+        setShowCongratsModal(true);
+      } else {
+        // Handle other next logic here if needed
+        handleNextClick(); // Optional: If you have another function for general navigation
+      }
+    }}
+  >
+    Next
+  </button>
+</div>
+
     </div>
   </div>
 )}
+
  
  
 {/* Next Modal */}
@@ -1433,86 +1494,101 @@ const handleShowCertificate = async () => {
 )}
  
  
-{isQuizModalOpen && (
-  <div className="quiz-modal-overlay">
-    <div className="quiz-modal-content">
-      <button onClick={() => setIsQuizModalOpen(false)} className="quiz-close-button">X</button>
-      <img
-        src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg"
-        alt="Quiz Icon"
-        className="quiz-icon"
+ {isQuizModalOpen && (
+<div className="quiz-modal-overlay">
+<div className="quiz-modal-content">
+<button onClick={() => setIsQuizModalOpen(false)} className="quiz-close-button">X</button>
+<img 
+        src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg" 
+        alt="Quiz Icon" 
+        className="quiz-icon" 
       />
-      <h2 className="quiz-title">Ready for quiz</h2>
-      <p className="quiz-description">
+<h2 className="quiz-title">Ready for quiz</h2>
+<p className="quiz-description">
         Test yourself on the skills in this course for what you already know!
-      </p>
-      <p className="quiz-questions">{numberOfQuestions} Questions Only</p>
-      <p className="quiz-duration">Quiz Duration: {selectedCourse.quizDuration} minutes</p> {/* Display quiz duration here */}
-      <p className="quiz-attempts">{attemptsUsed}/{maxAttempts} Attempts</p>
+</p>
+<p className="quiz-questions">{numberOfQuestions} Questions Only</p>
+<p className="quiz-duration">Quiz Duration: {selectedCourse.quizDuration} minutes</p>
+<p className="quiz-attempts">{attemptsUsed}/{maxAttempts} Attempts</p>
  
-      {/* Disable start button if max attempts are reached */}
-      <button
-        className="quiz-start-button"
-        onClick={handleStartQuiz}
-        disabled={attemptsUsed >= maxAttempts}
-      >
+      {/* Quiz start logic */}
+<button 
+        className="quiz-start-button" 
+        onClick={handleStartQuiz} 
+        disabled={attemptsUsed >= maxAttempts && !canStartAfterDelay}
+>
         Start Quiz
-      </button>
+</button>
  
-      {/* Show message if attempts are exhausted */}
+      {/* Message and timer for allowing a retry */}
       {attemptsUsed >= maxAttempts && (
-        <p style={{ color: 'red' }}>Maximum attempts reached. You cannot retake the quiz.</p>
+<>
+<p style={{ color: 'red' }}>Maximum attempts reached. You cannot retake the quiz.</p>
+          {!canStartAfterDelay && (
+<p style={{ color: 'blue' }}>You will be able to retake the quiz in 1 minute.</p>
+          )}
+</>
       )}
-    </div>
-  </div>
+</div>
+</div>
 )}
  
  
-{isQuizContentModalOpen && quizData && quizData.questions && (
+ {isQuizContentModalOpen && quizData && quizData.questions && (
   <div className="quiz-content-modal-overlay">
     <div className="quiz-content-modal">
-      <h2>{selectedCourse.courseTitle}</h2>
-      <p>Time Left: {formatTime(timeLeft)}</p> {/* Display the timer here */}
-     
-      {quizData.questions.length > 0 && quizData.questions[currentQuestion] ? (
-        <div>
-          <h3>{quizData.questions[currentQuestion].question}</h3>
-          <ul>
-            {quizData.questions[currentQuestion].choices.map((choice, index) => (
-              <li key={index}>
-                <input
-                  type="radio"
-                  id={`choice_${index}`}
-                  name={`quiz-question-${currentQuestion}`}
-                  value={String.fromCharCode(65 + index)} // A, B, C, D
-                  onChange={() => handleAnswerSelect(currentQuestion, String.fromCharCode(65 + index))} // Track answer for the current question
-                  checked={selectedAnswers[currentQuestion] === String.fromCharCode(65 + index)} // Maintain the selected option
-                />
-                <label htmlFor={`choice_${index}`}>
-                  {String.fromCharCode(65 + index)}. {choice}
-                </label>
-              </li>
-            ))}
-          </ul>
-          {/* Display current question number and total number of questions */}
-          <p>{currentQuestion + 1} of {quizData.questions.length} Questions</p>
-          <button
-            className="quiz-next-button"
-            onClick={() => {
-              if (currentQuestion < quizData.questions.length - 1) {
-                setCurrentQuestion(currentQuestion + 1);
-              } else {
-                handleFinishQuiz();  // Call this function to process quiz results
-              }
-            }}
-            disabled={!selectedAnswers[currentQuestion]} // Disable the next button if no answer is selected
-          >
-            {currentQuestion < quizData.questions.length - 1 ? "Next Question" : "Finish Quiz"}
-          </button>
-        </div>
-      ) : (
-        <p>Loading questions...</p>
-      )}
+      
+      {/* Header */}
+      <div className="quiz-content-modal-header">
+        <h2>{selectedCourse.courseTitle}</h2>
+        <span className="quiz-timer">Time Left: {formatTime(timeLeft)}</span> {/* Timer on the right */}
+      </div>
+
+      {/* Body */}
+      <div className="quiz-content-modal-body">
+        {quizData.questions.length > 0 && quizData.questions[currentQuestion] ? (
+          <div>
+            <h3>{quizData.questions[currentQuestion].question}</h3>
+            <ul>
+              {quizData.questions[currentQuestion].choices.map((choice, index) => (
+                <li key={index}>
+                  <input
+                    type="radio"
+                    id={`choice_${index}`}
+                    name={`quiz-question-${currentQuestion}`}
+                    value={String.fromCharCode(65 + index)} // A, B, C, D
+                    onChange={() => handleAnswerSelect(currentQuestion, String.fromCharCode(65 + index))} // Track answer for the current question
+                    checked={selectedAnswers[currentQuestion] === String.fromCharCode(65 + index)} // Maintain the selected option
+                  />
+                  <label htmlFor={`choice_${index}`}>
+                    {String.fromCharCode(65 + index)}. {choice}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p>Loading questions...</p>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="quiz-content-modal-footer">
+        <p>{currentQuestion + 1} of {quizData.questions.length} Questions</p>
+        <button
+          className="quiz-next-button"
+          onClick={() => {
+            if (currentQuestion < quizData.questions.length - 1) {
+              setCurrentQuestion(currentQuestion + 1);
+            } else {
+              handleFinishQuiz();  // Call this function to process quiz results
+            }
+          }}
+          disabled={!selectedAnswers[currentQuestion]} // Disable the next button if no answer is selected
+        >
+          {currentQuestion < quizData.questions.length - 1 ? "Next Question" : "Finish Quiz"}
+        </button>
+      </div>
     </div>
   </div>
 )}
@@ -1520,7 +1596,8 @@ const handleShowCertificate = async () => {
 
 
 
-{/* Vincent Kyle Mesiona*/}
+
+
 
 
 {isResultModalOpen && quizResult && selectedCourse && (
@@ -1528,14 +1605,14 @@ const handleShowCertificate = async () => {
     <div className="result-modal">
       {/* Close Button at the top right */}
       <div className="IT-user-course-passed-footer">
-      <button
-        className="close-button top-right"
-        onClick={() => setIsResultModalOpen(false)} // Close the modal
-      >
-        ✕
-      </button>
+        <button
+          className="close-button top-right"
+          onClick={() => setIsResultModalOpen(false)} // Close the modal
+        >
+          ✕
+        </button>
       </div>
-      
+     
       <h2>{selectedCourse.courseTitle || "Course Title"}</h2>
       <div className="result-modal-content">
         {/* If the quiz is passed, show the passed modal */}
@@ -1543,55 +1620,56 @@ const handleShowCertificate = async () => {
           <>
             <img src={verifiedGif} alt="Verified Icon" className="result-icon" />
             <h3>Congratulations, you passed {selectedCourse.courseTitle}!</h3>
-            <p1><strong>Your Score: {quizResult.score}/{quizResult.totalQuestions}</strong></p1>
-
+            <p><strong>Your Score: {quizResult.score}/{quizResult.totalQuestions}</strong></p>
+ 
             <div className="IT-user-course-passed-footer">
-            <button
-              className="retake-button"
-              onClick={handleRetakeCourse}
-            >
-              Retake Course
-            </button>
+              {/* "View Course" button aligned to the left */}
+              <button
+                className="view-course-button"
+                onClick={() => {
+                  setIsMyCoursesModalOpen(true);  // Open "My Courses" modal
+                  setIsResultModalOpen(false);    // Close the results modal
+                }}
+              >
+                View Course
+              </button>
 
-            
-            <button
-              className="next-page-button"
-              onClick={async () => {
-                setIsResultModalOpen(false);
-                setShowCongratsModal(true);
-                await handleNextPageAfterPass();
-              }}
-            >
-              Next Page
-            </button>
+              {/* "Next" button aligned to the right */}
+              <button
+                className="next-page-button"
+                onClick={async () => {
+                  setIsResultModalOpen(false);
+                  setShowCongratsModal(true);
+                  await handleNextPageAfterPass();
+                }}
+              >
+                Next
+              </button>
             </div>
-
           </>
         ) : (
           <>
             <img src={sadGif} alt="Sad Icon" className="result-icon" />
             <h3>You didn't pass {selectedCourse.courseTitle}. A little more effort is needed.</h3>
             <p>Your Score: {quizResult.score}/{quizResult.totalQuestions}</p>
-
-          
-            
+ 
             <button
               className="retake-button"
               onClick={async () => {
                 if (attemptsUsed < maxAttempts) {
                   const newAttemptsUsed = attemptsUsed + 1;
                   setAttemptsUsed(newAttemptsUsed);
-
+ 
                   try {
                     const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
                     await updateDoc(enrollmentRef, {
                       quizAttempts: newAttemptsUsed,
                     });
-
+ 
                     setCurrentQuestion(0);
                     setQuizScore(0);
                     setSelectedAnswers([]);
-
+ 
                     setIsResultModalOpen(false);
                     setIsQuizModalOpen(true);
                   } catch (error) {
@@ -1599,10 +1677,11 @@ const handleShowCertificate = async () => {
                     toast.error("Failed to retake the quiz. Please try again.");
                   }
                 } else {
-                  toast.error("No more attempts left for this quiz.");
+                  // If no more attempts, just open the quiz modal
+                  setIsResultModalOpen(false);
+                  setIsQuizModalOpen(true);
                 }
               }}
-              disabled={attemptsUsed >= maxAttempts}
             >
               {attemptsUsed >= maxAttempts ? "No More Attempts" : "Retake Quiz"}
             </button>
@@ -1613,10 +1692,15 @@ const handleShowCertificate = async () => {
   </div>
 )}
 
-
-
-
+ 
+ 
+ 
 {/* Vincent Kyle Mesiona*/}
+ 
+
+
+
+
 
 
 
@@ -1625,13 +1709,25 @@ const handleShowCertificate = async () => {
 
 {showCongratsModal && (
   <div className="congrats-modal-overlay">
+    
     <div className="congrats-modal">
       <h2>Congratulations!</h2>
+
+      <div className="IT-user-course-passed-header">
+        <button
+          className="close-button top-right-1"
+          onClick={() => setShowCongratsModal(false)} // Close the modal
+        >
+          ✕
+        </button>
+      </div>  
       <img src={trophyGif} alt="Trophy Icon" />
       <p>
         Congratulations on successfully completing the course and reaching this
         incredible milestone in your learning journey!
       </p>
+      
+      {/* Continue Button */}
       <button
         className="continue-button"
         onClick={async () => {
@@ -1652,10 +1748,11 @@ const handleShowCertificate = async () => {
       >
         Continue
       </button>
+                 
+     
     </div>
   </div>
 )}
-
 
 
 {/* Detailed Results Modal */}
@@ -1696,24 +1793,23 @@ const handleShowCertificate = async () => {
   </div>
 )}
 
-
-
 {/* Vincent Kyle Mesiona*/}
-
+ 
 {showCertificateModal && (
           <div className="certificate-modal-overlay">
             <div className="certificate-modal">
               <h2>Course Completion Certificate</h2>
-              
+             
              {/* Certificate Content with Background from Firebase */}
              
       <button
-        className="close-button top-rightcert"
+        className="close-button top-right"
         onClick={() => setShowCertificateModal(false)} // Close the modal
       >
         ✕
       </button>
-  
+      
+ 
 <div
   className="certificate-content"
   ref={certificateRef}
@@ -1743,7 +1839,7 @@ const handleShowCertificate = async () => {
   >
     {selectedCourse?.courseTitle || "Course Title"}
   </div>
-
+ 
   <div
     className="certificate-full-name"
     style={{
@@ -1759,7 +1855,7 @@ const handleShowCertificate = async () => {
   >
     {fullName || "User Name"}
   </div>
-
+ 
   <div
     className="certificate-date"
     style={{
@@ -1770,28 +1866,29 @@ const handleShowCertificate = async () => {
       fontSize: "15px",
       color: "#2C5F2D",
       alignItems: "center",
-
+ 
     }}
   >
     Date: {new Date().toLocaleDateString()}
   </div>
 </div>
-
-
  
-
+ 
+ 
+ 
               {/* Download Buttons */}
               <div className="certificate-actions">
-
+ 
   <button  className="download-button" onClick={handleDownloadCertificate}>Download as PNG</button>
-  
+ 
 </div>
             </div>
           </div>
         )}
-
-
+ 
+ 
       {/* Vincent Kyle Mesiona*/}
+ 
 
 
 
@@ -1800,64 +1897,76 @@ const handleShowCertificate = async () => {
 
 
 
-
-
-
-
-{isAvailableCoursesModalOpen && selectedCourse && (
+      {isAvailableCoursesModalOpen && selectedCourse && (
   <div className="IT-user-course-modal">
     <div className="IT-user-course-modal-content">
+
+      {/* Header */}
       <div className="IT-user-course-modal-header">
         <h2>{selectedCourse.courseTitle}</h2>
         <button className="IT-user-course-close-button" onClick={() => setIsAvailableCoursesModalOpen(false)}>X</button>
       </div>
 
+      {/* Body with Image */}
       <div className="IT-user-course-modal-body">
         <img src={Category_IT} alt="Course visual" className="IT-user-course-modal-image" />
-        <p23>{selectedCourse.courseDescription}</p23>
-        <div className="IT-user-course-course-details">
-          <h4>Prerequisite: <span className="IT-user-course-prerequisite">
-            {Array.isArray(selectedCourse.prerequisites) && selectedCourse.prerequisites.length > 0
-              ? selectedCourse.prerequisites.join(', ')  // Now showing titles instead of IDs
-              : "None"}
-          </span></h4>
-
-          <h5>Category: <span className="IT-user-course-category">{selectedCourse.category}</span></h5>
-          <h5>Quiz Duration: <span>{selectedCourse.quizDuration} minutes</span></h5>
-        </div>
+        <p className="it-user-course-description">{selectedCourse.courseDescription}</p>
       </div>
 
+      {/* Footer */}
       <div className="IT-user-course-modal-footer">
-        {selectedCourse.prerequisites?.length > 0 && !selectedCourse.prerequisiteResults.every(result => result) ? (
-          <div className="IT-user-course-enroll-locked">
-            <p className="prerequisite-warning">
-              Complete all prerequisite courses first.
-            </p>
-            <button disabled className="IT-user-course-enroll-button-disabled">
-              Course Locked
+        <div className="IT-user-course-course-details">
+          <h4>
+            Prerequisite: 
+            <span className="IT-user-course-course-details-quiz-duration">
+              {Array.isArray(selectedCourse.prerequisites) && selectedCourse.prerequisites.length > 0
+                ? selectedCourse.prerequisites.join(', ')
+                : "None"}
+            </span>
+          </h4>
+
+          <h5>
+            Category: 
+            <span className="IT-user-course-course-details-quiz-duration">
+              {selectedCourse.category}
+            </span>
+          </h5>
+          
+          <h5>
+            Quiz Duration: 
+            <span className="IT-user-course-course-details-quiz-duration">
+              {selectedCourse.quizDuration} {selectedCourse.quizDuration === 1 ? "minute" : "minutes"}
+            </span>
+          </h5>
+        </div>
+
+        {/* Enroll Button */}
+        <div className="IT-user-course-enroll-section">
+          {selectedCourse.prerequisites?.length > 0 && !selectedCourse.prerequisiteResults.every(result => result) ? (
+            <div className="IT-user-course-enroll-locked">
+              <p className="prerequisite-warning">
+                Complete all prerequisite courses first.
+              </p>
+              <button disabled className="IT-user-course-enroll-button-disabled">
+                Course Locked
+              </button>
+            </div>
+          ) : (
+            <button className="IT-user-course-enroll-button" onClick={handleConfirmEnroll}>
+              Enroll Course
             </button>
-          </div>
-        ) : (
-          <button className="IT-user-course-enroll-button" onClick={handleConfirmEnroll}>
-            Enroll Course
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      </div> 
     </div>
   </div>
 )}
-
-
-
-
-
-
 
         {/* Confirm Enroll Modal */}
         {showConfirmModal && (
           <div className="IT-user-course-confirm-overlay">
             <div className="IT-user-course-confirm-modal">
-              <div className="IT-user-course-modal-header">
+              <div className="IT-user-course-modal-header-confirm">
                 Confirm Enrollment
               </div>
 
@@ -1865,13 +1974,15 @@ const handleShowCertificate = async () => {
                 <p>Are you sure you want to enroll in {selectedCourse?.courseTitle}?</p>
               </div>
 
-              <div className="IT-user-course-modal-footer">
+              <div className="IT-user-course-modal-footer-yes-no">
+              <div className="IT-user-course-modal-footer-no">
                 <button className="IT-user-course-cancel-button" onClick={handleCancelEnroll}>
                   No
                 </button>
                 <button className="IT-user-course-confirm-button" onClick={handleEnrollCourse}>
                   Yes
                 </button>
+                </div>
               </div>
             </div>
           </div>

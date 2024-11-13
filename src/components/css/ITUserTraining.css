@@ -210,21 +210,9 @@ font-size: 14px;
   }
 }
 
-.IT-user-training-side-modal {
-  position: fixed;
-  top: 0;
-  right: -400px; /* Initially hidden outside of the viewport */
-  width: 400px;
-  height: 100%;
-  background-color: white;
-  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-  transition: right 0.4s ease-in-out;
-  z-index: 1000;
-}
 
-.IT-user-training-side-modal.open {
-  right: 0; /* Slide the modal into view */
-}
+
+
 
 .IT-user-training-side-modal-content {
   display: flex;
@@ -234,15 +222,15 @@ font-size: 14px;
 }
 
 .IT-user-training-side-modal-header {
-  background-color: #4baea0; /* Matching the green color */
-    color: white;
-    height: 60px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 0 20px;
-    box-sizing: border-box;
+  background-color: #4baea0;
+  color: white;
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .IT-user-training-side-modal-header h2 {
@@ -260,35 +248,110 @@ font-size: 14px;
 
 .IT-user-training-side-modal-body {
   padding: 20px;
-  flex-grow: 1;
+  flex-grow: 1; /* Allow body to grow and take up remaining space */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow-y: auto; /* Enable vertical scrolling if content overflows */
+  margin-bottom: 0;
 }
+
+
+
+
+
+.IT-user-training-side-modal {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 400px;
+  background-color: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+  z-index: 1000;
+  display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensure the modal takes full height */
+}
+
+.IT-user-training-side-modal.open {
+  transform: translateX(0);
+}
+
+
+
+
+
 
 .IT-user-training-side-modal-image {
   width: 100%;
   height: auto;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
-.IT-user-training-side-modal-details h4,
-.IT-user-training-side-modal-details h5 {
-  margin: 10px 0;
+.IT-user-course-course-details-1{
+  margin-bottom: 5px;
+    line-height: 1;
 }
 
 .IT-user-training-side-modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #ccc;
+  background-color: white; /* Optional: to give footer a distinct background */
+  position: sticky; /* Fix the footer at the bottom */
+  bottom: 0;
+  width: 100%; /* Ensure footer spans the full width of the modal */
   display: flex;
-    justify-content: center;
-    margin-top: 160px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
-
-
+.IT-user-training-side-modal-details{
+  text-align: justify;
+  display: -webkit-box;
+  -webkit-line-clamp: 8; /* Limit to 4 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
 .IT-user-training-side-modal-enroll-button {
-  background-color: #007bff;
+  background-color: #0514e7;
   color: white;
-  padding: 10px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
+  padding: 10px 20px;
   cursor: pointer;
+  font-size: 18px;
+  margin-left: 80px;
+  margin-top: 20px;
 }
+
+.IT-user-training-side-modal-enroll-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+ .p111{
+  text-align: justify;
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  margin-top: 10px;
+  margin-bottom: auto;
+  font-size: 14px;
+  }
+
+
 
 .IT-user-training-side-modal-enroll-button:hover {
   background-color: #0056b3;

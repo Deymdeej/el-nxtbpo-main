@@ -43,7 +43,7 @@ function Login({ toggleForm }) {
             });
             navigate("/admin"); // Head Admin navigation
           } else if (department === "it") {
-            navigate("/it-admin-dashboard"); // IT Admin navigation
+            navigate("/it-admin-courses"); // IT Admin navigation
           } else if (department === "hr") {
             navigate("/hr-admin-dashboard"); // HR Admin navigation
           } else {

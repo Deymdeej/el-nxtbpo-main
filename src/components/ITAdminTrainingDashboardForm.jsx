@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc, setDoc, query, where, Timestamp } from "firebase/firestore"; // Firestore methods
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc, setDoc, query, where, Timestamp, writeBatch, FieldValue } from "firebase/firestore"; // Firestore methods
 import { db } from "../firebase"; // Firestore configuration
 
 import BPOLOGO from '../assets/bpo-logo.png';
@@ -16,11 +16,12 @@ import CertDefault from '../assets/certdefault.png';
 import { getAuth, signOut } from "firebase/auth";
 import EditIcon from "../assets/edit.svg"
 
-
 const ITAdminTrainingDashboardForm = ({ selectedNav }) => {
   const [showAddModal, setShowAddModal] = useState(false); // For adding new training
   const [showEditModal, setShowEditModal] = useState(false); // For editing existing training
   const [selectedTraining, setSelectedTraining] = useState(null);
+  const [selectedTrainingId, setSelectedTrainingId] = useState(null);
+  const [trainingId, setTrainingId] = useState(null); // Declare trainingId state
   const [trainingTitle, setTrainingTitle] = useState("");
   const [trainingDescription, setTrainingDescription] = useState("");
   const [trainingDate, setTrainingDate] = useState("");
@@ -39,7 +40,6 @@ const ITAdminTrainingDashboardForm = ({ selectedNav }) => {
   const ITEMS_PER_PAGE = 5; // You can adjust this number as needed
   const [attendance, setAttendance] = useState({});
   const [isOpen, setIsOpen] = useState(window.innerWidth > 768); // Initialize based on screen size
-  const [selectedSection, setSelectedSection] = useState('training');
   const auth = getAuth();
   const [attendanceStatus, setAttendanceStatus] = useState({});
   const navigate = useNavigate();
@@ -47,7 +47,163 @@ const ITAdminTrainingDashboardForm = ({ selectedNav }) => {
   const [currentTraining, setCurrentTraining] = useState(null); // Store current training for attendance modal
   const [showAttendanceModal, setShowAttendanceModal] = useState(false); // Attendance Modal visibility
   const [currentUser, setCurrentUser] = useState(null); // Store current user for editing/attendance
+  const [selectedSection, setSelectedSection] = useState("training");
 
+
+  useEffect(() => {
+    console.log("Modal opened with training data:", selectedTraining);
+  }, [showEditModal]);  // Runs whenever the modal visibility changes
+  
+  const handleSectionChange = (section) => {
+    setSelectedSection(section);
+  };
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
+  const handleResize = () => {
+    if (window.innerWidth > 768) {
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
+  
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+const fetchSelectedTraining = async (trainingId) => {
+  const trainingRef = doc(db, "trainings", trainingId);
+  const docSnap = await getDoc(trainingRef);
+  if (docSnap.exists()) {
+    setSelectedTraining(docSnap.data()); // Make sure this has the correct structure
+  } else {
+    console.log("No such document!");
+  }
+};
+
+
+const fetchEnrolledUsers = async (trainingId) => {
+  console.log("Fetching enrolled users...");
+
+  try {
+    // Fetch the training document to get enrolled user IDs
+    const trainingDocRef = doc(db, "trainings", trainingId);
+    const trainingSnapshot = await getDoc(trainingDocRef);
+
+    if (!trainingSnapshot.exists()) {
+      console.log("No such training!");
+      return;
+    }
+
+    const trainingData = trainingSnapshot.data();
+    const enrolledUsers = trainingData.enrolledUsers || [];
+
+    if (enrolledUsers.length === 0) {
+      console.log("No enrolled users found.");
+      return;
+    }
+
+    // Get the user IDs from enrolled users
+    const userIds = enrolledUsers.map(user => user.userId);
+
+    // Fetch user details in parallel
+    const userSnapshots = await Promise.all(userIds.map(userId =>
+      getDoc(doc(db, "Users", userId))
+    ));
+
+    // Transform the user snapshots into a usable format
+    const usersData = userSnapshots.map((userSnapshot, index) => {
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.data();
+        return {
+          ...enrolledUsers[index], // Spread the user data from enrolledUsers array
+          fullName: userData.fullName || "Anonymous",
+          department: userData.department || "Unknown",
+          email: userData.email || "No Email",
+          attendanceStatus: enrolledUsers[index].attendanceStatus || "absent", // Use attendance from enrolledUsers
+        };
+      }
+      return null;
+    }).filter(Boolean); // Filter out null values
+
+    // Update local state with the fetched data
+    setEnrolledUsers(usersData);
+
+  } catch (error) {
+    console.error("Error fetching enrolled users:", error);
+  }
+};
+
+useEffect(() => {
+  if (!trainingId) return; // If no trainingId, don't fetch
+
+  // Function to fetch training data
+  const fetchTrainingData = async () => {
+    try {
+      const docRef = doc(db, "trainings", trainingId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const trainingData = docSnap.data();
+        // Set form data from the fetched training data
+        setTrainingTitle(trainingData.trainingTitle || "");
+        setTrainingDescription(trainingData.trainingDescription || "");
+        setTrainingDate(trainingData.trainingDate || "");
+        setTrainingTime(trainingData.trainingTime || "");
+        setSelectedCertificate(trainingData.prerequisiteCertificate || "");
+
+        // Fetch the enrolled users as well
+        const enrolledUsers = trainingData.enrolledUsers || [];
+        if (enrolledUsers.length > 0) {
+          const userSnapshots = await Promise.all(
+            enrolledUsers.map(user => getDoc(doc(db, "Users", user.userId)))
+          );
+          
+          // Extract user data and merge with enrolledUsers
+          const usersData = userSnapshots.map((userSnapshot, index) => {
+            if (userSnapshot.exists()) {
+              const userData = userSnapshot.data();
+              return {
+                ...enrolledUsers[index], // Spread the user data from enrolledUsers array
+                fullName: userData.fullName || "Anonymous",
+                department: userData.department || "Unknown",
+                email: userData.email || "No Email",
+                attendance: enrolledUsers[index].attendance || "absent",
+              };
+            }
+            return null;  // Return null if user not found
+          }).filter(Boolean);  // Filter out null values
+
+          setEnrolledUsers(usersData); // Set the enrolled users data
+        }
+      } else {
+        console.log("No such training document!");
+      }
+    } catch (error) {
+      console.error("Error fetching training data:", error);
+    }
+  };
+
+  fetchTrainingData();
+}, [trainingId]);  // Only run when `trainingId` changes
+
+
+
+  const openEditModal = (training) => {
+    console.log("Opening edit modal with training:", training); // Log the selected training object
+    setSelectedTraining(training); // Set the selected training with the object
+    setShowEditModal(true); // Open the modal
+  };
+
+  useEffect(() => {
+    if (selectedTraining) {
+      setSelectedTrainingId(selectedTraining.id);
+    }
+  }, [selectedTraining]);
 
   // Declare getPaginatedUsers before using it
 const getPaginatedUsers = () => {
@@ -86,46 +242,40 @@ const getPaginatedUsers = () => {
     setShowAttendanceModal(true); // Open the modal
   };
 
-  // Function to handle opening the Edit Modal
   const handleEditModalOpen = (training) => {
-    setTrainingTitle(training.trainingTitle);
-    setTrainingDescription(training.trainingDescription);
-    setTrainingDate(training.trainingDate);
-    setTrainingTime(training.trainingTime);
-    setSelectedCertificate(training.selectedCertificate);
-    setShowEditModal(true);
-
-  };
-
+    console.log(training);  // Log the training object to verify its contents
+    if (training && training.id) {
+      setTrainingId(training.id);
+      setTrainingTitle(training.trainingTitle);
+      setTrainingDescription(training.trainingDescription);
+      setTrainingDate(training.trainingDate);
+      setTrainingTime(training.trainingTime);
+      setSelectedCertificate(training.selectedCertificate);
+      setShowEditModal(true); // Open the modal
+    } else {
+      console.error('Training object is missing an ID!');
+      alert('Training ID is missing!');
+    }
+  };  
+  
    // Function to close the Attendance Modal
    const handleAttendanceModalClose = () => {
     setShowAttendanceModal(false);
   };
 
-  // Function to handle opening the Attendance Modal
   const handleAttendanceModalOpen = (training) => {
-    console.log('Opening attendance for training:', training);
-    setCurrentTraining(training);
-    setShowAttendanceModal(true);
+    console.log("Training clicked:", training);  // Log the training object
+    if (training && training.id) {
+      setTrainingId(training.id);  // Set the training ID when the modal opens
+      console.log("Setting training ID:", training.id); // Log the ID set
+      setShowAttendanceModal(true);
+    } else {
+      console.error('Training ID is missing!');
+      alert('Training ID is missing!');
+    }
   };
-
-
-  // Function to handle opening the attendance modal
-  const handleViewAttendanceModalOpen = (training) => {
-    // Handle the logic for opening attendance modal
-    console.log('View Attendance for', training);
-  };
-
-
-  const handleEdit = (training) => {
-    setTrainingTitle(training.title); // Set training title
-    setTrainingDescription(training.description); // Set description
-    setTrainingDate(training.date); // Set date
-    setTrainingTime(training.time); // Set time
-    setSelectedCertificate(training.certificateId); // Set certificate ID
-    setShowEditModal(true); // Show the modal
-  };
-
+  
+  
    // Function to toggle dropdown visibility
    const toggleDropdown = (id) => {
     setActiveDropdown(activeDropdown === id ? null : id); // Toggle the dropdown open/close
@@ -136,20 +286,22 @@ const getPaginatedUsers = () => {
     setActiveDropdown(null); // Close dropdown
   };
 
-  // Fetch trainings
   const fetchTrainings = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "trainings"));
-      const trainingsData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
+      const trainingsList = querySnapshot.docs.map(doc => ({
         ...doc.data(),
+        id: doc.id
       }));
-      setTrainings(trainingsData);
+      console.log('Fetched trainings:', trainingsList);
+  
+      setTrainings(trainingsList);  // Ensure this state update triggers re-render
     } catch (error) {
-      console.error("Error fetching trainings: ", error);
+      console.error('Error fetching trainings:', error);
     }
   };
-
+  
+  
   // Fetch available certificates
   const fetchCertificates = async () => {
     try {
@@ -195,114 +347,61 @@ const handleDelete = async (trainingId) => {
     }
   }
 };
+const handleSaveAttendance = async () => {
+  if (!trainingId) {
+    alert('Training ID is missing');
+    return;
+  }
 
-
-
-const fetchEnrolledUsers = async (trainingId) => {
   try {
-    const trainingDocRef = doc(db, "trainings", trainingId);
-    const trainingSnapshot = await getDoc(trainingDocRef);
+    const updatedUsers = enrolledUsers.map(user => ({
+      userId: user.userId,
+      attendanceStatus: user.attendanceStatus || "absent",  // Default to "absent"
+    }));
 
-    if (trainingSnapshot.exists()) {
-      const trainingData = trainingSnapshot.data();
-      const enrolledUsers = trainingData.enrolledUsers || [];
+    const batch = writeBatch(db);  // Create a batch write to ensure all updates happen at once
+    console.log('Updated users:', updatedUsers);
 
-      // Fetch attendance data for each user and additional user details
-      const usersData = await Promise.all(
-        enrolledUsers.map(async (user) => {
-          const userDocRef = doc(db, "Users", user.userId);
-          const userSnapshot = await getDoc(userDocRef);
+    // Iterate over each user and add the update operation to the batch
+    for (const user of updatedUsers) {
+      if (!user.userId) {
+        console.error(`Invalid user ID: ${user.userId}`);
+        continue;  // Skip this user if no valid userId
+      }
 
-          if (userSnapshot.exists()) {
-            const userData = userSnapshot.data();
-            
-            return {
-              ...user,
-              fullName: userData.fullName || "Anonymous",
-              department: userData.department || "Unknown",
-              email: userData.email || "No Email",
-              attendanceStatus: user.attendance || "absent", // Include attendance status
-            };
-          }
-          return null;
-        })
-      );
+      // Ensure the user reference is correct (document reference for each user within "enrolledUsers" subcollection)
+      const userRef = doc(db, 'trainings', trainingId, 'enrolledUsers', user.userId);
+      console.log(`Updating user at path: ${userRef.path}`);  // Log the path for debugging
 
-      setEnrolledUsers(usersData.filter(Boolean)); // Filter out null values
-    } else {
-      console.log("No such training!");
+      // Directly update the attendanceStatus field
+      batch.update(userRef, { attendanceStatus: user.attendanceStatus });
     }
+
+    // Commit the batch update
+    await batch.commit();
+    console.log('Batch update committed successfully!');
+
+    // Re-fetch the users after update to ensure UI is refreshed with latest data
+    setEnrolledUsers([]);  // Clear existing users in the state (for re-fetch)
+    await fetchEnrolledUsers(trainingId);  // Wait for the fetch to complete
+
+    alert('Attendance updated successfully!');
   } catch (error) {
-    console.error("Error fetching enrolled users:", error);
+    console.error('Error updating attendance:', error);  // This will show the actual error
+    alert(`Error updating attendance: ${error.message}`);
   }
 };
 
 
 useEffect(() => {
-  const fetchEnrolledUsers = async (trainingId) => {
-    try {
-      const trainingDocRef = doc(db, "trainings", trainingId);
-      const trainingSnapshot = await getDoc(trainingDocRef);
-
-      if (trainingSnapshot.exists()) {
-        const trainingData = trainingSnapshot.data();
-        
-        // Fetch the enrolled users from the training data
-        const enrolledUsers = trainingData.enrolledUsers || [];
-
-        // Get user details from the "Users" collection for each enrolled user
-        const usersData = await Promise.all(
-          enrolledUsers.map(async (user) => {
-            const userDocRef = doc(db, "Users", user.userId);
-            const userSnapshot = await getDoc(userDocRef);
-
-            if (userSnapshot.exists()) {
-              const userData = userSnapshot.data();
-              return {
-                ...user,
-                fullName: userData.fullName || "Anonymous",
-                department: userData.department || "Unknown",
-                email: userData.email || "No Email",
-                attendanceStatus: user.attendance || "absent", // Default to absent if no attendance
-              };
-            }
-            return null; // Return null if the user document doesn't exist
-          })
-        );
-
-        // Filter out any null values (in case a user doesn't exist)
-        setEnrolledUsers(usersData.filter(Boolean));
-      } else {
-        console.log("No such training!");
-      }
-    } catch (error) {
-      console.error("Error fetching enrolled users:", error);
-    }
-  };
-
-  if (currentTraining) {
-    fetchEnrolledUsers(currentTraining.id);
+  if (selectedTraining) {
+    setTrainingTitle(selectedTraining.trainingTitle || "");
+    setTrainingDescription(selectedTraining.trainingDescription || "");
+    setTrainingDate(selectedTraining.trainingDate || "");
+    setTrainingTime(selectedTraining.trainingTime || "");
+    setSelectedCertificate(selectedTraining.prerequisiteCertificate || "");
   }
-
-}, [currentTraining]); // Fetch users when `currentTraining` changes
-
-
-useEffect(() => {
-  if (selectedTraining && selectedTraining.id) {
-    // Fetch enrolled users for the selected training when it changes
-    fetchEnrolledUsers(selectedTraining.id);
-  }
-}, [selectedTraining]); // Fetch users when `selectedTraining` changes
-
-
-
-// Call this function when loading the modal or when you want to fetch users' data
-useEffect(() => {
-  if (selectedTraining && selectedTraining.id) {
-    fetchEnrolledUsers(selectedTraining.id);
-  }
-}, [selectedTraining]);
-  
+}, [selectedTraining]); // This will update state when selectedTraining changes
 
 
   const formatTimeTo12Hour = (time) => {
@@ -350,31 +449,14 @@ const handleEditModalClose = () => {
 const handlePageChange = (pageNumber) => {
   setCurrentPage(pageNumber);
 };
-
-const handleAttendanceChange = async (userId, newStatus) => {
-  try {
-    // Call an API to update the attendance status for the user
-    const response = await fetch(`/api/updateAttendance?userId=${userId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ attendanceStatus: newStatus }),
-    });
-    
-    if (response.ok) {
-      // Update the state after successful API call
-      setEnrolledUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.userId === userId ? { ...user, attendanceStatus: newStatus } : user
-        )
-      );
-    } else {
-      console.error("Failed to update attendance");
-    }
-  } catch (error) {
-    console.error('Error updating attendance:', error);
-  }
+const handleAttendanceChange = (userId, newAttendance) => {
+  setEnrolledUsers(prevUsers =>
+    prevUsers.map(user =>
+      user.userId === userId
+        ? { ...user, attendance: newAttendance } // Update attendance for the specific user
+        : user
+    )
+  );
 };
 
  // Handle update click
@@ -417,21 +499,16 @@ const handleLogout = () => {
     });
 };
 
-  // Handle form reset
-  const resetFormFields = () => {
-    setTrainingTitle("");
-    setTrainingDescription("");
-    setTrainingDate("");
-    setTrainingTime("");
-    setSelectedCertificate("");
-    setAmPm("AM");
-    setErrors({});
-  };;
-
-  
-
-
-
+// Handle form reset
+const resetFormFields = () => {
+  setTrainingTitle("");
+  setTrainingDescription("");
+  setTrainingDate("");
+  setTrainingTime("");
+  setSelectedCertificate("");
+  setAmPm("AM");
+  setErrors({});
+};
 
 
   // Form validation
@@ -470,8 +547,6 @@ const handleLogout = () => {
     }
   };
 
-
-  
   const handleEditSubmit = async () => {
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length === 0) {
@@ -486,32 +561,49 @@ const handleLogout = () => {
           trainingTime,
           prerequisiteCertificate: selectedCertificate,
         });
-
+  
         // Update the attendance in the 'trainings' collection directly for each enrolled user
         const updatedEnrolledUsers = enrolledUsers.map(user => ({
           ...user,
-          attendance: user.attendanceStatus || "absent" // Update attendance in the training document
+          attendance: user.attendanceStatus || "absent", // Update attendance in the training document
         }));
-
+  
         // Update the 'enrolledUsers' field in the 'trainings' collection with updated attendance
         await updateDoc(trainingDocRef, {
-          enrolledUsers: updatedEnrolledUsers
+          enrolledUsers: updatedEnrolledUsers,
         });
-
+  
         // Loop through each enrolled user to update their attendance in the 'attendance' collection
         for (const user of enrolledUsers) {
           const status = user.attendanceStatus || "absent"; // Default to "absent"
           
           // Query to check if the user's attendance data already exists for this training
+          const enrolledUserDocRef = doc(db, "trainings", selectedTraining.id, "enrolledUsers", user.userId);
+          const enrolledUserDocSnapshot = await getDoc(enrolledUserDocRef);
+  
+          if (enrolledUserDocSnapshot.exists()) {
+            // If the document exists, update the attendanceStatus
+            await updateDoc(enrolledUserDocRef, {
+              attendanceStatus: status,
+            });
+          } else {
+            // If the document doesn't exist, create a new document for the user
+            await setDoc(enrolledUserDocRef, {
+              userId: user.userId,
+              attendanceStatus: status,
+            });
+          }
+  
+          // Check if the attendance document exists in the 'attendance' collection
           const attendanceQuery = query(
             collection(db, "attendance"),
             where("userId", "==", user.userId),
             where("trainingId", "==", selectedTraining.id)
           );
           const querySnapshot = await getDocs(attendanceQuery);
-
+  
           if (!querySnapshot.empty) {
-            // Update the status if the document already exists
+            // If the attendance document exists, update it
             querySnapshot.forEach(async (docSnapshot) => {
               const attendanceDocRef = doc(db, "attendance", docSnapshot.id);
               await updateDoc(attendanceDocRef, {
@@ -520,7 +612,7 @@ const handleLogout = () => {
               });
             });
           } else {
-            // Create a new attendance document if it does not exist
+            // If the attendance document doesn't exist, create a new document
             const newAttendanceDocRef = doc(collection(db, "attendance"));
             await setDoc(newAttendanceDocRef, {
               userId: user.userId,
@@ -534,11 +626,11 @@ const handleLogout = () => {
             });
           }
         }
-
+  
         alert("Training and attendance updated successfully!");
         setShowEditModal(false); // Close Edit modal after successful submission
         fetchTrainings(); // Refresh the training list
-
+  
       } catch (error) {
         console.error("Error updating training or attendance:", error);
         alert("Failed to update training or attendance. Please try again.");
@@ -546,34 +638,9 @@ const handleLogout = () => {
     } else {
       setErrors(validationErrors);
     }
-};
-
-
-
-const handleSectionChange = (section) => {
-  setSelectedSection(section);
-};
-const toggleSidebar = () => {
-  setIsOpen(!isOpen);
-};
-const handleResize = () => {
-  if (window.innerWidth > 768) {
-    setIsOpen(true);
-  } else {
-    setIsOpen(false);
-  }
-};
-
-useEffect(() => {
-  window.addEventListener('resize', handleResize);
-  handleResize();
-  return () => {
-    window.removeEventListener('resize', handleResize);
   };
-}, []);
   
-
-
+  
   const handleUpdateAttendance = async () => {
     try {
       for (const user of enrolledUsers) {
@@ -599,7 +666,7 @@ useEffect(() => {
     }
   };
 
- // Function to fetch attendance status for each user
+ // Fetch attendance status for a specific training
 const fetchAttendanceStatus = async (trainingId) => {
   try {
     const attendanceQuery = query(
@@ -611,13 +678,12 @@ const fetchAttendanceStatus = async (trainingId) => {
     const attendanceData = {};
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      attendanceData[data.userId] = data.status; // Store status keyed by userId
+      attendanceData[data.userId] = data.status;
     });
 
-    // Update enrolledUsers with attendance status
     const updatedEnrolledUsers = enrolledUsers.map((user) => ({
       ...user,
-      attendanceStatus: attendanceData[user.userId] || "absent", // Default to "absent" if no record
+      attendanceStatus: attendanceData[user.userId] || "absent",
     }));
 
     setEnrolledUsers(updatedEnrolledUsers);
@@ -625,13 +691,6 @@ const fetchAttendanceStatus = async (trainingId) => {
     console.error("Error fetching attendance status:", error);
   }
 };
-;
-  
-  
-
-  
-  
-
   const getFilteredUsers = () => {
     let filtered = enrolledUsers;
   
@@ -655,7 +714,11 @@ const fetchAttendanceStatus = async (trainingId) => {
   
   const handleTrainingClick = async (training) => {
     console.log('Training clicked:', training); // Debugging log
+  
+    // Ensure selectedTraining is correctly set before calling other logic
     setSelectedTraining(training);
+  
+    // Avoid accessing selectedTraining.id immediately after setting state
     setTrainingTitle(training.trainingTitle);
     setTrainingDescription(training.trainingDescription);
     setTrainingDate(training.trainingDate);
@@ -667,10 +730,11 @@ const fetchAttendanceStatus = async (trainingId) => {
     // Fetch attendance status from Firestore and update users
     await fetchAttendanceStatus(training.id);
     await fetchEnrolledUsers(training.id);
-    
+  
+    // Now show the modal
     setShowEditModal(true);
   };
-
+  
 
   return (
     <div className="admin-super-container">
@@ -679,15 +743,7 @@ const fetchAttendanceStatus = async (trainingId) => {
           <img src={BPOLOGO} alt="Company Logo" />
         </div>
         <ul className="nav-links-super">
-          <li>
-            <button
-              onClick={() => handleSectionChange('overview')}
-              className={`nav-button-super ${selectedSection === 'overview' ? 'active-super' : ''}`}
-            >
-              <img src={UserDefault} alt="Overview" className="nav-icon-super" />
-              <span>Overview</span>
-            </button> 
-          </li>
+          
           <li>
             <button
               onClick={() => navigate('/it-admin-courses')}
@@ -699,7 +755,7 @@ const fetchAttendanceStatus = async (trainingId) => {
           </li>
           <li>
             <button
-              onClick={() => navigate('/it-admin-training')}
+              onClick={() => handleSectionChange('training')}
               className={`nav-button-super ${selectedSection === 'training' ? 'active-super' : ''}`}
             >
               <img src={TrainingDefault} alt="Training" className="nav-icon-super" />
@@ -730,16 +786,21 @@ const fetchAttendanceStatus = async (trainingId) => {
 
       {/* Dashboard Content */}
       <div className="content-super">
+
+        
         <h15 className="it-admin-training-title">Schedule Training</h15>
 
-        <div className="it-admin-training-grid">
-          <div className="it-admin-training-header">
+        {selectedSection === 'training' && (
+         <div className="row">
+    <div className="col-md-12">
+
+    <div className="course-grid-horizontal">
           {/* Existing Training Cards */}
           {trainings.map((training) => (
         <div key={training.id} className="it-admin-training-card">
           <div className="it-admin-training-header">
           <div className="it-admin-title-training">{training.trainingTitle}</div>
-          <div className="dropdown-container">
+          <div className="dropdown-container-training">
             <div
               className="three-dot-icon-training"
               onClick={(e) => {
@@ -752,12 +813,12 @@ const fetchAttendanceStatus = async (trainingId) => {
 
             {/* Dropdown options */}
             {activeDropdown === training.id && (
-              <div className="dropdown-menu">
+              <div className="dropdown-menu-training">
                 <div
                   className="dropdown-item"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleEdit(training); // Call edit function
+                    handleEditModalOpen(training);// Call edit function
                     closeDropdown();
                   }}
                 >
@@ -773,10 +834,22 @@ const fetchAttendanceStatus = async (trainingId) => {
                 >
                   View Attendance
                 </div>
-              </div>
-            )}
-          </div>
-          </div>
+                {/* Delete Option */}
+                <div
+                className="dropdown-item delete-item"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(training.id); // Call delete function
+                      closeDropdown();
+                    }}
+                    >
+                      Delete
+                    </div>
+                  </div>
+                )}
+                </div>
+                </div>
+               
 
           {/* Card content */}
           <div className="it-admin-description-training">{training.trainingDescription}</div>
@@ -786,10 +859,9 @@ const fetchAttendanceStatus = async (trainingId) => {
               </div>
             </div>
           ))}
-        </div>
 
-          {/* Add Training Button */}
-          <div
+            {/* Add Training Button */}
+            <div
             className="it-admin-training-add-card"
             onClick={() => {
               resetFormFields(); // Reset form fields when opening the Add modal
@@ -799,7 +871,14 @@ const fetchAttendanceStatus = async (trainingId) => {
             <div className="it-admin-training-add-icon">+</div>
             <p>Add Training</p>
           </div>
+
+          
         </div>
+
+        </div>
+        </div>
+
+        )}
       </div>
 
       {/* Modal for Adding Training */}
@@ -927,7 +1006,7 @@ const fetchAttendanceStatus = async (trainingId) => {
         <Form.Control
           type="text"
           placeholder="Enter training title"
-          value={trainingTitle}
+          value={trainingTitle || selectedTraining?.trainingTitle || ''}
           onChange={(e) => setTrainingTitle(e.target.value)}
           isInvalid={!!errors.trainingTitle}
         />
@@ -1057,9 +1136,9 @@ const fetchAttendanceStatus = async (trainingId) => {
               <p>Attendance</p>
             </div>
 
-  {enrolledUsers.length > 0 ? (
-  getPaginatedUsers().map((user, index) => (
-    <div className="it-admin-training-list it-admin-training-list-item" key={index}>
+            {enrolledUsers.length > 0 ? (
+  enrolledUsers.map((user, index) => (
+    <div key={index} className="it-admin-training-list it-admin-training-list-item">
       <p>{user.fullName}</p>
       <p>{user.department ? `${user.department} Department` : "Department"}</p>
       <p>{user.category || "General"}</p>
@@ -1067,9 +1146,9 @@ const fetchAttendanceStatus = async (trainingId) => {
       <p className="center-email">{user.email}</p>
       <div className="attendance-section">
         <select
-          className={`it-admin-training-attendance-dropdown ${user.attendanceStatus === "present" ? "present" : "absent"}`}
-          value={user.attendanceStatus || "absent"} // Default to "absent" if undefined
-          onChange={(e) => handleAttendanceChange(user.userId, e.target.value)} // Handle change of attendance
+          className={`it-admin-training-attendance-dropdown ${user.attendance === "present" ? "present" : "absent"}`}
+          value={user.attendance || "absent"}
+          onChange={(e) => handleAttendanceChange(user.userId, e.target.value)}
         >
           <option value="absent">Absent</option>
           <option value="present">Present</option>
@@ -1080,18 +1159,20 @@ const fetchAttendanceStatus = async (trainingId) => {
 ) : (
   <p>No users enrolled yet.</p>
 )}
+
 <div className="pagination-controls">
-      <button onClick={handlePrevPage} disabled={currentPage === 0}>
+      <button className="previous-attendance" onClick={handlePrevPage}  disabled={currentPage === 0 || enrolledUsers.length <= usersPerPage}
+      >
         Previous
       </button>
-      <button onClick={handleNextPage} disabled={(currentPage + 1) * usersPerPage >= enrolledUsers.length}>
+      <button className="next-attendance" onClick={handleNextPage} disabled={(currentPage + 1) * usersPerPage >= enrolledUsers.length}>
         Next
       </button>
     </div>
           </div>
         </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleAttendanceModalClose}>Close</Button>
+        <Modal.Footer className="it-admin-training-footer-modal">
+          <Button className="btn-update-edittraining" onClick={handleSaveAttendance}>Update</Button>
         </Modal.Footer>
       </Modal>
       </div>

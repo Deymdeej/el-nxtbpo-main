@@ -167,7 +167,17 @@
   color: white;
   border: none;
   padding: 5px 10px;
-  border-radius: 4px;
+  border-radius: 10px;
+  cursor: pointer;
+
+  
+}
+.user-super-table button2 {
+  background-color: #8c0000b6; 
+  color: white;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 10px;
   cursor: pointer;
 }
 

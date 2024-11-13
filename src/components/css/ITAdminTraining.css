@@ -1,82 +1,82 @@
 /* Sidebar */
 .it-admin-training-dashboard-container {
-    display: flex;
-    background-color: #efefef;
-    min-height: 100vh;
-}
- 
-.it-admin-training-sidebar {
-    background-color: #ffffff;
-    padding: 20px;
-    height: 100vh;
-    width: 250px;
-}
- 
-.it-admin-training-logo {
-    width: 150px;
-    margin-bottom: 40px;
-}
- 
-.it-admin-training-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
- 
-.it-admin-training-header-modal{
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #ddd;
-  padding-bottom: 10px;
+  background-color: #efefef;
+  min-height: 100vh;
+}
+
+.it-admin-training-sidebar {
+  background-color: #ffffff;
+  padding: 20px;
+  height: 100vh;
+  width: 250px;
+}
+
+.it-admin-training-logo {
+  width: 150px;
+  margin-bottom: 40px;
+}
+
+.it-admin-training-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.it-admin-training-header-modal{
+display: flex;
+justify-content: space-between;
+align-items: center;
+border-bottom: 2px solid #ddd;
+padding-bottom: 10px;
 }
 .it-admin-edit-training-header-modal{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #ddd;
-  padding-bottom: 10px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+border-bottom: 2px solid #ddd;
+padding-bottom: 10px;
 }
 .it-admin-training-footer-modal {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: 2px solid #ddd;
-  margin-top: 15px;
+display: flex;
+justify-content: flex-end;
+gap: 10px;
+padding-top: 10px;
+border-top: 2px solid #ddd;
+margin-top: 15px;
 }
 .btn-submit-addtraining {
-  margin-top: 20px;
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: #007bff;
-  color: #ffffff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 15px;
-  padding: 10px 20px;
+margin-top: 20px;
+padding: 10px 20px;
+font-size: 16px;
+background-color: #007bff;
+color: #ffffff;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+margin-top: 15px;
+padding: 10px 20px;
 }
 .btn-submit-addtraining:hover {
-  background-color:#007bff;
+background-color:#007bff;
 }
 .btn-update-edittraining{
-  margin-top: 20px;
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: #007bff;
-  color: #ffffff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 15px;
-  padding: 10px 20px;
+margin-top: 20px;
+padding: 10px 20px;
+font-size: 16px;
+background-color: #007bff;
+color: #ffffff;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+margin-top: 15px;
+padding: 10px 20px;
 }
 .btn-update-edittraining:hover {
-  background-color:#007bff;
+background-color:#007bff;
 }
 .it-admin-training-modal {
-  padding: 1rem;
+padding: 1rem;
 }
 
 .it-admin-training-title-add .form-label,
@@ -85,14 +85,14 @@
 .it-admin-training-trainingtime-add .form-label,
 .it-admin-training-preqrequisite-add .form-label { 
 
-  position: relative;
-  margin-bottom: 10px;
-  top: 10px;
-  display: flex;
-  flex-direction: column;
-  font-size: 18px;
-  font-weight: 500;
-  color: #333;
+position: relative;
+margin-bottom: 10px;
+top: 10px;
+display: flex;
+flex-direction: column;
+font-size: 18px;
+font-weight: 500;
+color: #333;
 
 }
 .it-admin-training-title-add .form-control,
@@ -100,422 +100,490 @@
 .it-admin-training-trainingdate-add input,
 .it-admin-training-trainingtime-add input,
 .it-admin-training-preqrequisite-add select {
-  width: 100%;
-  padding: 15px;
-  border-radius: 8px;
-  border: 2px solid #ddd;
-  font-size: 14px;
-  background-color: #f7f7f7;
-  transition: all 0.3s;
+width: 100%;
+padding: 15px;
+border-radius: 8px;
+border: 2px solid #ddd;
+font-size: 14px;
+background-color: #f7f7f7;
+transition: all 0.3s;
 
 }
 .it-admin-training-nav-item {
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    font-size: 16px;
-    font-weight: 500;
-    color: #333;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+  gap: 10px;
 }
- 
+
 .it-admin-training-nav-item:hover {
-    background-color: #90EE90; /* Light green hover effect */
-    color: white; /* Text color change on hover */
+  background-color: #90EE90; /* Light green hover effect */
+  color: white; /* Text color change on hover */
 }
- 
+
 .it-admin-training-nav-item.active {
-    background-color: #007bff;
-    color: white;
+  background-color: #007bff;
+  color: white;
 }
- 
+
 .it-admin-training-nav-icon {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
 }
- 
+
 .it-admin-training-nav-logout {
-    margin-top: auto;
-    padding: 15px;
-    font-size: 16px;
-    font-weight: 500;
-    color: red;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+  margin-top: auto;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 500;
+  color: red;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
 }
- 
+
 .it-admin-training-nav-logout:hover {
-    background-color: #f8d7da;
-    color: #721c24;
+  background-color: #f8d7da;
+  color: #721c24;
 }
- 
+
 /* Main Content */
 .it-admin-training-dashboard-content {
-    padding: 20px;
+  padding: 20px;
 }
- 
+
 .it-admin-training-title {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 40px;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 40px;
 }
- 
+
 /* Training Cards */
 .it-admin-training-grid {
-    grid-template-columns: repeat(4, 1fr); /* Limit to 4 cards per row */
-    margin-top: 20px;
-    display: grid;
-    gap: 20px;
-}
- 
-.it-admin-training-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
-  background-color: white;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
-  width: 257px;
-  height: 357px;
-  flex-direction: column;
-  justify-content: space-between;
-  cursor: pointer;
-  position: relative;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: flex-start; /* Align items to the start */
+  margin-top: 30px;
+}
+
+.it-admin-training-card {
+border: 1px solid #ddd;
+border-radius: 8px;
+padding: 20px;
+background-color: white;
+box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+display: flex;
+width: 257px;
+height: 357px;
+flex-direction: column;
+justify-content: space-between;
+cursor: pointer;
+position: relative;
 }
 .it-admin-training-add-card {
-    width: 250px; /* Adjust the width */
-    height: 150px; /* Adjust the height */
-    border-radius: 10px; /* Rounded corners */
-    background-color: white;
-    border: 2px dashed #ccc;
+border: 1px solid #ddd;
+border-radius: 8px;
+padding: 20px;
+background-color: white;
+box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+display: flex;
+width: 257px;
+height: 357px;
+flex-direction: column;
+cursor: pointer;
+position: relative;
+align-items: center;
+justify-content: center;
 
 }
 .it-admin-training-add-card:hover {
-  background-color: #e6e6e6;
-  transform: translateY(-2px); /* Slightly lift the card */
-  border-color: #666; /* Change border color on hover */
+background-color: #e6e6e6;
+transform: translateY(-2px); /* Slightly lift the card */
+border-color: #666; /* Change border color on hover */
 }
- 
+
 .it-admin-training-card h3 {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0;
-    color: #000; /* Black text for the title */
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #000; /* Black text for the title */
 }
- 
+
 .it-admin-training-card p {
-    font-size: 14px;
-    color: #444; /* Dark gray text for the description */
-    margin: 5px 0 0 0;
+  font-size: 14px;
+  color: #444; /* Dark gray text for the description */
+  margin: 5px 0 0 0;
 }
- 
+
 .it-admin-training-card:hover{
-    border-color: #666; /* Change border color on hover */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px); /* Slightly lift the card */
+  border-color: #666; /* Change border color on hover */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px); /* Slightly lift the card */
 }
- 
-.it-admin-training-add-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
- 
+
 .it-admin-training-add-icon {
-    font-size: 36px;
-    color: #666;
+  font-size: 36px;
+  color: #666;
 }
- 
+
 .it-admin-training-time {
-    margin-top: 20px;
-    font-size: 14px;
-    color: #888;
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px; /* Smaller text for time and date */
+  margin-top: 20px;
+  font-size: 14px;
+  color: #888;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px; /* Smaller text for time and date */
 }
 
 .it-admin-training-time p {
-    margin: 0;
-    color: #000; /* Black text for the date and time */
+  margin: 0;
+  color: #000; /* Black text for the date and time */
 }
- 
+
 /* Modal Styling */
 .it-admin-training-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
- 
+
 .it-admin-training-modal-container {
-    background-color: white;
-    border-radius: 10px;
-    padding: 40px;
-    width: 500px;
-    max-width: 90%;
-    text-align: center;
+  background-color: white;
+  border-radius: 10px;
+  padding: 40px;
+  width: 500px;
+  max-width: 90%;
+  text-align: center;
 }
- 
+
 .it-admin-training-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
- 
+
 .it-admin-training-modal-header h2 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 600;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
 }
 .it-admin-training-closebutton {
-  width: 24px;
-  height: 24px;
+width: 24px;
+height: 24px;
 }
- 
+
 .it-admin-training-modal-close-btn {
-    font-size: 24px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #888;
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
 }
- 
+
 .it-admin-training-modal-close-btn:hover {
-    color: red;
+  color: red;
 }
- 
+
 .it-admin-training-modal-body {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
- 
+
 .it-admin-training-modal-body input[type="text"],
 .it-admin-training-modal-body textarea,
 .it-admin-training-modal-body input[type="date"],
 .it-admin-training-modal-body input[type="time"] {
-    width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    border-radius: 5px;
-    border: 1px solid #e5e5e5;
-    background-color: #f9f9f9;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #e5e5e5;
+  background-color: #f9f9f9;
 }
- 
+
 .it-admin-training-modal-body input[type="text"]:focus,
 .it-admin-training-modal-body textarea:focus,
 .it-admin-training-modal-body input[type="date"]:focus,
 .it-admin-training-modal-body input[type="time"]:focus {
-    border-color: #007bff;
-    background-color: white;
-    outline: none;
+  border-color: #007bff;
+  background-color: white;
+  outline: none;
 }
- 
-.it-admin-training-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Control the size of each column */
-    gap: 20px; /* Add space between each column */
-    align-items: center; /* Vertically aligns the content */
-  }
- 
-  .it-admin-training-list-header {
-    font-weight: bold;
-    background-color: #f3f3f3; /* Optional for distinction */
-    padding: 10px 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Match with content rows */
-    align-items: center;
-  }
- 
-  .it-admin-training-list-item {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Match with header */
-    padding: 10px 0;
-    border-bottom: 1px solid #ddd;
-    align-items: center;
-  }
- 
-  .attendance-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
- 
-  .it-admin-training-attendance-button {
-    background-color: #28a745;
-    border: none;
-    color: white;
-    padding: 5px 10px;
-    cursor: pointer;
-  }
 
-  .it-admin-training-attendance-dropdown {
-    padding: 8px;
-    font-size: 14px;
-    background-color: #28a745; /* Default green background */
-    color: white; /* Text color */
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 100px; /* Set a width */
-  }
- 
-  .it-admin-training-attendance-dropdown option {
-    color: black; /* Black text for options */
-    background-color: white; /* White background for options */
-  }
- 
-.modal-title-edit-training{
-  margin: 0;
-  font-size: 24px;
-  font-weight: bold;
-  margin-top: 60px;
+.it-admin-training-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Control the size of each column */
+  gap: 20px; /* Add space between each column */
+  align-items: center; /* Vertically aligns the content */
 }
-.trainingTitle Label{
-  font-size: 18px;
+
+.it-admin-training-list-header {
   font-weight: bold;
-  color: #333;
-  display: block;
-  margin-bottom: 10px;
-  margin-top: 10px;
-}
-.it-admin-training-search-bar-container-attendance{
-  display: flex;
-  justify-content: flex-end;
+  background-color: #f3f3f3; /* Optional for distinction */
+  padding: 10px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Match with content rows */
   align-items: center;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  gap: 20px; /* Space between search and dropdown */
 }
- 
- 
-  /* Container holding both search and sort elements */
-.it-admin-training-search-bar-container {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-bottom: 20px;
-    gap: 20px; /* Space between search and dropdown */
-  }
- 
-  /* Search input */
-  .it-admin-training-search-input {
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    background-color: #f5f5f5;
-    font-size: 14px;
-    width: 250px;
-    color: #333;
-    outline: none;
-    transition: background-color 0.2s ease;
-  }
- 
-  .it-admin-training-search-input::placeholder {
-    color: #c0c0c0;
-    font-size: 14px;
-  }
- 
-  /* On focus, change the background */
-  .it-admin-training-search-input:focus {
-    background-color: #fff;
-    border-color: #d1d1d1;
-  }
- 
-  /* Search icon next to input */
-  .it-admin-training-search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #888;
-    font-size: 18px;
-  }
- 
-  /* Sort dropdown */
-  .it-admin-training-sort-dropdown {
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    background-color: #f5f5f5;
-    font-size: 14px;
-    width: 200px;
-    color: #333;
-    outline: none;
-    appearance: none;
-  }
- 
-  .it-admin-training-sort-dropdown:focus {
-    background-color: #fff;
-    border-color: #d1d1d1;
-  }
- 
-  /* Flexbox layout for the search input and the search icon */
-  .search-wrapper {
-    position: relative;
-    display: inline-block;
-  }
-  .three-dot-icon-training {
-    width: 15px;
-    height: 15px;
-    position: absolute;
-    cursor: pointer;
-  }
-  .dropdown-menu {
-    position: absolute;
-    top: 0; /* Adjust as needed */
-    z-index: 10; /* Ensure it's on top of other elements */
-    width: auto; /* Ensure it's sized properly within the card */
-    max-width: 200px; /* Adjust this as needed */
-    right: 5px; /* Align it better */
-  }
-  
-  .dropdown-item {
-    padding: 10px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .dropdown-item:hover {
-    background-color: #f0f0f0;
-  }
-.it-admin-training-header {
+
+.it-admin-training-list-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; /* Match with header */
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+  align-items: center;
+}
+
+.attendance-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 15px;
-  padding-bottom: 5px;
+}
+
+.it-admin-training-attendance-button {
+  background-color: #28a745;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.it-admin-training-attendance-dropdown {
+  padding: 8px;
+  font-size: 14px;
+  background-color: #28a745; /* Default green background */
+  color: white; /* Text color */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100px; /* Set a width */
+}
+
+.it-admin-training-attendance-dropdown option {
+  color: black; /* Black text for options */
+  background-color: white; /* White background for options */
+}
+
+.modal-title-edit-training{
+margin: 0;
+font-size: 24px;
+font-weight: bold;
+margin-top: 60px;
+}
+.trainingTitle Label{
+font-size: 18px;
+font-weight: bold;
+color: #333;
+display: block;
+margin-bottom: 10px;
+margin-top: 10px;
+}
+.it-admin-training-search-bar-container-attendance{
+display: flex;
+justify-content: flex-end;
+align-items: center;
+margin-top: 20px;
+margin-bottom: 20px;
+gap: 20px; /* Space between search and dropdown */
+}
+
+
+/* Container holding both search and sort elements */
+.it-admin-training-search-bar-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 20px; /* Space between search and dropdown */
+}
+
+/* Search input */
+.it-admin-training-search-input {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background-color: #f5f5f5;
+  font-size: 14px;
+  width: 250px;
+  color: #333;
+  outline: none;
+  transition: background-color 0.2s ease;
+}
+
+.it-admin-training-search-input::placeholder {
+  color: #c0c0c0;
+  font-size: 14px;
+}
+
+/* On focus, change the background */
+.it-admin-training-search-input:focus {
+  background-color: #fff;
+  border-color: #d1d1d1;
+}
+
+/* Search icon next to input */
+.it-admin-training-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 18px;
+}
+
+/* Sort dropdown */
+.it-admin-training-sort-dropdown {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background-color: #f5f5f5;
+  font-size: 14px;
+  width: 200px;
+  color: #333;
+  outline: none;
+  appearance: none;
+}
+
+.it-admin-training-sort-dropdown:focus {
+  background-color: #fff;
+  border-color: #d1d1d1;
+}
+
+/* Flexbox layout for the search input and the search icon */
+.search-wrapper {
   position: relative;
+  display: inline-block;
+}
+.three-dot-icon-training {
+  width: 15px; /* Ensure the icon stays at a reasonable size */
+height: 15px;
+cursor: pointer;
+object-fit: contain;  
+}
+.dropdown-menu-training {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 100px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.dropdown-item {
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+.it-admin-training-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding-top: 15px;
+padding-bottom: 5px;
+position: relative;
 }
 .it-admin-title-training{
-  margin-bottom: 5px;
-  font-size: 18px;
-  font-weight: bold;
+margin-top: 20px;
+margin-bottom: 5px;
+font-size: 18px;
+font-weight: bold;
+}
+.it-admin-description-training{
+text-align: justify;
+display: -webkit-box;
+-webkit-line-clamp: 5; /* Limit to 4 lines */
+-webkit-box-orient: vertical;
+overflow: hidden;
+text-overflow: ellipsis;
+word-break: break-word;
+margin-top: 10px;
+margin-bottom: auto;
+font-size: 14px;
 }
 .it-admin-training-attendance-dropdown {
-  display: inline-block;
-  width: auto;
-  padding: 5px;
+display: inline-block;
+width: auto;
+padding: 5px;
 }
 .it-admin-training-container {
-  width: 100%;       /* Ensure it takes up the full width */
-  max-width: 1200px; /* You can adjust this value based on the desired max size */
-  margin: 0 auto;    /* Center the container */
-  padding: 20px;     /* Add padding to give space inside the container */
-  height: 100%;      /* Ensure it expands vertically */
-  min-height: 600px; /* Set a minimum height to ensure it's tall enough */
-  box-sizing: border-box; /* Includes padding and borders in element's total width/height */
+width: 100%;       /* Ensure it takes up the full width */
+max-width: 1200px; /* You can adjust this value based on the desired max size */
+margin: 0 auto;    /* Center the container */
+padding: 20px;     /* Add padding to give space inside the container */
+height: 100%;      /* Ensure it expands vertically */
+min-height: 600px; /* Set a minimum height to ensure it's tall enough */
+box-sizing: border-box; /* Includes padding and borders in element's total width/height */
+}
+.pagination-controls{
+margin-top: 20px;
+}
+.previous-attendance{
+margin-right: 20px;
+background-color: #007bff;  /* Set the normal background color */
+color: white;  /* Normal text color */
+border: 1px solid #007bff;  /* Border color */
+padding: 10px 20px;
+cursor: pointer;
+
+}
+.previous-attendance:disabled {
+background-color: transparent; /* Remove the background color */
+color: inherit; /* Inherit the color of the parent element */
+border: 1px solid #ddd; /* Optional: set a neutral border for the disabled button */
+cursor: not-allowed; /* Change the cursor to indicate that the button is disabled */
+}
+.next-attendance{
+color: #000;
+background-color: #007bff;  /* Set the normal background color */
+border: 1px solid #007bff;  /* Border color */
+padding: 10px 20px;
+cursor: pointer;
+
+}
+.next-attendance:disabled{
+background-color: transparent; /* Remove the background color */
+color: inherit; /* Inherit the color of the parent element */
+border: 1px solid #ddd; /* Optional: set a neutral border for the disabled button */
+cursor: not-allowed; /* Change the cursor to indicate that the button is disabled */
+
+}
+/* Style the entire dropdown when "absent" is selected */
+.it-admin-training-attendance-dropdown.absent {
+background-color: #cf1b2a;  /* Light red background */
+border-color: #de6773;      /* Light red border */
+}
+
+/* Style the dropdown when "present" is selected */
+.it-admin-training-attendance-dropdown.present {
+background-color: #029224;  /* Light green background */
+border-color: #10be39;      /* Light green border */
+}
+.dropdown-container-training{
+position: absolute;
+top: 5px;
+right: 5px;
+z-index: 1;
 }

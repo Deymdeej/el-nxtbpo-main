@@ -241,15 +241,6 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
       <ul className="nav-links-super">
         <li>
           <button
-            onClick={() => navigate('/it-admin-dashboard')}
-            className={`nav-button-super ${selectedSection === 'overview' ? 'active-super' : ''}`}
-          >
-            <img src={UserDefault} alt="Overview" className="nav-icon-super" />
-            <span>Overview</span>
-          </button> 
-        </li>
-        <li>
-          <button
             onClick={() => navigate('/it-admin-courses')}
             className={`nav-button-super ${selectedSection === 'course' ? 'active-super' : ''}`}
           >
@@ -338,6 +329,9 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
                   resetFileInput();
                   setShowAddModal(true);
                 }}>
+
+                  <div className="admin-certificate-add-icon">+</div>
+         
                   <span>Add Certificate</span>
                 </div>
               </>
@@ -346,6 +340,7 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
                 resetFileInput();
                 setShowAddModal(true);
               }}>
+                 <div className="admin-certificate-add-icon">+</div>
                 <span>Add Certificate</span>
               </div>
             )}

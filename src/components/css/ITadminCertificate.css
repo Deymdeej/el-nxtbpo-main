@@ -147,6 +147,7 @@
   width: 300px;
   height: 370px; /* Match the certificate card height */
   display: flex;
+  flex-direction: column; /* Stack items vertically */
   justify-content: center;
   align-items: center;
   background-color: #fff;
@@ -155,6 +156,11 @@
   cursor: pointer;
   transition: background-color 0.3s ease, border-color 0.3s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.admin-certificate-add-icon {
+  font-size: 36px;
+  color: #666;
+  margin-bottom: 8px; /* Add some space between the icon and text */
 }
 
 .admin-certificate-add-file-button:hover {

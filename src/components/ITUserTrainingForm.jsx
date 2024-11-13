@@ -358,11 +358,12 @@ function ITUserTrainingForm() {
               
               <div className="IT-user-training-side-modal-details">
               <p>{selectedTraining.trainingDescription}</p>
-                <h4>Prerequisite: <span className="IT-user-training-prerequisite">{prerequisiteTitle || "None"}</span></h4>
-                <h5>Category: <span className="IT-user-training-category">{selectedTraining.category || "General"}</span></h5>
               </div>
             </div>
             <div className="IT-user-training-side-modal-footer">
+            <div className="IT-user-course-course-details-1">
+            <h4>Prerequisite: <span className="IT-user-training-prerequisite">{prerequisiteTitle || "None"}</span></h4>
+            <h5>Category: <span className="IT-user-training-category">{selectedTraining.category || "General"}</span></h5>
               <button 
                 className="IT-user-training-side-modal-enroll-button" 
                 onClick={handleEnrollTraining}
@@ -371,7 +372,7 @@ function ITUserTrainingForm() {
                 ENROLL TRAINING
               </button>
             </div>
-          
+            </div>
         </div>
       )}
 

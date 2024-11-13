@@ -7,7 +7,7 @@ import UserCoursePage from "./components/UserCoursePage";
 import AdminResultsPage from "./components/AdminResultsPage";
 import HRAdminDashboard from "./components/HRAdminDashboard";
 import HRUserDashboard from "./components/HRUserDashboard";
-import ITAdminDashboard from "./components/ITAdminDashboard";
+
 import ITUserDashboard from "./components/ITUserDashboard";
 import ITAdminTrainingDashboard from "./components/ITAdminTrainingDashboard";
 import ITUserTraining from "./components/ITUserTraining"; // Fix the import path
@@ -19,7 +19,8 @@ import { auth, db } from "./firebase";
 import { doc, getDoc } from "firebase/firestore";
 import Spinner from "react-bootstrap/Spinner";
 import ITUserCertificate from "./components/ITUserCertificate";
-import AdminSuperCourseForm1 from "./components/AdminSuperCourseForm1"
+import AdminSuperCourseForm1 from "./components/AdminSuperCourse";
+
 import AdminCoursePage from "./components/AdminCoursePage"
  
 function App() {
@@ -81,7 +82,7 @@ function App() {
                       department === "HR" ? (
 <Navigate to="/hr-admin-dashboard" />
                       ) : (
-<Navigate to="/it-admin-dashboard" />
+<Navigate to="/it-admin-courses" />
                       )
                     ) : department === "HR" ? (
 <Navigate to="/hr-user-dashboard" />
@@ -111,10 +112,7 @@ function App() {
               />
  
               {/* IT Admin and User Routes */}
-<Route
-                path="/it-admin-dashboard"
-                element={user && role === "admin" && department === "IT" ? <ITAdminDashboard /> : <Navigate to="/login" />}
-              />
+
 <Route
                 path="/it-user-dashboard"
                 element={user && role === "user" && department === "IT" ? <ITUserDashboard /> : <Navigate to="/login" />}

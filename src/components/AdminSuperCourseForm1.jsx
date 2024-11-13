@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { db, storage } from "../firebase";
 import { getAuth, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,8 @@ import CustomModal from './CustomModal';
 import './css/ITAdminCoursePage.css';
 import { Button, Modal } from 'react-bootstrap';
 import Switch from "react-switch";
+import TrainingDefault from '../assets/trainingdefault.png';
+import CertDefault from '../assets/certdefault.png';
  
 
 import { auth } from "../firebase";
@@ -20,11 +22,13 @@ import trashIcon from '../assets/trash.svg';
 import editIcon from '../assets/edit.svg';
 import SortIcon from '../assets/filter.svg'
 import addIcon from '../assets/add-course.svg'
+
 import CloseIcon from '../assets/closebtn.svg'
-import TrainingDefault from '../assets/trainingdefault.png';
-import CertDefault from '../assets/certdefault.png';
-const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selectedNav }) => {
+ 
+const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSection, setSelectedSection] = useState('course');
+  const [isOpen, setIsOpen] = useState(true);
   const [courseTitle, setCourseTitle] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
   const [category, setCategory] = useState('');
@@ -49,13 +53,17 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [showMenu, setShowMenu] = useState(null); // To track the active menu for each file
   const [showMenuIndex, setShowMenuIndex] = useState(null);
-  const [isOpen, setIsOpen] = useState(window.innerWidth > 768); // Initialize based on screen size
-  const [selectedSection, setSelectedSection] = useState('course');
+  const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRefs = useRef([]);
 
+  
   const handleFilterSelect = (filter) => {
+    console.log('Filter selected:', filter);  // Check if this logs the selected filter
     setSelectedFilter(filter);
-    setDropdownOpen(false); // Close the dropdown after selecting a filter
+    setDropdownOpen(false);  // Close dropdown after selecting a filter
   };
+
 
   const handleViewFile = (file) => {
     // Make sure file.url is the full URL to the file in Firebase Storage
@@ -86,13 +94,9 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
     setIsVideoLinkEnabled(!isVideoLinkEnabled);
   };
  
-  const navigate = useNavigate();
-
-
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
   const admintoggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
+    setDropdownOpen((prevState) => !prevState);  // Toggle dropdown visibility
+    console.log('Dropdown open:', !dropdownOpen);  // Debug: check if it's toggling
   };
 
  
@@ -474,17 +478,6 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
       console.error("Error deleting course:", error);
     }
   };
- 
-  const closeCourseModal = () => {
-    setShowCourseModal(false);
-    setSelectedCourse(null);
-  };
- 
-  const closeEditModal = () => {
-    setShowEditModal(false);
-    setSelectedCourse(null);
-    setUploadedFiles([]);
-  };
 
   const handleSectionChange = (section) => {
     setSelectedSection(section);
@@ -508,8 +501,17 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
     };
   }, []);
 
-
-
+ 
+  const closeCourseModal = () => {
+    setShowCourseModal(false);
+    setSelectedCourse(null);
+  };
+ 
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setSelectedCourse(null);
+    setUploadedFiles([]);
+  };
   const openCourseModal = (course) => {
     const certificate = certificates.find((cert) => cert.id === course.certificateId);
     setSelectedCourse({
@@ -520,12 +522,28 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
     setShowCourseModal(true);
   };
  
- 
     const filteredCourses = courses.filter((course) => {
     const matchesTitle = course.courseTitle.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'All' || course.category === filterCategory;
-    return matchesTitle && matchesCategory;
+    const matchesCategory = selectedFilter === 'All' || course.category === selectedFilter;
+    return matchesCategory && matchesTitle;
   });
+
+   // Close dropdown if clicked outside
+   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRefs.current.every((ref) => ref && !ref.contains(event.target))) {
+        setActiveDropdown(null); // Close dropdown if clicked outside of all dropdowns
+      }
+    };
+
+    // Add event listener to close dropdown if clicked outside
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Cleanup event listener on unmount
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="admin-super-container">
@@ -536,11 +554,11 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
       <ul className="nav-links-super">
         <li>
           <button
-            onClick={() => navigate('/it-admin-dashboard')}
+            onClick={() => navigate('/admin')}
             className={`nav-button-super ${selectedSection === 'overview' ? 'active-super' : ''}`}
           >
             <img src={UserDefault} alt="Overview" className="nav-icon-super" />
-            <span>Overview</span>
+            <span>User List</span>
           </button> 
         </li>
         <li>
@@ -550,24 +568,6 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
           >
             <img src={CourseDefault} alt="Course" className="nav-icon-super" />
             <span>Course</span>
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={() => navigate('/it-admin-training')}
-            className={`nav-button-super ${selectedSection === 'training' ? 'active-super' : ''}`}
-          >
-            <img src={TrainingDefault} alt="Training" className="nav-icon-super" />
-            <span>Training</span>
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={() => navigate('/it-admin-certificates')}
-            className={`nav-button-super ${selectedSection === 'certificate' ? 'active-super' : ''}`}
-          >
-            <img src={CertDefault} alt="Certificate" className="nav-icon-super" />
-            <span>Certificate</span>
           </button>
         </li>
       </ul>
@@ -583,19 +583,15 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
       ☰
     </button>
 
-      {/* Main content area */}
-      <div className="content-super">
 
-      
+        {/* Main content area */}
+        <div className="it-admin-main-content">
 
-      {selectedSection === 'course' && (
-
+        {selectedSection === 'course' && (
   <div className="row">
     <div className="col-md-12">
       <h10>All Courses</h10>
 
-
-  
       {/* Search Bar and Filter By Category */}
       <div className="itadmin-search-filter-container">
   <div className="itadmin-search-bar-wrapper">
@@ -608,7 +604,7 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
     />
       </div>
       <div className="filter-wrapper">
-          <button onClick={admintoggleDropdown} className="filter-button-admin">
+          <button onClick= {admintoggleDropdown} className="filter-button-admin">
           <span className="filter-label">Filter by: {selectedFilter}</span>
           <img src={SortIcon} alt="Sort/Filter Icon" className="filter-icon-2" />
           </button>
@@ -644,7 +640,7 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
             }}
           />
           {activeDropdown === course.id && (
-            <div className="dropdown-menu">
+            <div className="dropdown-menu" ref={(el) => (dropdownRefs.current[course.id] = el)}>
               <div
                 className="dropdown-item edit"
                 onClick={(e) => {
@@ -667,9 +663,7 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
           )}
         </div>
       </div>
-
-      
-      <div className="p69">{course.courseDescription}</div>
+      <p className="course-description-admin">{course.courseDescription}</p>
 
       <div className="category-tag-wrapper">
         <span className="category-tag">{course.category}</span>
@@ -694,11 +688,7 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
           </div>
         </div>
 
-
-        
-         )}
-
-
+)}
          {/* Modal for Course Details */}
           {selectedCourse && (
         <Modal show={showCourseModal} onHide={closeCourseModal}>
@@ -712,7 +702,7 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
     <Modal.Body className="modal-body-course">
       {/* Description */}
       <p className="description-text">
-        <strong>Description:</strong> {selectedCourse.courseDescription}
+        <strong1>Description:</strong1> {selectedCourse.courseDescription}
       </p>
       {/* Category */}
       <p>
@@ -727,17 +717,18 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
       )}
         <strong>Prerequisites:</strong>{' '}
         {selectedCourse.prerequisites && selectedCourse.prerequisites.length > 0
-          ? selectedCourse.prerequisites.map((prereqId) => {
-              const prereqCourse = courses.find((course) => course.id === prereqId);
-              return prereqCourse ? prereqCourse.courseTitle : 'Unknown';
-            }).join(', ')
-          : 'None'}
+  ? selectedCourse.prerequisites.map((prereqId) => {
+      const prereqCourse = courses.find((course) => course.id === prereqId);
+      return prereqCourse && prereqCourse.courseTitle ? prereqCourse.courseTitle : 'Unknown';
+    }).join(', ')
+  : 'None'}
+
       </p>
       
       {/* Quiz Questions */}
       {selectedCourse.questions?.length > 0 && (
         <div className="quiz-section">
-          <h5>Quiz Questions:</h5>
+          <h50>Quiz Questions:</h50>
           {selectedCourse.questions.map((question, index) => (
             <div key={index} style={{ marginBottom: '20px' }}>
               <h6 className="quiz-question">Question {index + 1}: {question.question}</h6>
@@ -768,6 +759,25 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
             </span>
           </div>
         </div>
+         {/* Three-dot icon with menu */}
+         <div className="pdf-file-options">
+          <img
+            src={editIcon}
+            alt="Options"
+            className="three-dot-icon"
+            onClick={() => toggleMenu(index)}
+          />
+          {showMenuIndex === index && (
+            <div className="pdf-options-menu">
+              <button className="view-pdf-btn" onClick={() => handleViewFile(file)}>
+                View
+              </button>
+              <button className="delete-pdf-btn" onClick={() => handleDeleteFileForFirebase(file.url, selectedCourse.id)}>
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     ))}
   </div>
@@ -787,29 +797,6 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
               allowFullScreen
             />
           </div>
-        </div>
-      )}
-      {/* Certificate Display */}
-      {selectedCourse.certificateFileUrl && (
-        <div style={{ marginTop: '20px' }}>
-          <h5>Certificate:</h5>
-          <p><strong>Title:</strong> {selectedCourse.certificateTitle || "No title available"}</p>
-          {selectedCourse.certificateFileUrl.endsWith('.pdf') ? (
-            <iframe
-              src={selectedCourse.certificateFileUrl}
-              title="Certificate PDF"
-              width="90%"
-              height="500px"
-              frameBorder="0"
-              style={{ border: "1px solid #ddd", borderRadius: "8px" }}
-            />
-          ) : (
-            <img
-              src={selectedCourse.certificateFileUrl}
-              alt="Certificate Image"
-              style={{ width: "90%", height: "auto", border: "1px solid #ddd", borderRadius: "8px" }}
-            />
-          )}
         </div>
       )}
     </Modal.Body>
@@ -1251,11 +1238,8 @@ const AdminSuperCourseForm1 = ({ courses, setCourses, enrollmentCounts, selected
           </CustomModal>
         )}
       </div>
-
-
-   
     </div>
   );
 };
 
-export default AdminSuperCourseForm1;
+export default ITAdminCoursePage;

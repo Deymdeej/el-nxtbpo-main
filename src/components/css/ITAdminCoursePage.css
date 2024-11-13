@@ -52,10 +52,17 @@
  
 /* Main content styling */
 .it-admin-main-content {
-  margin-left: 250px; /* Adjust margin-left to account for sidebar */
+  margin-left: 250px; /* Leaves space for a sidebar */
   padding: 20px;
-  transition: margin-left 0.3s ease;
+  width: calc(100vw - 250px); /* Ensures the content takes up the full width of the viewport minus the sidebar */
+  background-color: #EFEFEF; /* Light gray background for content area */
+  min-height: 100vh; /* Ensures the full height of the content area is covered */
+  box-sizing: border-box; /* Ensures padding is included within the width/height */
+  overflow-x: hidden; /* Prevents horizontal scroll */
+  transition: margin-left 0.3s ease-in-out;
 }
+
+
  
 h4 {
   color: #333;
@@ -334,7 +341,7 @@ background-color: #f0f0f0;
   text-overflow: ellipsis; /* Add ellipsis for overflowed text */
 }
  
-.p69 {
+.course-description-admin {
 text-align: justify;
 display: -webkit-box;
 -webkit-line-clamp: 5; /* Limit to 4 lines */
@@ -464,7 +471,6 @@ font-size: 14px;
 background-color: green;
 color: white;
 padding: 6px 10px;
-border-radius: 5px;
 width: fit-content; /* Keeps the width of the category box tight around the text */
 font-size: 14px; /* Adjust font size to your preference */
 font-weight: bold;
@@ -970,7 +976,7 @@ margin-bottom: 20px; /* Adds space below the entire table */
  
 .course-title-header-admin {
   margin: 0;
-  font-size: 24px;
+  font-size: 30px;
   font-weight: bold;
 }
  
@@ -1117,7 +1123,7 @@ margin-bottom: 20px; /* Adds space below the entire table */
  
 .dropdown-menu {
   position: absolute;
-  right: 0;
+  right: 15px;
   top: 100%;
   background-color: white;
   border: 1px solid #ccc;
@@ -1149,6 +1155,7 @@ margin-bottom: 15px; /* Adjust this value to control spacing */
  
 .modal-body strong {
 margin-bottom: 5px; /* Add spacing after each label */
+font-size: 18px;
 }
  
 /* Extra spacing specifically between major sections */
@@ -1341,3 +1348,28 @@ margin-bottom: 10px; /* Adds spacing from the bottom */
 .delete-pdf-btn:hover {
   background-color: #c82333;  /* Darker red */
 }
+.description-text strong1{
+  font-weight: bold;
+  font-size: 30px;
+  display: block;
+  margin-bottom: 5px;
+}
+.quiz-section h50{
+  font-weight: bold;
+  font-size: 30px;
+
+}
+
+.addquestion-button{
+  background-color: green;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.addquestion-button:hover{
+  background-color: #58c85d;
+}
+ 
