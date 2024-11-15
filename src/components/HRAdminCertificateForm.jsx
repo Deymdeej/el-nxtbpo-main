@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { db, storage } from "../firebase";
 import { getAuth, signOut } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+
 import { collection, addDoc, updateDoc, deleteDoc, onSnapshot, doc, getDocs, arrayRemove } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject} from "firebase/storage";
 import CustomModal from './CustomModal';
@@ -10,8 +10,6 @@ import { Button, Modal } from 'react-bootstrap';
 import Switch from "react-switch";
 import TrainingDefault from '../assets/trainingdefault.png';
 import CertDefault from '../assets/certdefault.png';
- 
-
 import { auth } from "../firebase";
 import BPOLOGO from '../assets/bpo-logo.png';
 import UserDefault from '../assets/userdefault.png';
@@ -22,12 +20,13 @@ import trashIcon from '../assets/trash.svg';
 import editIcon from '../assets/edit.svg';
 import SortIcon from '../assets/filter.svg'
 import addIcon from '../assets/add-course.svg'
-
 import CloseIcon from '../assets/closebtn.svg'
+import HRAdminCertificateDashboard from "./HRAdminCertificateDashboard";
+import { useNavigate } from 'react-router-dom';
  
-const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}) => {
+const HRAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedSection, setSelectedSection] = useState('course');
+  const [selectedSection, setSelectedSection] = useState('hradmincert');
   const [isOpen, setIsOpen] = useState(true);
   const [courseTitle, setCourseTitle] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
@@ -63,7 +62,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
     console.log('Filter selected:', filter);  // Check if this logs the selected filter
     setSelectedFilter(filter);
     setDropdownOpen(false);  // Close dropdown after selecting a filter
-  }; 
+  };
 
 
   const handleViewFile = (file) => {
@@ -115,14 +114,14 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
       });
     });
  
-    const unsubscribeITCourses = onSnapshot(collection(db, 'ITCourses'), (snapshot) => {
+    const unsubscribeITCourses = onSnapshot(collection(db, 'HRCourses'), (snapshot) => {
       const itCourses = snapshot.docs.map((doc) => ({
         id: doc.id,
-        category: 'IT',
+        category: 'HR',
         ...doc.data(),
       }));
       setCourses((prevCourses) => {
-        const otherCourses = prevCourses.filter((course) => course.category !== 'IT');
+        const otherCourses = prevCourses.filter((course) => course.category !== 'HR');
         return [...otherCourses, ...itCourses];
       });
     });
@@ -289,7 +288,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
       const course = courses.find(c => c.id === courseId); // Find the course by ID
       if (!course) throw new Error("Course not found");
    
-      const collectionName = course.category === "General" ? "GeneralCourses" : "ITCourses";
+      const collectionName = course.category === "General" ? "GeneralCourses" : "HRCourses";
       const docRef = doc(db, collectionName, courseId); // Ensure correct collection
       await deleteDoc(docRef); // Deleting from Firestore
    
@@ -356,10 +355,10 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
     setQuestions([...questions, { question: "", choices: ["", "", "", ""], correctAnswer: "" }]);
   };
  
-  const handleCorrectAnswerChange = (questionIndex, e) => {
-    const updatedQuestions = [...selectedCourse.questions];  // Make a copy of the questions array
-    updatedQuestions[questionIndex].correctAnswer = e.target.value;  // Update the correct answer for this question
-    setSelectedCourse({ ...selectedCourse, questions: updatedQuestions });  // Update the state with the new questions array
+  const handleCorrectAnswerChange = (index, event) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[index].correctAnswer = event.target.value;
+    setQuestions(updatedQuestions);
   };
  
   const handleSubmit = async () => {
@@ -392,7 +391,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
         })
       );
   
-      const collectionName = category === "General" ? "GeneralCourses" : "ITCourses";
+      const collectionName = category === "General" ? "GeneralCourses" : "HRCourses";
       await addDoc(collection(db, collectionName), {
         courseTitle,
         courseDescription,
@@ -416,7 +415,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
    
   const handleUpdateCourse = async () => {
     try {
-      const collectionName = category === "General" ? "GeneralCourses" : "ITCourses";
+      const collectionName = category === "General" ? "GeneralCourses" : "HRCourses";
       const docRef = doc(db, collectionName, selectedCourse.id);
   
       if (!docRef) {
@@ -470,7 +469,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
   };
   const handleDeleteCourse = async (courseId) => {
     try {
-      const collectionName = selectedCourse.category === "General" ? "GeneralCourses" : "ITCourses";
+      const collectionName = selectedCourse.category === "General" ? "GeneralCourses" : "HRCourses";
       const docRef = doc(db, collectionName, courseId);
       await deleteDoc(docRef);
       window.alert("Course deleted successfully!");
@@ -480,10 +479,12 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
     }
   };
 
+  const handleSectionChange = (section) => {
+    setSelectedSection(section);
+  };
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
-
   const handleResize = () => {
     if (window.innerWidth > 768) {
       setIsOpen(true);
@@ -491,7 +492,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
       setIsOpen(false);
     }
   };
-
+  
   useEffect(() => {
     window.addEventListener('resize', handleResize);
     handleResize();
@@ -500,9 +501,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
     };
   }, []);
 
-  const handleSectionChange = (section) => {
-    setSelectedSection(section);
-  };
  
   const closeCourseModal = () => {
     setShowCourseModal(false);
@@ -534,47 +532,57 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
 
   return (
     <div className="admin-super-container">
-      <nav className={`sidebar-super ${isOpen ? 'open-super' : 'closed-super'}`}>
-        <div className="logo-super">
-          <img src={BPOLOGO} alt="Company Logo" />
-        </div>
-        <ul className="nav-links-super">
-          <li>
-            <button
-              onClick={() => navigate('/admin')}
-              className={`nav-button-super ${selectedSection === 'overview' ? 'active-super' : ''}`}
-            >
-              <img src={UserDefault} alt="Overview" className="nav-icon-super" />
-              <span>User List</span>
-            </button> 
-          </li>
-          <li>
-            <button
-              onClick={() => handleSectionChange('course')}
-              className={`nav-button-super ${selectedSection === 'course' ? 'active-super' : ''}`}
-            >
-              <img src={CourseDefault} alt="Course" className="nav-icon-super" />
-              <span>Course</span>
-            </button>
-          </li>
-        </ul>
-        <div className="logout-super">
-          <button className="nav-button-super" onClick={handleLogout}>
-            <img src={LogoutDefault} alt="Logout Icon" className="nav-icon-super" />
-            Logout
+    <nav className={`sidebar-super ${isOpen ? 'open-super' : 'closed-super'}`}>
+      <div className="logo-super">
+        <img src={BPOLOGO} alt="Company Logo" />
+      </div>
+      <ul className="nav-links-super">
+        
+        <li>
+          <button
+            onClick={() =>navigate('/hr-admin-dashboard')}
+            className={`nav-button-super ${selectedSection === 'course' ? 'active-super' : ''}`}
+          >
+            <img src={CourseDefault} alt="Course" className="nav-icon-super" />
+            <span>Course</span>
           </button>
-        </div>
-      </nav>
+        </li>
+        <li>
+          <button
+            onClick={() => navigate('/hr-admin-training')}
+            className={`nav-button-super ${selectedSection === 'training' ? 'active-super' : ''}`}
+          >
+            <img src={TrainingDefault} alt="Training" className="nav-icon-super" />
+            <span>Training</span>
+          </button>
+        </li>
+        <li>
+          <button
+            onClick={() => handleSectionChange('hradmincert')}
+            className={`nav-button-super ${selectedSection === 'certificate' ? 'active-super' : ''}`}
+          >
+            <img src={CertDefault} alt="Certificate" className="nav-icon-super" />
+            <span>Certificate</span>
+          </button>
+        </li>
+      </ul>
+      <div className="logout-super">
+        <button className="nav-button-super" onClick={handleLogout}>
+          <img src={LogoutDefault} alt="Logout Icon" className="nav-icon-super" />
+          Logout
+        </button>
+      </div>
+    </nav>
 
-      <button className="hamburger-super" onClick={toggleSidebar}>
-        ☰
-      </button>
+    <button className="hamburger-super" onClick={toggleSidebar}>
+      ☰
+    </button>
 
 
         {/* Main content area */}
         <div className="it-admin-main-content">
 
-        {selectedSection === 'course' && (
+        {selectedSection === 'hradmincert' && (
   <div className="row">
     <div className="col-md-12">
       <h10>All Courses</h10>
@@ -600,7 +608,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
           <div className="dropdown-content">
           <div onClick={() => handleFilterSelect('All')}>All</div>
           <div onClick={() => handleFilterSelect('General')}>General</div>
-          <div onClick={() => handleFilterSelect('IT')}>IT</div>
           <div onClick={() => handleFilterSelect('HR')}>HR</div>
         </div>
         )}
@@ -835,7 +842,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
           className="form-control"
         >
           <option value="General">General</option>
-          <option value="IT">IT</option>
           <option value="HR">HR</option>
         </select>
       </div>
@@ -1031,7 +1037,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
               >
               <option value="">Select Category</option>
                 <option value="General">General</option>
-              <option value="IT">IT</option>
               <option value="HR">HR</option>
             </select>
               </div>
@@ -1233,4 +1238,4 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
   );
 };
 
-export default ITAdminCoursePage;
+export default HRAdminCertificateDashboard;

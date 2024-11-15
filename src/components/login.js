@@ -38,9 +38,7 @@ function Login({ toggleForm }) {
         // Check role and navigate accordingly
         if (userRole === "admin") {
           if (!department) {
-            toast.info("Head Admin (No Department Assigned)", {
-              position: "top-center",
-            });
+            
             navigate("/admin"); // Head Admin navigation
           } else if (department === "it") {
             navigate("/it-admin-courses"); // IT Admin navigation

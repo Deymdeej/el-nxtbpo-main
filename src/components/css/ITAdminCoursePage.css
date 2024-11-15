@@ -524,10 +524,22 @@ height: 30px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Adds a shadow for better visibility */
 }
+.cert-button11{
+  margin-top: 20px;
+padding: 10px 20px;
+font-size: 16px;
+background-color: #007bff;
+color: #ffffff;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+margin-top: 15px;
+padding: 10px 20px;
+}
 .modal-content {
   background-color: white;
   border-radius: 8px;
-  padding: 30px;
+  padding: 5px 10px;
   width: 95%;
   max-width: 950px;
   max-height: 95vh;
@@ -1257,6 +1269,7 @@ margin-bottom: 10px; /* Adds spacing from the bottom */
 }
 
 .pdf-file-card {
+  cursor: pointer; /* Optional: change cursor on hover */
   display: flex;
   align-items: center;
   background-color: #f9f9f9;
@@ -1279,6 +1292,14 @@ margin-bottom: 10px; /* Adds spacing from the bottom */
   margin-right: 10px;
 }
 
+
+
+.pdf-file-card:hover {
+
+
+
+  background-color: #c3c3c3;
+}
 .pdf-file-meta {
   display: flex;
   flex-direction: column;
@@ -1372,4 +1393,38 @@ margin-bottom: 10px; /* Adds spacing from the bottom */
 .addquestion-button:hover{
   background-color: #58c85d;
 }
+@media screen and (max-width: 768px) {
+  .it-admin-mai n-content {
+    margin-left: 0; /* Removes margin on smaller screens */
+    width: 100vw; /* Full width on smaller screens */
+  }
+}
  
+.it-admin-main-content.sidebar-closed {
+  margin-left: 0; /* Full width content when sidebar is hidden */
+}
+ 
+ 
+@media (max-width: 768px) {
+  .sidebar-super {
+    width: 250px;
+    transform: translateX(-250px); /* Sidebar hidden by default */
+  }
+ 
+  .sidebar-super.open-super {
+    transform: translateX(0); /* Show sidebar when open */
+  }
+ 
+  .hamburger-super {
+    display: block; /* Show hamburger menu on small screens */
+    right: 10px; /* Position it on the right side of the screen */
+  }
+ 
+  .it-admin-main-content {
+    margin-left: 0; /* Full width content on small screens */
+  }
+ 
+  .it-admin-main-content.sidebar-closed {
+    margin-left: 0; /* Adjust content width when sidebar is closed */
+  }
+}

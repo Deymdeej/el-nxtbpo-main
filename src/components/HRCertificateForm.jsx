@@ -20,7 +20,7 @@ import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import html2canvas from 'html2canvas';
 
-function ITUserCertificateForm({
+function HRUserCertificateForm({
   certificates,
   certificateTitle,
   setCertificateTitle,
@@ -32,7 +32,7 @@ function ITUserCertificateForm({
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
-  const [selectedSection, setSelectedSection] = useState('cert');
+  const [selectedSection, setSelectedSection] = useState('hrcert');
   const auth = getAuth();
   const [certificateResults, setCertificateResults] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -154,7 +154,7 @@ function ITUserCertificateForm({
         <ul className="nav-links-super">
           <li>
             <button
-              onClick={() => navigate('/it-user-dashboard')}
+              onClick={() => navigate('/hr-user-dashboard')}
               className={`nav-button-super ${selectedSection === 'courses' ? 'active-super' : ''}`}
             >
               <img src={CourseDefault} alt="Courses" className="nav-icon-super" />
@@ -163,7 +163,7 @@ function ITUserCertificateForm({
           </li>
           <li>
             <button
-              onClick={() => navigate('/it-user-training')}
+              onClick={() => navigate('/hr-user-training')}
               className={`nav-button-super ${selectedSection === 'training' ? 'active-super' : ''}`}
             >
               <img src={TrainingDefault} alt="Training" className="nav-icon-super" />
@@ -172,8 +172,8 @@ function ITUserCertificateForm({
           </li>
           <li>
             <button
-              onClick={() => navigate('/it-user-certificate')}
-              className={`nav-button-super ${selectedSection === 'cert' ? 'active-super' : ''}`}
+              onClick={() => handleSectionChange('hrcert')}
+              className={`nav-button-super ${selectedSection === 'hrcert' ? 'active-super' : ''}`}
             >
               <img src={CertDefault} alt="Certificates" className="nav-icon-super" />
               <span>Certificates</span>
@@ -194,10 +194,10 @@ function ITUserCertificateForm({
 
       <div className="content-super">
         <h1 style={{ fontSize: '22px', marginLeft: '25px' }}>
-          <strong><span style={{ color: '#48887B' }}>Hello</span></strong>, <em>{fullName || 'IT user'}</em>!
+          <strong><span style={{ color: '#48887B' }}>Hello</span></strong>, <em>{fullName || 'HR user'}</em>!
         </h1>
 
-        {selectedSection === 'cert' && (
+        {selectedSection === 'hrcert' && (
   <div id="certificates-list" className="user-list-super-section">
     <h2>Your Certificates</h2>
     {certificateResults &&
@@ -266,4 +266,4 @@ function ITUserCertificateForm({
   );
 }
 
-export default ITUserCertificateForm;
+export default HRUserCertificateForm;

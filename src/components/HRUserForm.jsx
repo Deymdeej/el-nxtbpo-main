@@ -37,7 +37,7 @@ import editIcon from '../assets/edit.svg';
 
 
 
-const ITUser = ({
+const HRUser = ({
   handleLogout,
   certificateId,
   userType // Added userType to determine whether the user is HR or IT
@@ -47,7 +47,6 @@ const ITUser = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedNav, setSelectedNav] = useState('courses'); // Set default navigation to "courses"
   const [selectedCourse, setSelectedCourse] = useState(null); // For handling selected course
   const [isMyCoursesModalOpen, setIsMyCoursesModalOpen] = useState(false); // For handling "My Courses" modal visibility
   const [isAvailableCoursesModalOpen, setIsAvailableCoursesModalOpen] = useState(false); // For handling "Available Courses" modal visibility
@@ -134,7 +133,7 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
   useEffect(() => {
     if (userId) {
       // Real-time listener for enrolled courses
-      const enrollmentQuery = query(collection(db, "Enrollments"), where("userId", "==", userId));
+      const enrollmentQuery = query(collection(db, "HREnrollments"), where("userId", "==", userId));
       const unsubscribeEnrolled = onSnapshot(enrollmentQuery, (snapshot) => {
         const enrolledCoursesFromFirebase = snapshot.docs.map(doc => ({
           id: doc.data().courseId,
@@ -155,14 +154,14 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
       });
 
       // Real-time listener for IT and General courses
-      const unsubscribeITCourses = onSnapshot(collection(db, "ITCourses"), (snapshot) => {
+      const unsubscribeITCourses = onSnapshot(collection(db, "HRCourses"), (snapshot) => {
         const itCourses = snapshot.docs.map(doc => ({
           id: doc.id,
           courseTitle: doc.data().courseTitle,
           courseDescription: doc.data().courseDescription || "No description available",
-          category: "IT",
+          category: "HR",
         }));
-        setCourses(prevCourses => [...prevCourses.filter(course => course.category !== 'IT'), ...itCourses]);
+        setCourses(prevCourses => [...prevCourses.filter(course => course.category !== 'HR'), ...itCourses]);
       }, (error) => {
         console.error("Error fetching IT courses in real-time:", error.message);
         toast.error("Failed to fetch IT courses.");
@@ -193,7 +192,7 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
   useEffect(() => {
     // Fetch quiz result in real-time when the component loads or when userId or selectedCourse changes
     if (userId && selectedCourse) {
-      const quizResultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
+      const quizResultRef = doc(db, "HRQuizResults", `${userId}_${selectedCourse.id}`);
       const unsubscribeQuizResult = onSnapshot(quizResultRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.data();
@@ -264,7 +263,7 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
   useEffect(() => {
     // Fetch quiz result in real-time when the component loads or when userId or selectedCourse changes
     if (userId && selectedCourse) {
-      const quizResultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
+      const quizResultRef = doc(db, "HRQuizResults", `${userId}_${selectedCourse.id}`);
 
       const unsubscribeQuizResult = onSnapshot(quizResultRef, (snapshot) => {
         if (snapshot.exists()) {
@@ -292,7 +291,7 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
   useEffect(() => {
     const fetchQuizData = async () => {
       if (userId && selectedCourse) {
-        const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
+        const enrollmentRef = doc(db, "HREnrollments", `${userId}_${selectedCourse.id}`);
         try {
           const enrollmentSnap = await getDoc(enrollmentRef);
           if (enrollmentSnap.exists()) {
@@ -491,7 +490,7 @@ const downloadImageAsDataURL = async (imageUrl) => {
 
 const fetchQuizDataFromEnrollment = async (courseId) => {
   try {
-    const enrollmentRef = doc(db, "Enrollments", `${userId}_${courseId}`);
+    const enrollmentRef = doc(db, "HREnrollments", `${userId}_${courseId}`);
     const enrollmentSnap = await getDoc(enrollmentRef);
 
     if (enrollmentSnap.exists()) {
@@ -509,7 +508,7 @@ const fetchQuizDataFromEnrollment = async (courseId) => {
       setAttemptsUsed(quizAttempts); // Set the attempts used
 
       // Fetch the quiz result if it exists
-      const resultRef = doc(db, "QuizResults", `${userId}_${courseId}`);
+      const resultRef = doc(db, "HRQuizResults", `${userId}_${courseId}`);
       const resultSnap = await getDoc(resultRef);
       if (resultSnap.exists()) {
         const resultData = resultSnap.data();
@@ -571,7 +570,7 @@ const handleCloseQuizModal = () => {
 
 const fetchQuizData = async (courseId) => {
   try {
-    const enrollmentRef = doc(db, "Enrollments", `${userId}_${courseId}`);
+    const enrollmentRef = doc(db, "HREnrollments", `${userId}_${courseId}`);
     const enrollmentSnap = await getDoc(enrollmentRef);
     
     if (enrollmentSnap.exists()) {
@@ -606,7 +605,7 @@ const fetchQuizData = async (courseId) => {
     try {
       if (!course) return;
   
-      const enrollmentRef = doc(db, "Enrollments", `${userId}_${course.id}`);
+      const enrollmentRef = doc(db, "HREnrollments", `${userId}_${course.id}`);
       const enrollmentSnapshot = await getDoc(enrollmentRef);
   
       if (!enrollmentSnapshot.exists()) {
@@ -631,7 +630,7 @@ const fetchQuizData = async (courseId) => {
       setTimeLeft(enrollmentData.quizDuration * 60); // Convert minutes to seconds
   
       // Fetch the quiz result for the specific course
-      const quizResultRef = doc(db, "QuizResults", `${userId}_${course.id}`);
+      const quizResultRef = doc(db, "HRQuizResults", `${userId}_${course.id}`);
       const quizResultSnapshot = await getDoc(quizResultRef);
   
       if (quizResultSnapshot.exists()) {
@@ -684,11 +683,11 @@ const handleRetakeCourse = async () => {
     }
 
     // Delete the quiz result from Firestore
-    const quizResultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
+    const quizResultRef = doc(db, "HRQuizResults", `${userId}_${selectedCourse.id}`);
     await deleteDoc(quizResultRef); // Use deleteDoc to remove the quiz result
 
     // Reset the attempts to zero in Firestore
-    const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
+    const enrollmentRef = doc(db, "HREnrollments", `${userId}_${selectedCourse.id}`);
     await updateDoc(enrollmentRef, {
       quizAttempts: 0,  // Reset quizAttempts to zero
     });
@@ -776,7 +775,7 @@ const handleRetakeCourse = async () => {
   
     try {
       // Fetch full course details from Firebase to ensure we get the latest data
-      const courseDocRef = doc(db, selectedCourse.category === 'IT' ? "ITCourses" : "GeneralCourses", selectedCourse.id);
+      const courseDocRef = doc(db, selectedCourse.category === 'HR' ? "HRCourses" : "GeneralCourses", selectedCourse.id);
       const courseSnapshot = await getDoc(courseDocRef);
   
       if (!courseSnapshot.exists()) {
@@ -800,7 +799,7 @@ const handleRetakeCourse = async () => {
       setSelectedCourse(courseDataWithDetails);
   
       // Store enrollment details in Firestore, including quiz details
-      const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
+      const enrollmentRef = doc(db, "HREnrollments", `${userId}_${selectedCourse.id}`);
       await setDoc(enrollmentRef, {
         userId,
         courseId: selectedCourse.id,
@@ -861,7 +860,7 @@ const handleRetakeCourse = async () => {
 
 const checkIfQuizPassed = async (courseId, courseTitle) => {
   try {
-    const quizResultRef = doc(db, "QuizResults", `${userId}_${courseId}`);
+    const quizResultRef = doc(db, "HRQuizResults", `${userId}_${courseId}`);
     const quizResultSnap = await getDoc(quizResultRef);
     if (quizResultSnap.exists()) {
       const quizData = quizResultSnap.data();
@@ -909,7 +908,7 @@ const handleRetakeQuiz = async () => {
 
     try {
       // Update the attempt count in Firestore or wherever you're storing it
-      const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
+      const enrollmentRef = doc(db, "HREnrollments", `${userId}_${selectedCourse.id}`);
       await updateDoc(enrollmentRef, {
         quizAttempts: newAttemptsUsed,
       });
@@ -951,7 +950,7 @@ const handleAnswerSelect = (questionIndex, answer) => {
   
 const handleAvailableCoursesClick = async (course) => {
   try {
-    const collectionName = course.category === "IT" ? "ITCourses" : "GeneralCourses";
+    const collectionName = course.category === "HR" ? "HRCourses" : "GeneralCourses";
     const courseDocRef = doc(db, collectionName, course.id);
     const courseSnapshot = await getDoc(courseDocRef);
 
@@ -965,7 +964,7 @@ const handleAvailableCoursesClick = async (course) => {
 
     const prerequisiteTitles = await Promise.all(
       prerequisiteIds.map(async (prereqId) => {
-        const prereqCourseRef = doc(db, "ITCourses", prereqId);
+        const prereqCourseRef = doc(db, "HRCourses", prereqId);
         const prereqCourseSnap = await getDoc(prereqCourseRef);
         return prereqCourseSnap.exists() ? prereqCourseSnap.data().courseTitle : "Unknown Course";
       })
@@ -976,7 +975,7 @@ const handleAvailableCoursesClick = async (course) => {
       prerequisites: prerequisiteTitles.length > 0 ? prerequisiteTitles : "None",
       prerequisiteResults: await Promise.all(
         prerequisiteIds.map(async (prereqId) => {
-          const quizResultRef = doc(db, "QuizResults", `${userId}_${prereqId}`);
+          const quizResultRef = doc(db, "HRQuizResults", `${userId}_${prereqId}`);
           const quizResultSnap = await getDoc(quizResultRef);
           return quizResultSnap.exists() ? quizResultSnap.data().passed : false;
         })
@@ -1003,7 +1002,7 @@ const handleAvailableCoursesClick = async (course) => {
   const fetchQuizQuestions = async (courseId) => {
     try {
         // Fetch the quiz questions related to the specific course
-        const enrollmentRef = doc(db, "Enrollments", `${userId}_${courseId}`);
+        const enrollmentRef = doc(db, "HREnrollments", `${userId}_${courseId}`);
         const enrollmentSnap = await getDoc(enrollmentRef);
   
         if (enrollmentSnap.exists()) {
@@ -1046,7 +1045,7 @@ const handleAvailableCoursesClick = async (course) => {
     };
 
     try {
-        const resultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
+        const resultRef = doc(db, "HRQuizResults", `${userId}_${selectedCourse.id}`);
         await setDoc(resultRef, quizResult); // Save quiz result in Firestore
 
         setQuizSaved(true); // Mark quiz as saved
@@ -1181,7 +1180,7 @@ const handleQuizStartClick = async () => {
             };
 
             // Save the quiz result to Firebase
-            const resultRef = doc(db, "QuizResults", `${userId}_${selectedCourse.id}`);
+            const resultRef = doc(db, "HRQuizResults", `${userId}_${selectedCourse.id}`);
             await setDoc(resultRef, quizResult);
             console.log("Quiz result saved successfully!");
 
@@ -1289,7 +1288,7 @@ const handleQuizStartClick = async () => {
           </li>
           <li>
             <button
-              onClick={() => navigate('/it-user-training')}
+              onClick={() => navigate('/hr-user-training')}
               className={`nav-button-super ${selectedSection === 'training' ? 'active-super' : ''}`}
             >
               <img src={TrainingDefault} alt="Training" className="nav-icon-super" />
@@ -1298,7 +1297,7 @@ const handleQuizStartClick = async () => {
           </li>
           <li>
             <button
-              onClick={() => navigate('/it-user-certificate')}
+              onClick={() => navigate('/hr-user-certificates')}
               className={`nav-button-super ${selectedSection === 'cert' ? 'active-super' : ''}`}
             >
               <img src={CertDefault} alt="Certificates" className="nav-icon-super" />
@@ -1320,7 +1319,7 @@ const handleQuizStartClick = async () => {
 
       <div className="content-super">
       <h1 style={{ fontSize: '22px', marginLeft: '25px' }}>
-        <strong><span style={{ color: '#48887B' }}>Hello</span></strong>, <em>{fullName || 'IT user'}</em>!
+        <strong><span style={{ color: '#48887B' }}>Hello</span></strong>, <em>{fullName || 'HR user'}</em>!
       </h1>
 
         {selectedSection === 'courses' && (
@@ -1675,7 +1674,6 @@ const handleQuizStartClick = async () => {
                 Next
               </button>
             </div>
- 
           </>
         ) : (
           <>
@@ -1691,7 +1689,7 @@ const handleQuizStartClick = async () => {
       setAttemptsUsed(newAttemptsUsed);
  
       try {
-        const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
+        const enrollmentRef = doc(db, "HREnrollments", `${userId}_${selectedCourse.id}`);
         await updateDoc(enrollmentRef, {
           quizAttempts: newAttemptsUsed,
         });
@@ -2023,4 +2021,4 @@ const handleQuizStartClick = async () => {
   );
 };
 
-export default ITUser;
+export default HRUser;

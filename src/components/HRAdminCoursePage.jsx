@@ -25,7 +25,7 @@ import addIcon from '../assets/add-course.svg'
 
 import CloseIcon from '../assets/closebtn.svg'
  
-const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}) => {
+const HRAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSection, setSelectedSection] = useState('course');
   const [isOpen, setIsOpen] = useState(true);
@@ -63,7 +63,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
     console.log('Filter selected:', filter);  // Check if this logs the selected filter
     setSelectedFilter(filter);
     setDropdownOpen(false);  // Close dropdown after selecting a filter
-  }; 
+  };
 
 
   const handleViewFile = (file) => {
@@ -115,14 +115,14 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
       });
     });
  
-    const unsubscribeITCourses = onSnapshot(collection(db, 'ITCourses'), (snapshot) => {
+    const unsubscribeITCourses = onSnapshot(collection(db, 'HRCourses'), (snapshot) => {
       const itCourses = snapshot.docs.map((doc) => ({
         id: doc.id,
-        category: 'IT',
+        category: 'HR',
         ...doc.data(),
       }));
       setCourses((prevCourses) => {
-        const otherCourses = prevCourses.filter((course) => course.category !== 'IT');
+        const otherCourses = prevCourses.filter((course) => course.category !== 'HR');
         return [...otherCourses, ...itCourses];
       });
     });
@@ -356,10 +356,10 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
     setQuestions([...questions, { question: "", choices: ["", "", "", ""], correctAnswer: "" }]);
   };
  
-  const handleCorrectAnswerChange = (questionIndex, e) => {
-    const updatedQuestions = [...selectedCourse.questions];  // Make a copy of the questions array
-    updatedQuestions[questionIndex].correctAnswer = e.target.value;  // Update the correct answer for this question
-    setSelectedCourse({ ...selectedCourse, questions: updatedQuestions });  // Update the state with the new questions array
+  const handleCorrectAnswerChange = (index, event) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[index].correctAnswer = event.target.value;
+    setQuestions(updatedQuestions);
   };
  
   const handleSubmit = async () => {
@@ -416,7 +416,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
    
   const handleUpdateCourse = async () => {
     try {
-      const collectionName = category === "General" ? "GeneralCourses" : "ITCourses";
+      const collectionName = category === "General" ? "GeneralCourses" : "HRCourses";
       const docRef = doc(db, collectionName, selectedCourse.id);
   
       if (!docRef) {
@@ -470,7 +470,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
   };
   const handleDeleteCourse = async (courseId) => {
     try {
-      const collectionName = selectedCourse.category === "General" ? "GeneralCourses" : "ITCourses";
+      const collectionName = selectedCourse.category === "General" ? "GeneralCourses" : "HRCourses";
       const docRef = doc(db, collectionName, courseId);
       await deleteDoc(docRef);
       window.alert("Course deleted successfully!");
@@ -480,10 +480,12 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
     }
   };
 
+  const handleSectionChange = (section) => {
+    setSelectedSection(section);
+  };
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
-
   const handleResize = () => {
     if (window.innerWidth > 768) {
       setIsOpen(true);
@@ -491,7 +493,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
       setIsOpen(false);
     }
   };
-
+  
   useEffect(() => {
     window.addEventListener('resize', handleResize);
     handleResize();
@@ -500,9 +502,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
     };
   }, []);
 
-  const handleSectionChange = (section) => {
-    setSelectedSection(section);
-  };
  
   const closeCourseModal = () => {
     setShowCourseModal(false);
@@ -534,41 +533,51 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
 
   return (
     <div className="admin-super-container">
-      <nav className={`sidebar-super ${isOpen ? 'open-super' : 'closed-super'}`}>
-        <div className="logo-super">
-          <img src={BPOLOGO} alt="Company Logo" />
-        </div>
-        <ul className="nav-links-super">
-          <li>
-            <button
-              onClick={() => navigate('/admin')}
-              className={`nav-button-super ${selectedSection === 'overview' ? 'active-super' : ''}`}
-            >
-              <img src={UserDefault} alt="Overview" className="nav-icon-super" />
-              <span>User List</span>
-            </button> 
-          </li>
-          <li>
-            <button
-              onClick={() => handleSectionChange('course')}
-              className={`nav-button-super ${selectedSection === 'course' ? 'active-super' : ''}`}
-            >
-              <img src={CourseDefault} alt="Course" className="nav-icon-super" />
-              <span>Course</span>
-            </button>
-          </li>
-        </ul>
-        <div className="logout-super">
-          <button className="nav-button-super" onClick={handleLogout}>
-            <img src={LogoutDefault} alt="Logout Icon" className="nav-icon-super" />
-            Logout
+    <nav className={`sidebar-super ${isOpen ? 'open-super' : 'closed-super'}`}>
+      <div className="logo-super">
+        <img src={BPOLOGO} alt="Company Logo" />
+      </div>
+      <ul className="nav-links-super">
+        
+        <li>
+          <button
+            onClick={() => handleSectionChange('course')}
+            className={`nav-button-super ${selectedSection === 'course' ? 'active-super' : ''}`}
+          >
+            <img src={CourseDefault} alt="Course" className="nav-icon-super" />
+            <span>Course</span>
           </button>
-        </div>
-      </nav>
+        </li>
+        <li>
+          <button
+            onClick={() => navigate('/hr-admin-training')}
+            className={`nav-button-super ${selectedSection === 'training' ? 'active-super' : ''}`}
+          >
+            <img src={TrainingDefault} alt="Training" className="nav-icon-super" />
+            <span>Training</span>
+          </button>
+        </li>
+        <li>
+          <button
+            onClick={() => navigate('/hr-admin-certificate')}
+            className={`nav-button-super ${selectedSection === 'certificate' ? 'active-super' : ''}`}
+          >
+            <img src={CertDefault} alt="Certificate" className="nav-icon-super" />
+            <span>Certificate</span>
+          </button>
+        </li>
+      </ul>
+      <div className="logout-super">
+        <button className="nav-button-super" onClick={handleLogout}>
+          <img src={LogoutDefault} alt="Logout Icon" className="nav-icon-super" />
+          Logout
+        </button>
+      </div>
+    </nav>
 
-      <button className="hamburger-super" onClick={toggleSidebar}>
-        ☰
-      </button>
+    <button className="hamburger-super" onClick={toggleSidebar}>
+      ☰
+    </button>
 
 
         {/* Main content area */}
@@ -601,7 +610,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
           <div onClick={() => handleFilterSelect('All')}>All</div>
           <div onClick={() => handleFilterSelect('General')}>General</div>
           <div onClick={() => handleFilterSelect('IT')}>IT</div>
-          <div onClick={() => handleFilterSelect('HR')}>HR</div>
         </div>
         )}
     </div>
@@ -655,7 +663,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
       <p className="course-description-admin">{course.courseDescription}</p>
 
       <div className="category-tag-wrapper">
-        <span className="category-tag">{course.category}</span>
       </div>
 
       <div className="course-footer">
@@ -836,7 +843,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
         >
           <option value="General">General</option>
           <option value="IT">IT</option>
-          <option value="HR">HR</option>
         </select>
       </div>
         
@@ -1032,7 +1038,6 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
               <option value="">Select Category</option>
                 <option value="General">General</option>
               <option value="IT">IT</option>
-              <option value="HR">HR</option>
             </select>
               </div>
               <div className="it-admin-form-group">
@@ -1233,4 +1238,4 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
   );
 };
 
-export default ITAdminCoursePage;
+export default HRAdminCoursePage;

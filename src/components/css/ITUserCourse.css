@@ -360,14 +360,14 @@ font-weight: bold;
   line-height: 1;
 }
 .IT-user-course-enroll-button {
-  background-color: #0514e7;
+  background-color: #007bff;
   color: white;
   border: none;
   border-radius: 4px;
   padding: 10px 20px;
   cursor: pointer;
   font-size: 18px;
-  margin-left: 120px; /* Ensure no extra space on the left */
+  margin-left: 110px; /* Ensure no extra space on the left */
   margin-top: 20px;
   
 }
@@ -377,7 +377,7 @@ font-weight: bold;
 }
 
 .IT-user-course-enroll-button:hover {
-  background-color: #2734f1;
+  background-color: #007bff;
 }
 
 .IT-user-course-confirm-overlay {
@@ -410,7 +410,7 @@ font-weight: bold;
 padding: 8px 16px;
 font-size: 14px;
 color: white;
-background-color: #0514e7;
+background-color: #007bff;
 border: none;
 border-radius: 5px;
 cursor: pointer;
@@ -430,7 +430,7 @@ margin-right: 8px; /* Adds space between the buttons */
 
 .IT-user-course-cancel-button:hover,
 .IT-user-course-confirm-button:hover {
-  background-color: #003399; /* Darker blue on hover */
+  background-color: #007bff; /* Darker blue on hover */
 }
 
 .IT-user-course-cancel-button:hover {
@@ -523,7 +523,7 @@ margin-bottom: 10px;
 }
 
 .next-button:hover {
-  background-color: #0056b3;
+  background-color: #007bff;
 }
 
 
@@ -623,7 +623,7 @@ float: right;
 margin-left: auto; /* Add space between elements if needed */
 }
 .quiz-start-button:hover {
-background-color: #0056b3;
+background-color: #007bff;
 }
 
 /* Modal overlay */
@@ -742,7 +742,7 @@ background-color: #ccc;
 cursor: not-allowed;
 }
 .quiz-next-button:hover {
-background-color: #0056b3;
+background-color: #007bff;
 }
 
 
@@ -830,7 +830,7 @@ margin: 20px auto 0;
 }
 
 .result-detailed-modal button:hover {
-background-color: #0056b3;
+background-color: #007bff;
 }
 
 
@@ -909,7 +909,7 @@ color: #333;
 }
 
 .continue-button {
-background-color: #4c6ef5; /* Blue button color */
+background-color: #007bff; /* Blue button color */
 color: white;
 padding: 10px 20px;
 border: none;
@@ -919,7 +919,7 @@ font-size: 16px;
 }
 
 .continue-button:hover {
-background-color: #3b5bdb; /* Darker blue on hover */
+background-color: #007bff; /* Darker blue on hover */
 }
 
 
@@ -1547,14 +1547,14 @@ margin-top: 20px;
 
 /* Next Page Button */
 .next-page-button {
-  background-color: #0024db;
+  background-color: #007bff;
   color: white;
   margin-right: 50px;
 }
 
 
 .next-page-button:hover {
-background-color: #243486;
+background-color: #007bff;
 }
 .view-course-button {
 background-color: #f39c12; /* Orange */
@@ -1568,7 +1568,7 @@ color: white;
 }
 
 .download-button{
-background-color: #0056b3; /* Orange */
+background-color: #007bff; /* Orange */
 color: white;
 }
 
@@ -1576,7 +1576,18 @@ color: white;
 background-color: #d3d3d3; /* Light Gray */
 cursor: not-allowed;
 }
-
+.download-button11{
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 15px;
+  padding: 10px 20px;
+}
 .retake-button:hover:not(:disabled) {
 background-color: #e67e22;
 }

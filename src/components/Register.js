@@ -37,7 +37,7 @@ function Register({ toggleForm }) {
       });
 
       // Redirect to login page after successful registration
-      navigate("/login");
+      navigate("/loginpage");
       
     } catch (error) {
       toast.error(error.message, {

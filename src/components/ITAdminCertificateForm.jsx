@@ -320,7 +320,6 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
                     </div>
                     <div className="certificate-details">
                       <h4>{certificate.title || 'Certificate Title'}</h4>
-                      <span className="course-category-badge">{certificate.category || 'Course Category'}</span>
                     </div>
                   </div>
                 ))}

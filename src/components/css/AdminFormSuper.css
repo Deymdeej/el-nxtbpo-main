@@ -330,9 +330,22 @@
 
 .role-selection {
   display: flex;
-  gap: 20px;
+  gap: 15px; /* Space between each radio button-label pair */
 }
 
+.role-selection span {
+  display: flex;
+  align-items: center; /* Vertically aligns the radio button with label */
+  gap: 5px; /* Space between radio button and label text */
+}
+
+.role-selection label{
+  margin-top: 10px
+}
+
+.role-selection input[type="radio"] {
+  margin: 0; /* Remove any default margin to ensure alignment */
+}
 /* Modal footer (buttons) */
 .modal-super-footer {
   display: flex;

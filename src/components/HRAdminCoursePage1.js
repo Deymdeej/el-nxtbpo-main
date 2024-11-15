@@ -3,9 +3,9 @@ import { db, auth, storage } from "../firebase"; // Include Firebase storage
 import { collection, addDoc, getDocs, doc, getDoc, query, where } from "firebase/firestore"; // Firestore methods
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; // Firebase Storage methods
 import { toast } from "react-toastify"; // For feedback
-import ITAdminCoursePage from "./AdminSuperCourseForm1"; // Import the form
+import HRAdminCoursePage from "./HRAdminCoursePage"; // Import the form
 
-function ITAdminCoursePage1() {
+function HRAdminCoursePage1() {
   const [courses, setCourses] = useState([]);
   const [certificates, setCertificates] = useState([]); // State for certificates
   const [enrollmentCounts, setEnrollmentCounts] = useState({});
@@ -26,8 +26,7 @@ function ITAdminCoursePage1() {
   useEffect(() => {
     const fetchCoursesAndEnrollments = async () => {
       const generalCoursesSnapshot = await getDocs(collection(db, "GeneralCourses"));
-      const itCoursesSnapshot = await getDocs(collection(db, "ITCourses"));
-      const itCoursesSnapshotHR = await getDocs(collection(db, "HRCourses"));
+      const itCoursesSnapshot = await getDocs(collection(db, "HRCourses"));
 
       const generalCourses = generalCoursesSnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -39,14 +38,7 @@ function ITAdminCoursePage1() {
         ...doc.data(), // Include all course data including category
       }));
 
-      const hrCourses = itCoursesSnapshotHR.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(), // Include all course data including category
-      }));
-
-      
-
-      const allCourses = [...generalCourses, ...itCourses, ...hrCourses];
+      const allCourses = [...generalCourses, ...itCourses];
       setCourses(allCourses);
 
       // Fetching enrollment counts
@@ -183,8 +175,7 @@ function ITAdminCoursePage1() {
           ? prerequisites
           : [];
 
-          const collectionPath = section === "general" ? "GeneralCourses" : section === "IT" ? "ITCourses" : "HRCourses";
-
+      const collectionPath = section === "general" ? "GeneralCourses" : "HRCourses";
 
       const docRef = await addDoc(collection(db, collectionPath), {
         courseTitle,
@@ -195,7 +186,7 @@ function ITAdminCoursePage1() {
         createdBy,
         createdAt: new Date(),
         pdfUrl: pdfDownloadUrl || "",
-        category: section === "general" ? "GeneralCourses" : section === "IT" ? "ITCourses" : "HRCourses" , // Adding category
+        category: section === "general" ? "General" : "HR", // Adding category
       });
 
       const newCourse = {
@@ -208,7 +199,7 @@ function ITAdminCoursePage1() {
         createdBy,
         createdAt: new Date(),
         pdfUrl: pdfDownloadUrl || "",
-        category: section === "general" ? "GeneralCourses" : section === "IT" ? "ITCourses" : "HRCourses",  // Adding category
+        category: section === "general" ? "General" : "HR", // Adding category
       };
 
       setCourses((prevCourses) => [...prevCourses, newCourse]);
@@ -228,7 +219,7 @@ function ITAdminCoursePage1() {
   };
 
   return (
-    <ITAdminCoursePage
+    <HRAdminCoursePage
       showModal={showModal}
       setShowModal={setShowModal}
       showCourseDetailsModal={showCourseDetailsModal}
@@ -262,4 +253,4 @@ function ITAdminCoursePage1() {
   );
 }
 
-export default ITAdminCoursePage1;
+export default HRAdminCoursePage1;

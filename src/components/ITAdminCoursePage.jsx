@@ -345,7 +345,32 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
     updatedQuestions[index][name] = value;
     setQuestions(updatedQuestions);
   };
+
+  const handleChangeQuestion2 = (index, event) => {
+    const updatedQuestions = [...selectedCourse.questions];
+    updatedQuestions[index].question = event.target.value;
  
+    // Update the selectedCourse state with the updated questions
+    setSelectedCourse((prevState) => ({
+      ...prevState,
+      questions: updatedQuestions,
+    }));
+  };
+// Handling change in a specific question's choices
+const handleChangeChoice2 = (questionIndex, choiceIndex, e) => {
+  const updatedQuestions = [...selectedCourse.questions];
+  const updatedQuestion = updatedQuestions[questionIndex];
+ 
+  // Update the specific choice
+  updatedQuestion.choices[choiceIndex] = e.target.value;
+ 
+  // Update the state with the new questions array
+  setSelectedCourse((prevState) => ({
+    ...prevState,
+    questions: updatedQuestions,
+  }));
+};
+
   const handleChangeChoice = (qIndex, cIndex, event) => {
     const updatedQuestions = [...questions];
     updatedQuestions[qIndex].choices[cIndex] = event.target.value;
@@ -353,15 +378,33 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
   };
  
   const handleAddQuestion = () => {
-    setQuestions([...questions, { question: "", choices: ["", "", "", ""], correctAnswer: "" }]);
+    setQuestions((prevQuestions) => [
+      ...prevQuestions,
+      { question: "", choices: ["", "", "", ""], correctAnswer: "" },
+    ]);
   };
- 
   const handleCorrectAnswerChange = (index, event) => {
     const updatedQuestions = [...questions];
     updatedQuestions[index].correctAnswer = event.target.value;
     setQuestions(updatedQuestions);
   };
  
+   // Handling change in a specific question's correct answer
+  const handleCorrectAnswerChange2 = (questionIndex, e) => {
+  const correctAnswer = e.target.value;
+  const updatedQuestions = [...selectedCourse.questions];
+  const updatedQuestion = updatedQuestions[questionIndex];
+ 
+  // Update the correct answer
+  updatedQuestion.correctAnswer = correctAnswer;
+ 
+  // Update the state with the updated questions array
+  setSelectedCourse((prevState) => ({
+    ...prevState,
+    questions: updatedQuestions,
+  }));
+};
+
   const handleSubmit = async () => {
     let validationErrors = {};
   
@@ -415,21 +458,48 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
   };
    
   const handleUpdateCourse = async () => {
+    // Log state values for debugging
+    console.log("Selected course:", selectedCourse);
+    console.log("Category:", category);
+    console.log("Questions:", selectedCourse.questions);
+    console.log("Uploaded files:", uploadedFiles);
+ 
+    // Ensure questions are an array and has data
+    const questions = selectedCourse.questions || [];
+    if (!Array.isArray(questions) || questions.length === 0) {
+      console.error("Invalid questions array");
+      window.alert("There are no questions to update.");
+      return;
+    }
+ 
+    // Validate each question and its structure before updating
+    questions.forEach((question, index) => {
+      if (!question.question || !question.choices || question.choices.length !== 4 || !question.correctAnswer) {
+        console.error(`Invalid question at index ${index}:`, question);
+        window.alert(`Please fill in all fields for question ${index + 1}.`);
+        return;
+      }
+    });
+ 
     try {
+      // Set Firestore collection name based on category
       const collectionName = category === "General" ? "GeneralCourses" : "ITCourses";
       const docRef = doc(db, collectionName, selectedCourse.id);
-  
+ 
       if (!docRef) {
+        console.error("Invalid Firestore document reference:", docRef);
         throw new Error("Invalid document reference");
       }
-  
+ 
+      // Handle file uploads if any
       let updatedPDFURLs = selectedCourse.pdfURLs ? [...selectedCourse.pdfURLs] : [];
-  
       if (uploadedFiles.length > 0) {
+        console.log("Uploading files...");
+ 
         const uploadPromises = uploadedFiles.map((fileData) => {
           const storageRef = ref(storage, `courses/${fileData.name}`);
           const uploadTask = uploadBytesResumable(storageRef, fileData.file);
-  
+ 
           return new Promise((resolve, reject) => {
             uploadTask.on(
               "state_changed",
@@ -445,11 +515,12 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
             );
           });
         });
-  
+ 
         const newPDFURLs = await Promise.all(uploadPromises);
         updatedPDFURLs = [...updatedPDFURLs, ...newPDFURLs];
       }
-  
+ 
+      // Update Firestore document with the new values
       await updateDoc(docRef, {
         courseTitle,
         courseDescription,
@@ -457,10 +528,12 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
         videoLink,
         pdfURLs: updatedPDFURLs,
         certificateId: selectedCertificate,
-        prerequisites: prerequisite ? [prerequisite] : [], // Store as an array
+        prerequisites: prerequisite ? [prerequisite] : [],
         quizDuration: parseInt(quizDuration, 10),
+        questions, // This will include updated questions with choices and correct answers
       });
-  
+ 
+      console.log("Course updated successfully.");
       window.alert("Course updated successfully!");
       handleCloseModal();
     } catch (error) {
@@ -468,6 +541,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
       window.alert("Error updating course. Please try again.");
     }
   };
+
   const handleDeleteCourse = async (courseId) => {
     try {
       const collectionName = selectedCourse.category === "General" ? "GeneralCourses" : "ITCourses";
@@ -984,7 +1058,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
               type="text"
               name="question"
               value={question.question}
-              onChange={(e) => handleChangeQuestion(index, e)}
+              onChange={(e) => handleChangeQuestion2(index, e)}
               placeholder="Enter question"
               className="form-control mb-2"
             />
@@ -996,7 +1070,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
                 <input
                   type="text"
                   value={choice}
-                  onChange={(e) => handleChangeChoice(index, cIndex, e)}
+                  onChange={(e) => handleChangeChoice2(index, cIndex, e)}
                   placeholder={`Choice ${cIndex + 1}`}
                   className="form-control mb-1"
                 />
@@ -1007,7 +1081,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
             <select
               name="correctAnswer"
               value={question.correctAnswer}
-              onChange={(e) => handleCorrectAnswerChange(index, e)}
+              onChange={(e) => handleCorrectAnswerChange2(index, e)}
               className="form-control mb-3"
             >
               <option value="A">A</option>

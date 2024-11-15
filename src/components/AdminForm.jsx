@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase';
-import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
-import { updateDoc } from 'firebase/firestore'; // Add this import
+import { collection, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './css/AdminFormSuper.css';
 import BPOLOGO from '../assets/bpo-logo.png';
 import UserDefault from '../assets/userdefault.png';
@@ -80,7 +81,6 @@ function AdminForm() {
 
   const handleSaveUser = async (updatedUser) => {
     try {
-      // Reference the specific document for the user and update it
       const userRef = doc(db, 'Users', updatedUser.id);
       await updateDoc(userRef, {
         fullName: updatedUser.fullName,
@@ -89,17 +89,24 @@ function AdminForm() {
       });
       console.log('User updated:', updatedUser);
       
-      // Close the modal after saving
+      // Display success toast notification
+      toast.success('Changes saved successfully!');
+      
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error updating user: ', error);
+      toast.error('Failed to save changes.');
     }
   };
+
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         await deleteDoc(doc(db, 'Users', userId));
         console.log(`User with ID: ${userId} has been deleted`);
+
+
+        toast.success(`Deleted successfully!`);
       } catch (error) {
         console.error('Error deleting user: ', error);
       }
@@ -108,6 +115,7 @@ function AdminForm() {
 
   return (
     <div className="admin-super-container">
+      
       <nav className={`sidebar-super ${isOpen ? 'open-super' : ''}`}>
         <div className="logo-super">
           <img src={BPOLOGO} alt="Company Logo" />
@@ -145,9 +153,9 @@ function AdminForm() {
       </button>
 
       <div className="content-super">
-       <h1 style={{ fontSize: '22px', marginLeft: '25px' }}>
-        <strong><span style={{ color: '#48887B' }}>Hello</span></strong>, <em>head admin</em>!
-      </h1>
+        <h1 style={{ fontSize: '22px', marginLeft: '25px' }}>
+          <strong><span style={{ color: '#48887B' }}>Hello</span></strong>, <em>head admin</em>!
+        </h1>
 
         {selectedSection === 'userlist' && (
           <div id="userlist" className="user-list-super-section">
@@ -162,37 +170,33 @@ function AdminForm() {
                 </tr>
               </thead>
               <tbody>
-  {users.length > 0 ? (
-    users
-      .filter((user) => user.fullName !== 'head admin') // Filter out Head Admin
-      .map((user) => (
-        <tr key={user.id}>
-          <td>{user.fullName}</td>
-          <td>{user.department}</td>
-          <td>{user.role}</td>
-          <td>
-            <button
-              onClick={() => handleEditUser(user)}
-              className="icon-button-super"
-            >
-              ✎
-            </button>
-            
-            <button2
-              onClick={() => handleDeleteUser(user.id)}
-              className="icon-button-super delete-icon-super"
-            >
-              🗑
-            </button2>
-          </td>
-        </tr>
-      ))
-  ) : (
-    <tr>
-      <td colSpan="4">No users found</td>
-    </tr>
-  )}
-</tbody>
+                {users.length > 0 ? (
+                  users
+                    .filter((user) => user.fullName !== 'head admin')
+                    .map((user) => (
+                      <tr key={user.id}>
+                        <td>{user.fullName}</td>
+                        <td>{user.department}</td>
+                        <td>{user.role}</td>
+                        <td>
+                          <button onClick={() => handleEditUser(user)} className="icon-button-super">
+                            ✎
+                          </button>
+                          <button2
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="icon-button-super delete-icon-super"
+                          >
+                            🗑
+                          </button2>
+                        </td>
+                      </tr>
+                    ))
+                ) : (
+                  <tr>
+                    <td colSpan="4">No users found</td>
+                  </tr>
+                )}
+              </tbody>
             </table>
           </div>
         )}
@@ -218,25 +222,26 @@ function AdminForm() {
                 </select>
                 <label>Role</label>
                 <div className="role-selection">
-                  <label>
+                  <span>
                     <input
                       type="radio"
+                      id="admin"
                       value="Admin"
                       checked={editingUser.role === 'admin'}
                       onChange={() => setEditingUser({ ...editingUser, role: 'admin' })}
                     />
-                    Admin
-                  </label>
-                  <label>
+                    <label htmlFor="admin">Admin</label>
+                  </span>
+                  <span>
                     <input
                       type="radio"
+                      id="user"
                       value="User"
                       checked={editingUser.role === 'user'}
                       onChange={() => setEditingUser({ ...editingUser, role: 'user' })}
                     />
-                    User
-                  </label>
-                 
+                    <label htmlFor="user">User</label>
+                  </span>
                 </div>
               </div>
               <div className="modal-super-footer">

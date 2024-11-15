@@ -157,10 +157,7 @@
   display: block; /* Ensures margin auto works */
 }
 
-/* Hover effect for the button */
-.IT-User-training-enroll-btn:hover {
-  background-color: #0056b3; /* Darker blue on hover */
-}
+
 
 /* Date and time container */
 .IT-User-training-datetime {
@@ -322,7 +319,7 @@ font-size: 14px;
   font-size: 14px;
 }
 .IT-user-training-side-modal-enroll-button {
-  background-color: #0514e7;
+  background-color: #007bff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -331,6 +328,36 @@ font-size: 14px;
   font-size: 18px;
   margin-left: 80px;
   margin-top: 20px;
+}
+
+
+
+.IT-User-training-enrolled {
+  background-color: green;
+  color: white; /* Optional: text color */
+  border: none; /* Optional: remove default border */
+  padding: 10px 20px; /* Optional: adjust padding */
+  border-radius: 5px; /* Optional: rounded corners */
+  cursor: pointer; /* Optional: change cursor on hover */
+}
+
+.IT-User-training-enrolled:hover {
+
+  background-color: rgba(34, 99, 62, 0.865); /* Optional: change text color on hover */
+}
+
+.IT-User-training-enroll-now {
+  background-color: #007bff;
+  color: white; /* Optional: text color */
+  border: none; /* Optional: remove default border */
+  padding: 10px 15px; /* Optional: adjust padding */
+  border-radius: 5px; /* Optional: rounded corners */
+  cursor: pointer; /* Optional: change cursor on hover */
+}
+
+.IT-User-training-enroll-now:hover {
+
+  background-color: rgba(49, 95, 244, 0.865); /* Optional: change text color on hover */
 }
 
 .IT-user-training-side-modal-enroll-button:disabled {
@@ -353,9 +380,7 @@ font-size: 14px;
 
 
 
-.IT-user-training-side-modal-enroll-button:hover {
-  background-color: #0056b3;
-}
+
 
 
 /* Success Modal Container */
@@ -424,7 +449,7 @@ font-size: 14px;
   /* Button Styling:
      Styles the confirmation button */
      .IT-user-training-success-ok-button {
-      background-color: #3b82f6; /* Bright blue background */
+      background-color: #007bff; /* Bright blue background */
       color: white;
       padding: 0.75rem 2rem;
       font-size: 1rem;
@@ -440,6 +465,6 @@ font-size: 14px;
   
   /* Button Hover Effect */
   .IT-user-training-success-ok-button:hover {
-    background-color: #2563eb; /* Darker blue on hover */
+    background-color: #007bff; /* Darker blue on hover */
   }
   

@@ -72,7 +72,7 @@ function SignupForm({ fname, setFname, email, setEmail, password, setPassword, d
   </div>
 
   {/* Submit Button */}
-  <button type="submit" className="text-wrapper-10">Sign Up</button>
+  <button type="submit" className="text-wrapper-10"  >Sign Up</button>
 </form>
 
 
