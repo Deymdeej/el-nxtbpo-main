@@ -570,20 +570,17 @@ border: 1px solid #ddd; /* Optional: set a neutral border for the disabled butto
 cursor: not-allowed; /* Change the cursor to indicate that the button is disabled */
 
 }
-/* Style the entire dropdown when "absent" is selected */
-.it-admin-training-attendance-dropdown.absent {
-background-color: #cf1b2a;  /* Light red background */
-border-color: #de6773;      /* Light red border */
+.it-admin-training-attendance-dropdown.ongoing {
+  background-color: rgb(240, 237, 69); /* Red for absent */
+  color: black;
 }
-
-/* Style the dropdown when "present" is selected */
-.it-admin-training-attendance-dropdown.present {
-background-color: #029224;  /* Light green background */
-border-color: #10be39;      /* Light green border */
+.it-admin-training-attendance-dropdown.completed {
+  background-color: green; /* Green for present */
+  color: white;
 }
 .dropdown-container-training{
-position: absolute;
-top: 5px;
-right: 5px;
-z-index: 1;
-}
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 1;
+  }

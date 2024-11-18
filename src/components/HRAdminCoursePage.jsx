@@ -55,6 +55,7 @@ const HRAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
   const [showMenuIndex, setShowMenuIndex] = useState(null);
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const userId = auth.currentUser?.uid; // Get the logged-in user's ID
  
 
 
@@ -392,7 +393,9 @@ const HRAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
         })
       );
   
-      const collectionName = category === "General" ? "GeneralCourses" : "ITCourses";
+      const collectionName = category === "General" ? "GeneralCourses" : "HRCourses";
+      const userId = auth.currentUser?.uid; // Fetch the userId of the currently logged-in user
+
       await addDoc(collection(db, collectionName), {
         courseTitle,
         courseDescription,
@@ -404,6 +407,7 @@ const HRAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
         certificateId: selectedCertificate,
         quizDuration: parseInt(quizDuration, 10),
         createdAt: new Date(),
+        userId // Add userId to the document
       });
   
       alert("Course added successfully!");
@@ -614,64 +618,66 @@ const HRAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
         )}
     </div>
     </div>
-      {/* Courses Grid */}
-      <div className="course-grid-horizontal">
-  {filteredCourses.map((course) => (
-    <div
-      key={course.id}
-      className="course-card-horizontal"
-      onClick={() => openCourseModal(course)}
-      style={{ cursor: "pointer" }}
-    >
-      <div className="course-card-header">
-        <h5 className="course-title-admin">{course.courseTitle}</h5>
-        <div className="dropdown-container">
-          <img
-            src={editIcon}
-            alt="More options"
-            className="dropdown-toggle"
-     
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleDropdown(course.id);
-            }}
-          />
-          {activeDropdown === course.id && (
-            <div className="dropdown-menu">
-              <div
-                className="dropdown-item edit"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openEditModal(course);
-                }}
-              >
-                Edit
+       {/* Courses Grid */}
+<div className="course-grid-horizontal">
+  {filteredCourses
+    .filter((course) => course.userId === userId) // Show only courses created by the logged-in user
+    .map((course) => (
+      <div
+        key={course.id}
+        className="course-card-horizontal"
+        onClick={() => openCourseModal(course)}
+        style={{ cursor: "pointer" }}
+      >
+        <div className="course-card-header">
+          <h5 className="course-title-admin">{course.courseTitle}</h5>
+          <div className="dropdown-container">
+            <img
+              src={editIcon}
+              alt="More options"
+              className="dropdown-toggle"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleDropdown(course.id);
+              }}
+            />
+            {activeDropdown === course.id && (
+              <div className="dropdown-menu">
+                <div
+                  className="dropdown-item edit"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEditModal(course);
+                  }}
+                >
+                  Edit
+                </div>
+                <div
+                  className="dropdown-item delete"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevents the dropdown from closing immediately
+                    confirmDelete(course.id); // Calls the delete function with the course id
+                  }}
+                >
+                  Delete
+                </div>
               </div>
-              <div
-                className="dropdown-item delete"
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevents the dropdown from closing immediately
-                  confirmDelete(course.id); // Calls the delete function with the course id
-                }}
-              >
-                Delete
-              </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div>
+        <p className="course-description-admin">{course.courseDescription}</p>
+
+        <div className="category-tag-wrapper">
+          <span className="category-tag">{course.category}</span>
+        </div>
+
+        <div className="course-footer">
+          <p className="enrolled-users">
+            Enrolled Users: {enrollmentCounts[course.id] || 0}
+          </p>
         </div>
       </div>
-      <p className="course-description-admin">{course.courseDescription}</p>
-
-      <div className="category-tag-wrapper">
-      </div>
-
-      <div className="course-footer">
-        <p className="enrolled-users">
-          Enrolled Users: {enrollmentCounts[course.id] || 0}
-        </p>
-      </div>
-    </div>
-  ))}
+    ))}
 
   {/* Add Course Button (Always visible) */}
   <div className="course-card-horizontal add-course-card" onClick={handleOpenModal}>
@@ -842,7 +848,7 @@ const HRAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
           className="form-control"
         >
           <option value="General">General</option>
-          <option value="IT">IT</option>
+          <option value="HR">HR</option>
         </select>
       </div>
         
@@ -1037,7 +1043,7 @@ const HRAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
               >
               <option value="">Select Category</option>
                 <option value="General">General</option>
-              <option value="IT">IT</option>
+              <option value="HR">HR</option>
             </select>
               </div>
               <div className="it-admin-form-group">

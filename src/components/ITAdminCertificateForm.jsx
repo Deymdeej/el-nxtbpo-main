@@ -15,6 +15,7 @@ import './css/ITadminCertificate.css';
 import CloseIcon from '../assets/closebtn.svg';
 import TrainingDefault from '../assets/trainingdefault.png';
 import CertDefault from '../assets/certdefault.png';
+import { getAuth, signOut } from "firebase/auth";
 
 const ITAdminCertificateForm = ({ selectedNav }) => {
   const [file, setFile] = useState(null);
@@ -30,6 +31,8 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
   const [courseCategory, setCourseCategory] = useState("");
   const [dateUploaded, setDateUploaded] = useState("");
   const [selectedCertificateId, setSelectedCertificateId] = useState(null);
+  const auth = getAuth();
+  
 
   const navigate = useNavigate();
 
@@ -95,23 +98,26 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
       setErrorMessage("Please select a valid file to upload.");
       return;
     }
-
+  
     const fileName = `${file.name}-${Date.now()}`;
     const storageRef = ref(storage, `uploads/${fileName}`);
-
+    const auth = getAuth(); // Ensure you have the auth instance
+  
     try {
       const snapshot = await uploadBytes(storageRef, file);
       const url = await getDownloadURL(snapshot.ref);
-
+  
       const currentTimestamp = new Date().toISOString();
-
+      const userId = auth.currentUser?.uid; // Get the authenticated user's ID
+  
       await addDoc(collection(db, "certificates"), {
         title: certificateTitle,
         category: courseCategory,
         dateUploaded: currentTimestamp,
         fileUrl: url,
+        userId: userId // Add userId to the document
       });
-
+  
       fetchCertificatesFromFirestore();
       toast.success("Certificate added successfully!");
       setShowAddModal(false);
@@ -121,6 +127,7 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
       console.error("Error uploading file:", error);
     }
   };
+  
 
   const handleEdit = async () => {
     if (!selectedCertificateId) return;
@@ -286,43 +293,49 @@ const ITAdminCertificateForm = ({ selectedNav }) => {
         <p>Click the button below to upload a PDF or PNG/JPEG file.</p>
 
         <div className="admin-certificate-add-file-section">
-          <div className="certificate-grid">
-            {/* Render existing certificates */}
-            {certificates.length > 0 ? (
-              <>
-                {certificates.map((certificate, index) => (
-                  <div key={index} className="certificate-preview-card" onClick={() => {
-                    setCertificateTitle(certificate.title);
-                    setCourseCategory(certificate.category);
-                    setDateUploaded(certificate.dateUploaded);
-                    setPreviewURL(certificate.fileUrl);
-                    setSelectedCertificateId(certificate.id);
-                    setShowEditModal(true);
-                  }}>
-                    <div className="certificate-image-container">
-                      {certificate.fileUrl && certificate.fileUrl.endsWith(".pdf") ? (
-                        <div className="pdf-preview">
-                          <iframe
-                            src={certificate.fileUrl}
-                            title={`PDF Viewer ${index + 1}`}
-                            width="100%"
-                            height="240px"
-                            frameBorder="0"
-                          />
-                        </div>
-                      ) : (
-                        <img
-                          src={certificate.fileUrl || 'path/to/default-image.png'}
-                          alt={`Certificate ${index}`}
-                          className="certificate-image-full"
-                        />
-                      )}
-                    </div>
-                    <div className="certificate-details">
-                      <h4>{certificate.title || 'Certificate Title'}</h4>
-                    </div>
+  <div className="certificate-grid">
+    {/* Filter and render existing certificates by userId */}
+    {certificates.length > 0 ? (
+      <>
+        {certificates
+          .filter(certificate => certificate.userId === auth.currentUser?.uid) // Filter by userId
+          .map((certificate, index) => (
+            <div
+              key={index}
+              className="certificate-preview-card"
+              onClick={() => {
+                setCertificateTitle(certificate.title);
+                setCourseCategory(certificate.category);
+                setDateUploaded(certificate.dateUploaded);
+                setPreviewURL(certificate.fileUrl);
+                setSelectedCertificateId(certificate.id);
+                setShowEditModal(true);
+              }}
+            >
+              <div className="certificate-image-container">
+                {certificate.fileUrl && certificate.fileUrl.endsWith(".pdf") ? (
+                  <div className="pdf-preview">
+                    <iframe
+                      src={certificate.fileUrl}
+                      title={`PDF Viewer ${index + 1}`}
+                      width="100%"
+                      height="240px"
+                      frameBorder="0"
+                    />
                   </div>
-                ))}
+                ) : (
+                  <img
+                    src={certificate.fileUrl || 'path/to/default-image.png'}
+                    alt={`Certificate ${index}`}
+                    className="certificate-image-full"
+                  />
+                )}
+              </div>
+              <div className="certificate-details">
+                <h4>{certificate.title || 'Certificate Title'}</h4>
+              </div>
+            </div>
+          ))}
                 {/* "Add Certificate" button */}
                 <div className="admin-certificate-add-file-button" onClick={() => {
                   resetFileInput();

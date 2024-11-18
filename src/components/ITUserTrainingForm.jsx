@@ -12,8 +12,8 @@ import CertDefault from '../assets/certdefault.png';
 import LogoutPick from '../assets/logoutpick.png';
 import LogoutDefault from '../assets/logoutdefault.png';
 import { useNavigate } from 'react-router-dom'; // For navigation
-import { updateDoc, doc, getDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
-import { signOut } from "firebase/auth";
+import { updateDoc, doc, getDoc, collection, getDocs, onSnapshot,query, where } from "firebase/firestore";
+import { signOut, getAuth } from "firebase/auth";
 import scheduleIcon from "../assets/schedule.png";
 
 import './css/ITUserTraining.css';
@@ -30,6 +30,67 @@ function ITUserTrainingForm() {
   const [selectedSection, setSelectedSection] = useState('training');
   const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const auth = getAuth();  // Initialize Firebase Auth
+ 
+ 
+    const fetchAttendance = async () => {
+    const attendanceRef = collection(db, "trainingAttendance");
+    const q = query(attendanceRef, where("userId", "==", currentUser.uid)); // Query attendance for the current user
+    const querySnapshot = await getDocs(q);
+    const attendanceList = querySnapshot.docs.map(doc => doc.data());
+    setAttendanceData(attendanceList); // Store attendance data (status)
+  };
+ 
+ // Fetch the list of trainings
+ useEffect(() => {
+  const fetchTrainings = async () => {
+    const trainingsRef = collection(db, "trainings");
+    const querySnapshot = await getDocs(trainingsRef);
+    const trainingsList = querySnapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id, // Add the document ID to each training object
+    }));
+    setTrainings(trainingsList);
+  };
+ 
+  fetchTrainings();
+}, []);
+ 
+// Get the current logged-in user using Firebase Auth
+useEffect(() => {
+  const user = auth.currentUser;
+  if (user) {
+    setCurrentUser(user);  // Store the user if authenticated
+  } else {
+    setCurrentUser(null);   // Clear user data if not logged in
+  }
+}, []);
+ 
+// Fetch attendance data from the trainingAttendance collection
+useEffect(() => {
+  if (currentUser) {
+    const fetchAttendance = async () => {
+      const attendanceRef = collection(db, "trainingAttendance");
+      const q = query(attendanceRef, where("userId", "==", currentUser.uid)); // Query attendance for the current user
+      const querySnapshot = await getDocs(q);
+     
+      const attendanceList = querySnapshot.docs.map(doc => doc.data());
+      setAttendanceData(attendanceList); // Store attendance data (status)
+    };
+ 
+    fetchAttendance();
+  }
+}, [currentUser]);
+ 
+// Function to get the user's status for a specific training
+const getUserStatusForTraining = (trainingId) => {
+  const userAttendance = attendanceData.find(
+    (attendance) => attendance.trainingId === trainingId
+  );
+  return userAttendance ? userAttendance.status : "Not Attended";  // Default to "Not Attended"
+};
 
   
 
@@ -311,34 +372,47 @@ function ITUserTrainingForm() {
           <h2>Schedule Training</h2>
           
           <div className="IT-user-course-course-container">
-  {trainings.length > 0 ? (
-    trainings.map((training) => (
-      <div key={training.id} className="IT-User-training-card">
-        <div className="IT-User-training-title">{training.trainingTitle}</div>
-
-        {/* Training Description */}
-        <div className="IT-User-training-description">
-          {training.trainingDescription || "No description available"}
-        </div>
-
-        <div className="IT-User-training-datetime">
-          <span>{new Date(training.trainingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-          &nbsp;
-          <span>{convertTo12Hour(training.trainingTime)}</span>
-        </div>
-
-        <button 
-          className={`IT-User-training-enroll-btn ${training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'IT-User-training-enrolled' : 'IT-User-training-enroll-now'}`} 
-          onClick={() => handleEnrollNowClick(training)}
-        >
-          {training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'Enrolled' : 'Enroll Now!'}
-        </button>
-      </div>
-    ))
-  ) : (
-    <p>No trainings available</p>
-  )}
-</div>
+          {trainings.length > 0 ? (
+        trainings.map((training) => (
+          <div key={training.id} className="IT-User-training-card">
+            {/* Get user's attendance status for this training */}
+            {currentUser && (
+              <div className="IT-User-training-status">
+              {/* Only display status if it is either 'ongoing' or 'completed' */}
+              {getUserStatusForTraining(training.id) === "ongoing" ? (
+                <span className="status-ongoing">Ongoing</span>
+              ) : getUserStatusForTraining(training.id) === "completed" ? (
+                <span className="status-completed">Completed</span>
+              ) : null} {/* Do not display anything if the status is not set */}
+            </div>
+          )}
+ 
+            <div className="IT-User-training-title">{training.trainingTitle}</div>
+ 
+            {/* Training Description */}
+            <div className="IT-User-training-description">
+              {training.trainingDescription || "No description available"}
+            </div>
+ 
+            <div className="IT-User-training-datetime">
+              <span>{new Date(training.trainingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              &nbsp;
+              <span>{convertTo12Hour(training.trainingTime)}</span>
+            </div>
+ 
+            {/* Enroll/Enrolled Button */}
+            <button
+              className={`IT-User-training-enroll-btn ${training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'IT-User-training-enrolled' : 'IT-User-training-enroll-now'}`}
+              onClick={() => handleEnrollNowClick(training)}
+            >
+              {training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'Enrolled' : 'Enroll Now!'}
+            </button>
+          </div>
+        ))
+      ) : (
+        <p>No trainings available</p>
+      )}
+  </div>
 
         </div>
       </div>

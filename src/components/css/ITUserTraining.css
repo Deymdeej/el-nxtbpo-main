@@ -138,6 +138,7 @@
   font-weight: bold;
   color: #000; /* Black color for better contrast */
   margin-bottom: 10px; /* Space below the title */
+  margin-top: 30px;
 }
 
 /* Button styling for enroll */
@@ -467,4 +468,29 @@ font-size: 14px;
   .IT-user-training-success-ok-button:hover {
     background-color: #007bff; /* Darker blue on hover */
   }
-  
+  .IT-User-training-status {
+    position: absolute;  /* Position the status absolutely inside the card */
+    top: 10px; /* Distance from the top */
+    right: 5px; /* Distance from the right */
+    font-size: 12px;
+    font-weight: bold;
+    padding: 5px 10px;  /* Added extra padding for better spacing */
+    border-radius: 5px;  /* Border radius to round the corners of the background */
+    background-color: transparent;  /* Default background is transparent */
+  }
+ 
+  /* Status for ongoing training */
+  .status-ongoing {
+    background-color: #ffeb3b; /* Yellow background for ongoing */
+    color: black; /* Black text color */
+    border-radius: 5px; /* Border radius for rounded corners */
+    padding: 7px 10px;  /* Added extra padding for better spacing */
+  }
+ 
+  /* Status for completed training */
+  .status-completed {
+    background-color: #4caf50; /* Green background for completed */
+    color: black; /* Black text color */
+    border-radius: 5px; /* Border radius for rounded corners */
+    padding: 7px 10px;  /* Added extra padding for better spacing */
+  }

@@ -48,6 +48,8 @@ const ITAdminTrainingDashboardForm = ({ selectedNav }) => {
   const [currentUser, setCurrentUser] = useState(null); // Store current user for editing/attendance
   const [selectedSection, setSelectedSection] = useState("training");
 
+  const userId = auth.currentUser?.uid; // Get the logged-in user's ID
+
 
   useEffect(() => {
     console.log("Modal opened with training data:", selectedTraining);
@@ -88,7 +90,7 @@ const ITAdminTrainingDashboardForm = ({ selectedNav }) => {
   
       // Loop through each enrolled user to update or create attendance
       for (const user of enrolledUsers) {
-        const status = user.attendance || "absent"; // Default to "absent" if no status is selected
+        const status = user.attendance || "ongoing"; // Default to "absent" if no status is selected
   
         // Check if the attendance already exists in the "training_attendance" collection
         const attendanceDocRef = doc(
@@ -187,11 +189,11 @@ const ITAdminTrainingDashboardForm = ({ selectedNav }) => {
               if (userSnapshot.exists()) {
                 const userData = userSnapshot.data();
                 const attendanceSnapshot = attendanceSnapshots[index];
-                let attendance = "absent"; // Default to absent if no attendance record exists
+                let attendance = "ongoing"; // Default to absent if no attendance record exists
   
                 // If attendance record exists, update attendance status
                 if (attendanceSnapshot.exists()) {
-                  attendance = attendanceSnapshot.data().status || "absent";
+                  attendance = attendanceSnapshot.data().status || "ongoing";
                 }
   
                 return {
@@ -494,30 +496,37 @@ const resetFormFields = () => {
   };
 
   // Handle form submission to add new training
-  const handleAddSubmit = async () => {
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length === 0) {
-      try {
-        await addDoc(collection(db, "trainings"), {
-          trainingTitle,
-          trainingDescription,
-          trainingDate,
-          trainingTime, // Save time in 24-hour format (no conversion needed)
-          prerequisiteCertificate: selectedCertificate,
-          enrolledUsers: [],
-        });
-        alert("Training added successfully!");
-        resetFormFields(); // Reset after submission
-        setShowAddModal(false); // Close Add modal after successful submission
-        fetchTrainings();
-      } catch (e) {
-        console.error("Error adding document: ", e);
-        alert("Failed to add training. Please try again.");
-      }
-    } else {
-      setErrors(validationErrors);
+// Handle form submission to add new training
+const handleAddSubmit = async () => {
+  const validationErrors = validateForm();
+  if (Object.keys(validationErrors).length === 0) {
+    try {
+      const userId = auth.currentUser?.uid; // Fetch the userId of the logged-in user
+
+      await addDoc(collection(db, "trainings"), {
+        trainingTitle,
+        trainingDescription,
+        trainingDate,
+        trainingTime, // Save time in 24-hour format (no conversion needed)
+        prerequisiteCertificate: selectedCertificate,
+        enrolledUsers: [],
+        userId // Add userId to the document
+      });
+      
+      alert("Training added successfully!");
+      resetFormFields(); // Reset after submission
+      setShowAddModal(false); // Close Add modal after successful submission
+      fetchTrainings();
+    } catch (e) {
+      console.error("Error adding document: ", e);
+      alert("Failed to add training. Please try again.");
     }
-  };
+  } else {
+    setErrors(validationErrors);
+  }
+};
+
+
   const handleEditSubmit = async () => {
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length === 0) {
@@ -649,70 +658,71 @@ const resetFormFields = () => {
     <div className="col-md-12">
 
     <div className="course-grid-horizontal">
-          {/* Existing Training Cards */}
-          {trainings.map((training) => (
-        <div key={training.id} className="it-admin-training-card">
-          <div className="it-admin-training-header">
-          <div className="it-admin-title-training">{training.trainingTitle}</div>
-          <div className="dropdown-container-training">
-            <div
-              className="three-dot-icon-training"
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent card click event from firing
-                toggleDropdown(training.id);
-              }}
-            >
-              <img src={EditIcon} alt="Options" />
-            </div>
+         {/* Existing Training Cards */}
+{trainings
+  .filter((training) => training.userId === auth.currentUser?.uid) // Filter by userId
+  .map((training) => (
+    <div key={training.id} className="it-admin-training-card">
+      <div className="it-admin-training-header">
+        <div className="it-admin-title-training">{training.trainingTitle}</div>
+        <div className="dropdown-container-training">
+          <div
+            className="three-dot-icon-training"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent card click event from firing
+              toggleDropdown(training.id);
+            }}
+          >
+            <img src={EditIcon} alt="Options" />
+          </div>
 
-            {/* Dropdown options */}
-            {activeDropdown === training.id && (
-              <div className="dropdown-menu-training">
-                <div
-                  className="dropdown-item"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleTrainingClick(training);// Call edit function
-                    closeDropdown();
-                  }}
-                >
-                  Edit
-                </div>
-                <div
-                  className="dropdown-item"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAttendanceModalOpen(training); // Call view attendance function
-                    closeDropdown();
-                  }}
-                >
-                  View Attendance
-                </div>
-                {/* Delete Option */}
-                <div
+          {/* Dropdown options */}
+          {activeDropdown === training.id && (
+            <div className="dropdown-menu-training">
+              <div
+                className="dropdown-item"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTrainingClick(training); // Call edit function
+                  closeDropdown();
+                }}
+              >
+                Edit
+              </div>
+              <div
+                className="dropdown-item"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAttendanceModalOpen(training); // Call view attendance function
+                  closeDropdown();
+                }}
+              >
+                View Attendance
+              </div>
+              {/* Delete Option */}
+              <div
                 className="dropdown-item delete-item"
                 onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(training.id); // Call delete function
-                      closeDropdown();
-                    }}
-                    >
-                      Delete
-                    </div>
-                  </div>
-                )}
-                </div>
-                </div>
-               
-
-          {/* Card content */}
-          <div className="it-admin-description-training">{training.trainingDescription}</div>
-          <div className="it-admin-training-time">
-            <p>{training.trainingDate}</p>
-            <p>{formatTimeTo12Hour(training.trainingTime)}</p> {/* Display in 12-hour format */}
+                  e.stopPropagation();
+                  handleDelete(training.id); // Call delete function
+                  closeDropdown();
+                }}
+              >
+                Delete
               </div>
             </div>
-          ))}
+          )}
+        </div>
+      </div>
+
+      {/* Card content */}
+      <div className="it-admin-description-training">{training.trainingDescription}</div>
+      <div className="it-admin-training-time">
+        <p>{training.trainingDate}</p>
+        <p>{formatTimeTo12Hour(training.trainingTime)}</p> {/* Display in 12-hour format */}
+      </div>
+    </div>
+  ))}
 
             {/* Add Training Button */}
             <div
@@ -955,7 +965,7 @@ const resetFormFields = () => {
        {/* Modal for View Attendance */}
        <Modal show={showAttendanceModal} onHide={handleAttendanceModalClose} centered>
         <Modal.Header className="it-admin-edit-training-header-modal">
-          <Modal.Title>Attendance</Modal.Title>
+          <Modal.Title>Status</Modal.Title>
           <button type="button" className="it-admin-training-closebutton" onClick={handleAttendanceModalClose}>
             <img src={CloseIcon} alt="Close" />
           </button>
@@ -980,16 +990,16 @@ const resetFormFields = () => {
                 <option value="oldest">Sort by: Oldest</option>
               </select>
             </div>
-
+ 
             <div className="it-admin-training-list it-admin-training-list-header">
               <p>Full Name</p>
               <p>Department</p>
               <p>Category</p>
               <p>Date</p>
               <p>Email</p>
-              <p>Attendance</p>
+              <p>Status</p>
             </div>
-
+ 
   {enrolledUsers.length > 0 ? (
   enrolledUsers.map((user, index) => (
     <div key={index} className="it-admin-training-list it-admin-training-list-item">
@@ -1000,12 +1010,12 @@ const resetFormFields = () => {
       <p className="center-email">{user.email}</p>
       <div className="attendance-section">
         <select
-          className={`it-admin-training-attendance-dropdown ${user.attendance === "present" ? "present" : "absent"}`}
-          value={user.attendance || "absent"}
+          className={`it-admin-training-attendance-dropdown ${user.attendance === "completed" ? "completed" : "ongoing"}`}
+          value={user.attendance || "ongoing"}
           onChange={(e) => handleAttendanceChange(user.userId, e.target.value)}
         >
-          <option value="absent">Absent</option>
-          <option value="present">Present</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="completed">Completed</option>
         </select>
       </div>
     </div>

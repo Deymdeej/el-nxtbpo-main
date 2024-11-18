@@ -132,6 +132,9 @@ function App() {
                 element={user && role === "user" && department === "HR" ? <HRCertificate /> : <Navigate to="/login" />}
               />
 
+<Route path="/hr-admin-dashboards" element={<HRAdminCoursePage1 />} />
+<Route path="/hr-admin-trainings" element={<HRAdminTrainingDashboard />} />
+
               {/* Add the route for HR Admin Course Page */}
               
               {/* Other HR Routes */}
