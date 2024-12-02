@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import { Modal, Button, Form } from "react-bootstrap"; // Assuming you're using react-bootstrap for modal
 import { toast } from "react-toastify"; // For toast notifications
 import BPOLOGO from '../assets/bpo-logo.png'; // Ensure the path is correct
@@ -15,6 +15,13 @@ import { useNavigate } from 'react-router-dom'; // For navigation
 import { updateDoc, doc, getDoc, collection, getDocs, onSnapshot,query, where } from "firebase/firestore";
 import { signOut, getAuth } from "firebase/auth";
 import scheduleIcon from "../assets/schedule.png";
+// Firebase imports
+import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
+import { setDoc } from "firebase/firestore";
+import { storage } from "../firebase";
+
+
+
 
 import './css/ITUserTraining.css';
 
@@ -33,6 +40,14 @@ function ITUserTrainingForm() {
   const [attendanceData, setAttendanceData] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const auth = getAuth();  // Initialize Firebase Auth
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+const [certificateUrl, setCertificateUrl] = useState(null);
+const [certificateFileURL, setCertificateFileURL] = useState(null);
+  
+
+// Reference for the certificate content
+const certificateRef = useRef(null);
+
  
  
     const fetchAttendance = async () => {
@@ -91,6 +106,102 @@ const getUserStatusForTraining = (trainingId) => {
   );
   return userAttendance ? userAttendance.status : "Not Attended";  // Default to "Not Attended"
 };
+
+
+const handleDownloadCertificate = async () => {
+  const trainingTitle = selectedTraining?.trainingTitle || "Training Title";
+  const userName = fullName || "User Name";
+  const currentDate = new Date().toLocaleDateString();
+
+  // Ensure certificateFileURL is passed or defined in the component
+  const certificateFileURL = selectedTraining?.certificateFileURL; // Use certificateFileURL here
+
+  if (!certificateFileURL) {
+    console.error("No certificate URL available.");
+    alert("Certificate URL is missing. Please try again later.");
+    return;
+  }
+
+  try {
+    const response = await fetch(certificateFileURL, { mode: 'cors' });
+    if (!response.ok) throw new Error("Failed to fetch the certificate image");
+
+    const blob = await response.blob();
+    const img = new Image();
+    img.src = URL.createObjectURL(blob);
+
+    img.onload = async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+
+      // Draw the background image
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Set font and style for training title
+      ctx.font = "bold 30px Arial";
+      ctx.fillStyle = "#2C5F2D";
+      ctx.textAlign = "center";
+      ctx.fillText(trainingTitle, canvas.width * 0.7, canvas.height * 0.27);
+
+      // Set font and style for user's name
+      ctx.font = "bold 45px Arial";
+      ctx.fillText(userName, canvas.width * 0.7, canvas.height * 0.4);
+
+      // Set font and style for date
+      ctx.font = "15px Arial";
+      ctx.fillText(`Date: ${currentDate}`, canvas.width * 0.7, canvas.height * 0.58);
+
+      // Convert the canvas to a data URL
+      const imgData = canvas.toDataURL("image/png");
+
+      // Get the authenticated user's ID (ensure you have access to the current user)
+      const userId = auth.currentUser?.uid;
+
+      // Upload certificate image to Firebase Storage
+      const storageRef = ref(storage, `certificateResults/${userId}_${selectedTraining.id}.png`);
+      await uploadString(storageRef, imgData, 'data_url');
+
+      // Get the download URL of the uploaded image
+      const downloadUrl = await getDownloadURL(storageRef);
+
+      // Store the certificate information in Firestore
+      const certificateResultRef = doc(db, "certificateResult", `${userId}_${selectedTraining.id}`);
+      await setDoc(certificateResultRef, {
+        userId,
+        trainingId: selectedTraining.id,
+        trainingTitle: selectedTraining.trainingTitle,
+        userName: fullName,
+        date: currentDate,
+        certificateUrl: downloadUrl, // Store the download URL
+      });
+
+      // Download the certificate for the user
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = `${userName}_${trainingTitle}_Certificate.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up URL
+      URL.revokeObjectURL(img.src);
+
+      toast.success("Certificate downloaded and saved successfully!");
+    };
+
+    img.onerror = () => {
+      console.error("Error loading certificate image.");
+      alert("Failed to load certificate image. Please check the URL or try again later.");
+    };
+  } catch (error) {
+    console.error("Error downloading certificate image:", error);
+    alert("An error occurred while downloading the certificate. Please try again.");
+  }
+};
+
+
 
   
 
@@ -223,7 +334,6 @@ const getUserStatusForTraining = (trainingId) => {
     setSelectedTraining(null);
     setPrerequisiteTitle(null);
   };
-
   const handleEnrollTraining = async () => {
     if (selectedTraining) {
       try {
@@ -285,16 +395,26 @@ const getUserStatusForTraining = (trainingId) => {
   
           // Show the success modal after the enrollment is saved successfully
           setIsTrainingModalOpen(false);
-          setIsSuccessModalOpen(true);
+          
+          // Check if the user has completed the training
+          const isCompleted = currentData.enrolledUsers.some(user => user.userId === currentUserId && user.attendance === 'present');
+          
+          if (isCompleted) {
+            // If the user has completed the training, show the certificate modal
+            setShowCertificateModal(true);
+          } else {
+            toast.success("Enrollment successful! Attend the training to receive the certificate.");
+          }
         } else {
           toast.error("Training data not found.");
         }
       } catch (error) {
         console.error("Error enrolling in training: ", error);
-        toast.error("Failed to enroll. Please try again.");
+     
       }
     }
   };
+  
   
 
 
@@ -304,7 +424,44 @@ const getUserStatusForTraining = (trainingId) => {
 
 
 
+  const handleShowCertificateModal = (training) => {
+    // Check if the training is completed, then show the certificate modal
+    if (getUserStatusForTraining(training.id) === "completed") {
+      setSelectedTraining(training); // Set the selected training for the certificate
+      setShowCertificateModal(true);  // Show the certificate modal
+    }
+  };
 
+
+  const fetchCertificateFileURLForTraining = async (trainingId) => {
+    try {
+      if (!trainingId) {
+        throw new Error("No training ID provided.");
+      }
+  
+      // Fetch the training data
+      const trainingRef = doc(db, "trainings", trainingId); // 'trainings' is the collection
+      const trainingSnap = await getDoc(trainingRef);
+  
+      if (trainingSnap.exists()) {
+        const trainingData = trainingSnap.data();
+        const certificateFileURL = trainingData.certificateFileURL; // Directly accessing certificateFileURL
+  
+        if (!certificateFileURL) {
+          throw new Error("No certificate file URL found in training data.");
+        }
+  
+        return certificateFileURL; // Return the certificate file URL
+      } else {
+        throw new Error("Training not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching certificate file URL for training:", error);
+      return null;
+    }
+  };
+  
+  
 
 
 
@@ -373,45 +530,54 @@ const getUserStatusForTraining = (trainingId) => {
           
           <div className="IT-user-course-course-container">
           {trainings.length > 0 ? (
-        trainings.map((training) => (
-          <div key={training.id} className="IT-User-training-card">
-            {/* Get user's attendance status for this training */}
-            {currentUser && (
-              <div className="IT-User-training-status">
-              {/* Only display status if it is either 'ongoing' or 'completed' */}
-              {getUserStatusForTraining(training.id) === "ongoing" ? (
-                <span className="status-ongoing">Ongoing</span>
-              ) : getUserStatusForTraining(training.id) === "completed" ? (
-                <span className="status-completed">Completed</span>
-              ) : null} {/* Do not display anything if the status is not set */}
-            </div>
-          )}
- 
-            <div className="IT-User-training-title">{training.trainingTitle}</div>
- 
-            {/* Training Description */}
-            <div className="IT-User-training-description">
-              {training.trainingDescription || "No description available"}
-            </div>
- 
-            <div className="IT-User-training-datetime">
-              <span>{new Date(training.trainingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-              &nbsp;
-              <span>{convertTo12Hour(training.trainingTime)}</span>
-            </div>
- 
-            {/* Enroll/Enrolled Button */}
-            <button
-              className={`IT-User-training-enroll-btn ${training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'IT-User-training-enrolled' : 'IT-User-training-enroll-now'}`}
-              onClick={() => handleEnrollNowClick(training)}
+  trainings.map((training) => (
+    <div key={training.id} className="IT-User-training-card">
+      {/* Get user's attendance status for this training */}
+      {currentUser && (
+        <div className="IT-User-training-status">
+          {/* Only display status if it is either 'ongoing' or 'completed' */}
+          {getUserStatusForTraining(training.id) === "ongoing" ? (
+            <span className="status-ongoing">Ongoing</span>
+          ) : getUserStatusForTraining(training.id) === "completed" ? (
+            <span
+              className="status-completed"
+              onClick={() => handleShowCertificateModal(training)} // Trigger the modal when clicked
+              style={{ cursor: 'pointer' }} // Show pointer cursor to indicate it's clickable
             >
-              {training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'Enrolled' : 'Enroll Now!'}
-            </button>
-          </div>
-        ))
-      ) : (
-        <p>No trainings available</p>
+              Completed
+            </span>
+          ) : null} {/* Do not display anything if the status is not set */}
+        </div>
       )}
+
+      <div className="IT-User-training-title">{training.trainingTitle}</div>
+
+      {/* Training Description */}
+      <div className="IT-User-training-description">
+        {training.trainingDescription || "No description available"}
+      </div>
+
+      <div className="IT-User-training-datetime">
+        <span>{new Date(training.trainingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+        &nbsp;
+        <span>{convertTo12Hour(training.trainingTime)}</span>
+        &nbsp;-&nbsp;
+        <span>{convertTo12Hour(training.trainingEndTime)}</span>
+      </div>
+
+      {/* Enroll/Enrolled Button */}
+      <button
+        className={`IT-User-training-enroll-btn ${training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'IT-User-training-enrolled' : 'IT-User-training-enroll-now'}`}
+        onClick={() => handleEnrollNowClick(training)}
+      >
+        {training.enrolledUsers?.some(user => user.userId === auth.currentUser?.uid) ? 'Enrolled' : 'Enroll Now!'}
+      </button>
+    </div>
+  ))
+) : (
+  <p>No trainings available</p>
+)}
+
   </div>
 
         </div>
@@ -419,36 +585,130 @@ const getUserStatusForTraining = (trainingId) => {
        )}
 
       {/* Side Modal for training details */}
-      {isTrainingModalOpen && selectedTraining && (
-        <div className={`IT-user-training-side-modal ${isTrainingModalOpen ? 'open' : ''}`}>
-          
-            <div className="IT-user-training-side-modal-header">
-              <h2>{selectedTraining.trainingTitle}</h2>
-              <button className="IT-user-training-side-modal-close-button" onClick={handleModalClose}>X</button>
-            </div>
+      {/* Side Modal for training details */}
+{isTrainingModalOpen && selectedTraining && (
+  <div className={`IT-user-training-side-modal ${isTrainingModalOpen ? 'open' : ''}`}>
+    <div className="IT-user-training-side-modal-header">
+      <h2>{selectedTraining.trainingTitle}</h2>
+      <button className="IT-user-training-side-modal-close-button" onClick={handleModalClose}>X</button>
+    </div>
 
-            <div className="IT-user-training-side-modal-body">
-              <img src={TrainingIllustration} alt="Training Illustration" className="IT-user-training-side-modal-image" />
-              
-              <div className="IT-user-training-side-modal-details">
-              <p>{selectedTraining.trainingDescription}</p>
-              </div>
-            </div>
-            <div className="IT-user-training-side-modal-footer">
-            <div className="IT-user-course-course-details-1">
-            <h4>Prerequisite: <span className="IT-user-training-prerequisite">{prerequisiteTitle || "None"}</span></h4>
-            <h5>Category: <span className="IT-user-training-category">{selectedTraining.category || "General"}</span></h5>
-              <button 
-                className="IT-user-training-side-modal-enroll-button" 
-                onClick={handleEnrollTraining}
-                disabled={!hasPrerequisiteCertificate && selectedTraining.prerequisiteCertificate} // Disable if prerequisite is required and not met
-              >
-                ENROLL TRAINING
-              </button>
-            </div>
-            </div>
+    <div className="IT-user-training-side-modal-body">
+      <img src={TrainingIllustration} alt="Training Illustration" className="IT-user-training-side-modal-image" />
+      
+      <div className="IT-user-training-side-modal-details">
+        <p>{selectedTraining.trainingDescription}</p>
+      </div>
+    </div>
+    
+    <div className="IT-user-training-side-modal-footer">
+      <div className="IT-user-course-course-details-1">
+        <h4>Prerequisite: <span className="IT-user-training-prerequisite">{prerequisiteTitle || "None"}</span></h4>
+        <h5>Category: <span className="IT-user-training-category">{selectedTraining.category || "General"}</span></h5>
+        <h5>Start Time: <span className="IT-user-training-category">{selectedTraining.trainingTime || "General"}</span></h5>
+        <h5>End Time: <span className="IT-user-training-category">{selectedTraining.trainingEndTime || "General"}</span></h5>
+
+        <button 
+          className="IT-user-training-side-modal-enroll-button" 
+          onClick={handleEnrollTraining}
+          disabled={!hasPrerequisiteCertificate && selectedTraining.prerequisiteCertificate} // Disable if prerequisite is required and not met
+        >
+          ENROLL TRAINING
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* Show certificate modal if the user has completed the training */}
+{showCertificateModal && selectedTraining && (
+  <div className="certificate-modal-overlay">
+    <div className="certificate-modal">
+      <h2>Course Completion Certificate</h2>
+
+      {/* Close Button */}
+      <button
+        className="close-button top-right"
+        onClick={() => setShowCertificateModal(false)} // Close the modal
+      >
+        ✕
+      </button>
+
+      {/* Certificate Content with Background from Firebase */}
+      <div
+        className="certificate-content"
+        ref={certificateRef}
+        style={{
+          position: "relative",
+          textAlign: "center",
+          backgroundImage: `url(${selectedTraining.certificateFileURL})`, // Use selected training's certificateFileURL here
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          width: "100%",
+          height: "500px", // Set a specific height to control the appearance
+        }}
+      >
+        {/* Certificate Overlays for Text */}
+        <div
+          className="certificate-course-title"
+          style={{
+            position: "absolute",
+            top: "27%",
+            left: "70%",
+            transform: "translate(-50%, -50%)",
+            fontSize: "25px",
+            fontWeight: "bold",
+            color: "#2C5F2D",
+            alignItems: "center",
+          }}
+        >
+          {selectedTraining?.trainingTitle || "Training Title"}
         </div>
-      )}
+
+        <div
+          className="certificate-full-name"
+          style={{
+            position: "absolute",
+            top: "40%",
+            left: "70%",
+            transform: "translate(-50%, -50%)",
+            fontSize: "25px",
+            fontWeight: "bold",
+            color: "#2C5F2D",
+            alignItems: "center",
+          }}
+        >
+          {fullName || "User Name"}
+        </div>
+
+        <div
+          className="certificate-date"
+          style={{
+            position: "absolute",
+            top: "58%",
+            left: "70%",
+            transform: "translate(-50%, -50%)",
+            fontSize: "15px",
+            color: "#2C5F2D",
+            alignItems: "center",
+          }}
+        >
+          Date: {new Date().toLocaleDateString()}
+        </div>
+      </div>
+
+      {/* Download Buttons */}
+      <div className="certificate-actions">
+        <button className="download-button" onClick={handleDownloadCertificate}>
+          Download as PNG
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
 
 {isSuccessModalOpen && (
   <div className="IT-user-training-success-modal">

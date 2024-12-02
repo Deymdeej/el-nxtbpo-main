@@ -145,15 +145,16 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
           videoLink: doc.data().videoLink || "",
           certificateId: doc.data().certificateId || null,
           enrolledDate: doc.data().enrolledDate?.toDate() || null,
+          skills: doc.data().skills || [], // Add the skills field here
         }));
-
+  
         setMyCourses(enrolledCoursesFromFirebase);
         setEnrolledCourses(enrolledCoursesFromFirebase.map(course => course.id));
       }, (error) => {
         console.error("Error fetching enrolled courses in real-time:", error.message);
         toast.error("Failed to fetch enrolled courses.");
       });
-
+  
       // Real-time listener for IT and General courses
       const unsubscribeITCourses = onSnapshot(collection(db, "ITCourses"), (snapshot) => {
         const itCourses = snapshot.docs.map(doc => ({
@@ -161,26 +162,28 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
           courseTitle: doc.data().courseTitle,
           courseDescription: doc.data().courseDescription || "No description available",
           category: "IT",
+          skills: doc.data().skills || [], // Add the skills field here
         }));
         setCourses(prevCourses => [...prevCourses.filter(course => course.category !== 'IT'), ...itCourses]);
       }, (error) => {
         console.error("Error fetching IT courses in real-time:", error.message);
         toast.error("Failed to fetch IT courses.");
       });
-
+  
       const unsubscribeGeneralCourses = onSnapshot(collection(db, "GeneralCourses"), (snapshot) => {
         const generalCourses = snapshot.docs.map(doc => ({
           id: doc.id,
           courseTitle: doc.data().courseTitle,
           courseDescription: doc.data().courseDescription || "No description available",
           category: "General",
+          skills: doc.data().skills || [], // Add the skills field here
         }));
         setCourses(prevCourses => [...prevCourses.filter(course => course.category !== 'General'), ...generalCourses]);
       }, (error) => {
         console.error("Error fetching General courses in real-time:", error.message);
         toast.error("Failed to fetch General courses.");
       });
-
+  
       // Cleanup listeners when component unmounts
       return () => {
         unsubscribeEnrolled();
@@ -189,6 +192,7 @@ const [selectedAnswers, setSelectedAnswers] = useState([]);
       };
     }
   }, [userId]);
+  
 
   useEffect(() => {
     // Fetch quiz result in real-time when the component loads or when userId or selectedCourse changes
@@ -776,7 +780,11 @@ const handleRetakeCourse = async () => {
   
     try {
       // Fetch full course details from Firebase to ensure we get the latest data
-      const courseDocRef = doc(db, selectedCourse.category === 'IT' ? "ITCourses" : "GeneralCourses", selectedCourse.id);
+      const courseDocRef = doc(
+        db, 
+        selectedCourse.category === 'IT' ? "ITCourses" : "GeneralCourses", 
+        selectedCourse.id
+      );
       const courseSnapshot = await getDoc(courseDocRef);
   
       if (!courseSnapshot.exists()) {
@@ -794,12 +802,13 @@ const handleRetakeCourse = async () => {
         pdfURLs: courseData.pdfURLs || [],
         videoLink: courseData.videoLink || "",
         certificateId: courseData.certificateId || null,
+        skills: courseData.skills || [], // Fetch skills
       };
   
       // Update selectedCourse with full details for local state use
       setSelectedCourse(courseDataWithDetails);
   
-      // Store enrollment details in Firestore, including quiz details
+      // Store enrollment details in Firestore, including skills and quiz details
       const enrollmentRef = doc(db, "Enrollments", `${userId}_${selectedCourse.id}`);
       await setDoc(enrollmentRef, {
         userId,
@@ -813,6 +822,7 @@ const handleRetakeCourse = async () => {
         pdfURLs: courseData.pdfURLs || [],
         videoLink: courseData.videoLink || "",
         certificateId: courseData.certificateId || null,
+        skills: courseData.skills || [], // Include skills in enrollment record
         enrolledDate: new Date(),
       });
   
@@ -1205,12 +1215,12 @@ const handleQuizStartClick = async () => {
 
 
   
-
-  const handleFetchAndCertifyUser = async () => {
+const handleFetchAndCertifyUser = async () => {
     if (!selectedCourse || !userId) {
       toast.error("Course or user information is missing.");
       return;
     }
+  
   
     try {
       // Ensure that the certificate ID is available in the selectedCourse object
@@ -1240,6 +1250,7 @@ const handleQuizStartClick = async () => {
       await setDoc(certificationRef, certificationData);
   
       toast.success("You have been certified!");
+      toast.success("You Acquired the skills!");
   
     } catch (error) {
       console.error("Error during certification process:", error);
@@ -1327,27 +1338,39 @@ const handleQuizStartClick = async () => {
           <>
             {/* My Courses Section */}
             <div className="IT-user-course-my-courses-section">
-              <h2>My Courses</h2>
-              <div className="IT-user-course-course-container">
-                {myCourses.length > 0 ? (
-                  myCourses.map((course) => (
-                    <div 
-                      className="IT-user-course-course-card clickable"  // Added 'clickable' class to make styling easier
-                      key={course.id}
-                      onClick={() => handleMyCoursesClick(course)} 
-                      style={{ cursor: "pointer" }} // Optional: Change cursor to indicate it's clickable
-                    >
-                      <h3>{course.courseTitle}</h3>
-                      <p22 className="IT-user-course-course-description">{course.courseDescription}</p22>
-                      <div className="IT-user-course-category-text">Category:</div>
-                      <div className="IT-user-course-category-label">{course.category}</div>
-                    </div>
-                  ))
-                ) : (
-                  <p>No courses enrolled yet.</p>
-                )}
+  <h2>My Courses</h2>
+  <div className="IT-user-course-course-container">
+    {myCourses.length > 0 ? (
+      myCourses.map((course) => (
+        <div
+          className="IT-user-course-course-card clickable"
+          key={course.id}
+          onClick={() => handleMyCoursesClick(course)}
+          style={{ cursor: "pointer" }}
+        >
+          <h3>{course.courseTitle || "Untitled Course"}</h3>
+          <p className="IT-user-course-course-description">
+            {course.courseDescription || "No description available."}
+          </p>
+          <div className="IT-user-course-category-text">Category:</div>
+          <div className="IT-user-course-category-label">{course.category || "Unknown"}</div>
+          {course.skills && course.skills.length > 0 && (
+            <>
+              <div className="IT-user-course-skills-text">Skills:</div>
+              <div className="IT-user-course-skills-label">
+                {course.skills.join(", ")}
               </div>
-            </div>
+            </>
+          )}
+        </div>
+      ))
+    ) : (
+      <p>No courses enrolled yet.</p>
+    )}
+  </div>
+</div>
+
+
 
             {/* Available Courses Section */}
             <div className="IT-user-course-available-section">
@@ -1418,24 +1441,16 @@ const handleQuizStartClick = async () => {
         </div>
 
         {/* Downloadable PDF Section */}
-        {selectedCourse.pdfURLs?.length > 0 && (
-  <div className="pdf-display-container">
-    <h5>PDF Files:</h5>
-    {selectedCourse.pdfURLs.map((file, index) => (
-      <div key={index} className="pdf-file-card" onClick={() => handleViewFile(file)} >
-        <div className="pdf-file-details">
-          <img src={pdfIcon} alt="PDF Icon" className="pdf-icon" />
-          <div className="pdf-file-meta">
-            <span className="pdf-file-name">{file.name || "Unknown File"}</span>
-            <span className="pdf-file-size">
-              {file.size ? `${(file.size / 1024).toFixed(2)} KB` : "Size not available"}
-            </span>
+  {/* Display PDF Preview */}
+  {Array.isArray(selectedCourse.pdfURLs) && selectedCourse.pdfURLs.length > 0 && (
+          <div className="IT-user-course-mycourse-pdf-container">
+            <h4>PDF Resource:</h4>
+            <iframe
+              src={selectedCourse.pdfURLs[0]}
+              title="PDF Preview"
+            />
           </div>
-        </div>
 
-      </div>
-    ))}
-  </div>
 )}
       </div>
 
@@ -1957,19 +1972,26 @@ const handleQuizStartClick = async () => {
           </h4>
 
           <h5>
-            Category: 
-            <span className="IT-user-course-course-details-quiz-duration">
-              {selectedCourse.category}
-            </span>
-          </h5>
-          
-          <h5>
-            Quiz Duration: 
-            <span className="IT-user-course-course-details-quiz-duration">
-              {selectedCourse.quizDuration} {selectedCourse.quizDuration === 1 ? "minute" : "minutes"}
-            </span>
-          </h5>
-        </div>
+    Category: 
+    <span className="IT-user-course-course-details-quiz-duration">
+      {selectedCourse.category}
+    </span>
+  </h5>
+  
+  <h5>
+    Quiz Duration: 
+    <span className="IT-user-course-course-details-quiz-duration">
+      {selectedCourse.quizDuration} {selectedCourse.quizDuration === 1 ? "minute" : "minutes"}
+    </span>
+  </h5>
+  
+  {/* Skills Acquired Section */}
+  {selectedCourse.skills && selectedCourse.skills.length > 0 && (
+    <h5>
+      Skills Acquired: {selectedCourse.skills.join(", ")}
+    </h5>
+  )}
+</div>
 
         {/* Enroll Button */}
         <div className="IT-user-course-enroll-section">

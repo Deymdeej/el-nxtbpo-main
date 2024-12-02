@@ -31,6 +31,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
   const [isOpen, setIsOpen] = useState(true);
   const [courseTitle, setCourseTitle] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
+ 
   const [category, setCategory] = useState('');
   const [videoLink, setVideoLink] = useState('');
   const [prerequisites, setPrerequisites] = useState([]);
@@ -55,6 +56,7 @@ const ITAdminCoursePage = ({ courses, setCourses, enrollmentCounts, selectedNav}
   const [showMenuIndex, setShowMenuIndex] = useState(null);
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [skills, setSkills] = useState([]);
   const userId = auth.currentUser?.uid; // Get the logged-in user's ID
   
 
@@ -450,7 +452,8 @@ const handleSubmit = async () => {
       certificateId: selectedCertificate,
       quizDuration: parseInt(quizDuration, 10),
       createdAt: new Date(),
-      userId // Add userId to the document
+      userId, // Add userId to the document
+      skills, // Add the skills field (array of strings)
     });
 
     alert("Course added successfully!");
@@ -460,6 +463,7 @@ const handleSubmit = async () => {
     alert("Error uploading files or adding course. Please try again.");
   }
 };
+
 
 
 
@@ -1144,6 +1148,18 @@ const handleSubmit = async () => {
                 className={`form-control ${errors.courseDescription ? 'is-invalid' : ''}`}
                 />
                 </div>
+                <div className="it-admin-form-group">
+  <label>Skills</label>
+  <input
+    type="text"
+    value={skills.join(", ")} // Show as comma-separated values
+    onChange={(e) => setSkills(e.target.value.split(",").map(skill => skill.trim()))} // Split input by commas and trim spaces
+    placeholder="Enter skills (e.g., JavaScript, React)"
+    className={`form-control ${errors.skills ? 'is-invalid' : ''}`}
+  />
+  {errors.skills && <div className="invalid-feedback">{errors.skills}</div>}
+</div>
+
 
             {/* Certificate Dropdown */}
             <div className="it-admin-form-group">

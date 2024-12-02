@@ -1090,6 +1090,8 @@ margin-bottom: 20px; /* Adds space below the entire table */
   position: relative;
  
 }
+
+
  
 .course-card-horizontal:hover {
   transform: translateY(-5px); /* Hover effect */

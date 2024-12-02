@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc, setDoc, query, where, Timestamp, writeBatch, FieldValue } from "firebase/firestore"; // Firestore methods
-import { db } from "../firebase"; // Firestore configuration
+import { db,storage } from "../firebase"; // Firestore configuration
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+
 
 import BPOLOGO from '../assets/bpo-logo.png';
 import UserDefault from '../assets/userdefault.png';
@@ -47,8 +50,51 @@ const ITAdminTrainingDashboardForm = ({ selectedNav }) => {
   const [showAttendanceModal, setShowAttendanceModal] = useState(false); // Attendance Modal visibility
   const [currentUser, setCurrentUser] = useState(null); // Store current user for editing/attendance
   const [selectedSection, setSelectedSection] = useState("training");
+  const [trainingEndTime, setTrainingEndTime] = useState('');
+const [speaker, setSpeaker] = useState('');
+const [previewURL, setPreviewURL] = useState("");
+const [file, setFile] = useState(null);
+const [errorMessage, setErrorMessage] = useState("");
+const [certificateID, setCertificateID] = useState("");
+const [certificateFileURL, setCertificateFileURL] = useState(null);
+
+useEffect(() => {
+  // Fetch certificate URL if editing or viewing existing training
+  if (selectedTraining) {
+    setCertificateFileURL(selectedTraining.certificateFileURL);
+  }
+}, [selectedTraining]);
+
+
+
+
 
   const userId = auth.currentUser?.uid; // Get the logged-in user's ID
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      const fileType = selectedFile.type;
+      if (fileType === "application/pdf" || fileType.startsWith("image/")) {
+        setFile(selectedFile);
+        setErrorMessage("");
+        if (fileType === "application/pdf") {
+          const objectURL = URL.createObjectURL(selectedFile);
+          setPreviewURL(objectURL);
+        } else {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setPreviewURL(reader.result);
+          };
+          reader.readAsDataURL(selectedFile);
+        }
+      } else {
+        setErrorMessage("Please upload a PDF or an image file (PNG/JPEG) only.");
+        setFile(null);
+        setPreviewURL("");
+      }
+    }
+  };
 
 
   useEffect(() => {
@@ -150,6 +196,8 @@ const ITAdminTrainingDashboardForm = ({ selectedNav }) => {
           setTrainingDate(trainingData.trainingDate || "");
           setTrainingTime(trainingData.trainingTime || "");
           setSelectedCertificate(trainingData.prerequisiteCertificate || "");
+          setSpeaker(trainingData.speaker || ""); // Set speaker field value
+          setCertificateFileURL(trainingData.certificateFileURL || "");
   
           // Set `selectedTraining` with the fetched data
           setSelectedTraining({
@@ -501,24 +549,46 @@ const handleAddSubmit = async () => {
   const validationErrors = validateForm();
   if (Object.keys(validationErrors).length === 0) {
     try {
-      const userId = auth.currentUser?.uid; // Fetch the userId of the logged-in user
+      let uploadedFileURL = null;
 
-      await addDoc(collection(db, "trainings"), {
+      // Check if a file is selected
+      if (file) {
+        // Generate a unique file name (e.g., using timestamp)
+        const fileName = `${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, `certificates/${fileName}`);
+
+        // Upload the file to Firebase Storage
+        const uploadTaskSnapshot = await uploadBytes(storageRef, file);
+        uploadedFileURL = await getDownloadURL(uploadTaskSnapshot.ref);
+      }
+
+      // Assuming you get userID from Firebase Authentication
+      const userID = auth.currentUser?.uid; // Replace 'auth' with your Firebase Auth instance
+      if (!userID) {
+        alert("User is not authenticated. Cannot add training.");
+        return;
+      }
+
+      // Create a new training document in Firestore
+      const newTraining = {
         trainingTitle,
         trainingDescription,
         trainingDate,
-        trainingTime, // Save time in 24-hour format (no conversion needed)
+        trainingTime,
+        trainingEndTime,
+        speaker,
         prerequisiteCertificate: selectedCertificate,
-        enrolledUsers: [],
-        userId // Add userId to the document
-      });
-      
+        certificateFileURL: uploadedFileURL || null, // Store the file URL
+        userId, // Add userID to the document
+      };
+
+      await addDoc(collection(db, "trainings"), newTraining);
+
       alert("Training added successfully!");
-      resetFormFields(); // Reset after submission
-      setShowAddModal(false); // Close Add modal after successful submission
-      fetchTrainings();
-    } catch (e) {
-      console.error("Error adding document: ", e);
+      setShowAddModal(false); // Close the modal after successful submission
+      fetchTrainings(); // Refresh the training list
+    } catch (error) {
+      console.error("Error adding training:", error);
       alert("Failed to add training. Please try again.");
     }
   } else {
@@ -527,40 +597,46 @@ const handleAddSubmit = async () => {
 };
 
 
-  const handleEditSubmit = async () => {
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length === 0) {
-      // Check if selectedTraining is set and has a valid ID
-      if (!selectedTraining || !selectedTraining.id) {
-        console.error('No training selected or missing training ID');
-        alert('No training selected or missing training ID');
-        return; // Prevent further processing if no valid training
-      }
-  
-      try {
-        const trainingDocRef = doc(db, "trainings", selectedTraining.id);
-  
-        // Update the training information in Firestore
-        await updateDoc(trainingDocRef, {
-          trainingTitle,
-          trainingDescription,
-          trainingDate,
-          trainingTime,
-          prerequisiteCertificate: selectedCertificate,
-        });
-  
-        alert("Training updated successfully!");
-        setShowEditModal(false); // Close Edit modal after successful submission
-        fetchTrainings(); // Refresh the training list
-  
-      } catch (error) {
-        console.error("Error updating training:", error);
-        alert("Failed to update training. Please try again.");
-      }
-    } else {
-      setErrors(validationErrors);
+
+
+
+const handleEditSubmit = async () => {
+  const validationErrors = validateForm();
+  if (Object.keys(validationErrors).length === 0) {
+    // Check if selectedTraining is set and has a valid ID
+    if (!selectedTraining || !selectedTraining.id) {
+      console.error('No training selected or missing training ID');
+      alert('No training selected or missing training ID');
+      return; // Prevent further processing if no valid training
     }
-  };
+
+    try {
+      const trainingDocRef = doc(db, "trainings", selectedTraining.id);
+
+      // Update the training information in Firestore
+      await updateDoc(trainingDocRef, {
+        trainingTitle,
+        trainingDescription,
+        trainingDate,
+        trainingTime, // Start time in 24-hour format
+        trainingEndTime, // End time
+        speaker, // Speaker information
+        prerequisiteCertificate: selectedCertificate,
+        certificateID, // Include certificateID in the update
+      });
+
+      alert("Training updated successfully!");
+      setShowEditModal(false); // Close Edit modal after successful submission
+      fetchTrainings(); // Refresh the training list
+    } catch (error) {
+      console.error("Error updating training:", error);
+      alert("Failed to update training. Please try again.");
+    }
+  } else {
+    setErrors(validationErrors);
+  }
+};
+
   
   const getFilteredUsers = () => {
     let filtered = enrolledUsers;
@@ -716,11 +792,15 @@ const handleAddSubmit = async () => {
       </div>
 
       {/* Card content */}
-      <div className="it-admin-description-training">{training.trainingDescription}</div>
-      <div className="it-admin-training-time">
-        <p>{training.trainingDate}</p>
-        <p>{formatTimeTo12Hour(training.trainingTime)}</p> {/* Display in 12-hour format */}
-      </div>
+{/* Card content */}
+<div className="it-admin-description-training">{training.trainingDescription}</div>
+<div className="it-admin-training-time">
+  <p>{training.trainingDate}</p>
+  <p>{formatTimeTo12Hour(training.trainingTime)}</p> {/* Display in 12-hour format */}
+  <p><strong>End Time:</strong> {formatTimeTo12Hour(training.trainingEndTime)}</p> {/* Display End Time */}
+  <p><strong>Speaker:</strong> {training.speaker}</p> {/* Display Speaker */}
+</div>
+
     </div>
   ))}
 
@@ -754,98 +834,164 @@ const handleAddSubmit = async () => {
           </button>
         </Modal.Header>
         <Modal.Body className="it-admin-training-modal">
-          <Form>
-            <Form.Group controlId="trainingTitle">
-              <div className="it-admin-training-title-add">
-              <Form.Label>Training Title</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter training title"
-                value={trainingTitle}
-                onChange={(e) => setTrainingTitle(e.target.value)}
-                isInvalid={!!errors.trainingTitle}
-              />
-              {errors.trainingTitle && (
-                <Form.Control.Feedback type="invalid">
-                  {errors.trainingTitle}
-                </Form.Control.Feedback>
-              )}
-              </div>
-            </Form.Group>
+        <Form>
+    <Form.Group controlId="trainingTitle">
+      <div className="it-admin-training-title-add">
+        <Form.Label>Training Title</Form.Label>
+        <Form.Control
+          type="text"
+          placeholder="Enter training title"
+          value={trainingTitle}
+          onChange={(e) => setTrainingTitle(e.target.value)}
+          isInvalid={!!errors.trainingTitle}
+        />
+        {errors.trainingTitle && (
+          <Form.Control.Feedback type="invalid">
+            {errors.trainingTitle}
+          </Form.Control.Feedback>
+        )}
+      </div>
+    </Form.Group>
 
-            <Form.Group controlId="trainingDescription">
-            <div className="it-admin-training-description-add">
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                placeholder="Enter description"
-                value={trainingDescription}
-                onChange={(e) => setTrainingDescription(e.target.value)}
-                isInvalid={!!errors.trainingDescription}
-              />
-              {errors.trainingDescription && (
-                <Form.Control.Feedback type="invalid">
-                  {errors.trainingDescription}
-                </Form.Control.Feedback>
-              )}
-              </div>
-            </Form.Group>
+    <Form.Group controlId="trainingDescription">
+      <div className="it-admin-training-description-add">
+        <Form.Label>Description</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={3}
+          placeholder="Enter description"
+          value={trainingDescription}
+          onChange={(e) => setTrainingDescription(e.target.value)}
+          isInvalid={!!errors.trainingDescription}
+        />
+        {errors.trainingDescription && (
+          <Form.Control.Feedback type="invalid">
+            {errors.trainingDescription}
+          </Form.Control.Feedback>
+        )}
+      </div>
+    </Form.Group>
 
-            <Form.Group controlId="trainingDate">
-            <div className="it-admin-training-trainingdate-add">
-              <Form.Label>Date</Form.Label>
-              <Form.Control
-                type="date"
-                value={trainingDate}
-                onChange={(e) => setTrainingDate(e.target.value)}
-                isInvalid={!!errors.trainingDate}
-              />
-              {errors.trainingDate && (
-                <Form.Control.Feedback type="invalid">
-                  {errors.trainingDate}
-                </Form.Control.Feedback>
-              )}
-              </div>
-            </Form.Group>
+    <Form.Group controlId="trainingDate">
+      <div className="it-admin-training-trainingdate-add">
+        <Form.Label>Date</Form.Label>
+        <Form.Control
+          type="date"
+          value={trainingDate}
+          onChange={(e) => setTrainingDate(e.target.value)}
+          isInvalid={!!errors.trainingDate}
+        />
+        {errors.trainingDate && (
+          <Form.Control.Feedback type="invalid">
+            {errors.trainingDate}
+          </Form.Control.Feedback>
+        )}
+      </div>
+    </Form.Group>
 
-            <Form.Group controlId="trainingTime">
-            <div className="it-admin-training-trainingtime-add">
-              <Form.Label>Time</Form.Label>
-                <Form.Control
-                  type="time"
-                  value={trainingTime}
-                  onChange={(e) => setTrainingTime(e.target.value)}
-                  isInvalid={!!errors.trainingTime}
-                />
-              
-              {errors.trainingTime && (
-                <Form.Control.Feedback type="invalid">
-                  {errors.trainingTime}
-                </Form.Control.Feedback>
-              )}
-              </div>
-            </Form.Group>
+    <Form.Group controlId="trainingTime">
+      <div className="it-admin-training-trainingtime-add">
+        <Form.Label>Time</Form.Label>
+        <Form.Control
+          type="time"
+          value={trainingTime}
+          onChange={(e) => setTrainingTime(e.target.value)}
+          isInvalid={!!errors.trainingTime}
+        />
+        {errors.trainingTime && (
+          <Form.Control.Feedback type="invalid">
+            {errors.trainingTime}
+          </Form.Control.Feedback>
+        )}
+      </div>
+    </Form.Group>
 
-            {/* Prerequisite Certificate Dropdown */}
-            <Form.Group controlId="prerequisiteCertificate">
-            <div className="it-admin-training-preqrequisite-add">
-              <Form.Label>Prerequisite Certificate</Form.Label>
-              <Form.Control
-                as="select"
-                value={selectedCertificate}
-                onChange={(e) => setSelectedCertificate(e.target.value)}
-              >
-                <option value="">-- Select Certificate --</option>
-                {certificates.map((certificate) => (
-                  <option key={certificate.id} value={certificate.id}>
-                    {certificate.certificateTitle}
-                  </option>
-                ))}
-              </Form.Control>
-              </div>
-            </Form.Group>
-          </Form>
+    {/* Add End Time Field */}
+    <Form.Group controlId="trainingEndTime">
+      <div className="it-admin-training-endtime-add">
+        <Form.Label>End Time</Form.Label>
+        <Form.Control
+          type="time"
+          value={trainingEndTime}
+          onChange={(e) => setTrainingEndTime(e.target.value)}
+          isInvalid={!!errors.trainingEndTime}
+        />
+        {errors.trainingEndTime && (
+          <Form.Control.Feedback type="invalid">
+            {errors.trainingEndTime}
+          </Form.Control.Feedback>
+        )}
+      </div>
+    </Form.Group>
+
+    {/* Add Speaker Field */}
+    <Form.Group controlId="speaker">
+      <div className="it-admin-training-speaker-add">
+        <Form.Label>Speaker</Form.Label>
+        <Form.Control
+          type="text"
+          placeholder="Enter speaker name"
+          value={speaker}
+          onChange={(e) => setSpeaker(e.target.value)}
+          isInvalid={!!errors.speaker}
+        />
+        {errors.speaker && (
+          <Form.Control.Feedback type="invalid">
+            {errors.speaker}
+          </Form.Control.Feedback>
+        )}
+      </div>
+    </Form.Group>
+
+    {/* Prerequisite Certificate Dropdown */}
+    <Form.Group controlId="prerequisiteCertificate">
+      <div className="it-admin-training-preqrequisite-add">
+        <Form.Label>Prerequisite Certificate</Form.Label>
+        <Form.Control
+          as="select"
+          value={selectedCertificate}
+          onChange={(e) => setSelectedCertificate(e.target.value)}
+        >
+          <option value="">-- Select Certificate --</option>
+          {certificates.map((certificate) => (
+            <option key={certificate.id} value={certificate.id}>
+              {certificate.certificateTitle}
+            </option>
+          ))}
+        </Form.Control>
+      </div>
+    </Form.Group>
+
+
+      {/* File Input */}
+      <div className="admin-certificate-file-upload-box" onClick={() => document.getElementById('fileInput').click()}>
+      <input
+        type="file"
+        id="fileInput"
+        accept=".pdf, .png, .jpeg"
+        onChange={handleFileChange}
+        style={{ display: "none" }}
+      />
+      <p>Select your file or drag and drop</p>
+    </div>
+
+    {/* Preview */}
+    {previewURL && (
+      <div className="admin-certificate-file-preview-box">
+        <h5>PDF Preview:</h5>
+        {file?.type === 'application/pdf' ? (
+          <iframe
+            src={previewURL}
+            title="PDF Preview"
+            style={{ width: "100%", height: "90vh" }}  // Increased height for better visibility
+          />
+        ) : (
+          <img src={previewURL} alt="Preview" className="admin-certificate-preview-image" />
+        )}
+      </div>
+    )}
+
+  </Form>
         </Modal.Body>
         <Modal.Footer className="it-admin-training-footer-modal">
           <Button className="btn-submit-addtraining" onClick={handleAddSubmit}>
@@ -863,98 +1009,160 @@ const handleAddSubmit = async () => {
             </button>
     </Modal.Header>
     <Modal.Body>
-      <Form>
-        <Form.Group controlId="trainingTitle">
-        <div className="it-admin-training-title-add">
-          <Form.Label>Training Title</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter training title"
-            value={trainingTitle || selectedTraining?.trainingTitle || ''}
-            onChange={(e) => setTrainingTitle(e.target.value)}
-            isInvalid={!!errors.trainingTitle}
-          />
-          {errors.trainingTitle && (
-            <Form.Control.Feedback type="invalid">
-              {errors.trainingTitle}
-            </Form.Control.Feedback>
-          )}
-          </div>
-        </Form.Group>
+    <Form>
+  <Form.Group controlId="trainingTitle">
+    <div className="it-admin-training-title-add">
+      <Form.Label>Training Title</Form.Label>
+      <Form.Control
+        type="text"
+        placeholder="Enter training title"
+        value={trainingTitle}
+        onChange={(e) => setTrainingTitle(e.target.value)}
+        isInvalid={!!errors.trainingTitle}
+      />
+      {errors.trainingTitle && (
+        <Form.Control.Feedback type="invalid">
+          {errors.trainingTitle}
+        </Form.Control.Feedback>
+      )}
+    </div>
+  </Form.Group>
 
-        <Form.Group controlId="trainingDescription">
-        <div className="it-admin-training-description-add">
-          <Form.Label>Description</Form.Label>
-          <Form.Control
-            as="textarea"
-            rows={3}
-            placeholder="Enter description"
-            value={trainingDescription}
-            onChange={(e) => setTrainingDescription(e.target.value)}
-            isInvalid={!!errors.trainingDescription}
-          />
-          {errors.trainingDescription && (
-            <Form.Control.Feedback type="invalid">
-              {errors.trainingDescription}
-            </Form.Control.Feedback>
-          )}
-          </div>
-        </Form.Group>
+  <Form.Group controlId="trainingDescription">
+    <div className="it-admin-training-description-add">
+      <Form.Label>Description</Form.Label>
+      <Form.Control
+        as="textarea"
+        rows={3}
+        placeholder="Enter description"
+        value={trainingDescription}
+        onChange={(e) => setTrainingDescription(e.target.value)}
+        isInvalid={!!errors.trainingDescription}
+      />
+      {errors.trainingDescription && (
+        <Form.Control.Feedback type="invalid">
+          {errors.trainingDescription}
+        </Form.Control.Feedback>
+      )}
+    </div>
+  </Form.Group>
 
-        <Form.Group controlId="trainingDate">
-        <div className="it-admin-training-trainingdate-add">
-          <Form.Label>Date</Form.Label>
-          <Form.Control
-            type="date"
-            value={trainingDate}
-            onChange={(e) => setTrainingDate(e.target.value)}
-            isInvalid={!!errors.trainingDate}
-          />
-          {errors.trainingDate && (
-            <Form.Control.Feedback type="invalid">
-              {errors.trainingDate}
-            </Form.Control.Feedback>
-          )}
-          </div>
-        </Form.Group>
+  <Form.Group controlId="trainingDate">
+    <div className="it-admin-training-trainingdate-add">
+      <Form.Label>Date</Form.Label>
+      <Form.Control
+        type="date"
+        value={trainingDate}
+        onChange={(e) => setTrainingDate(e.target.value)}
+        isInvalid={!!errors.trainingDate}
+      />
+      {errors.trainingDate && (
+        <Form.Control.Feedback type="invalid">
+          {errors.trainingDate}
+        </Form.Control.Feedback>
+      )}
+    </div>
+  </Form.Group>
 
-        <Form.Group controlId="trainingTime">
-        <div className="it-admin-training-trainingtime-add">
-          <Form.Label>Time</Form.Label>
-            <Form.Control
-              type="time"
-              value={trainingTime}
-              onChange={(e) => setTrainingTime(e.target.value)}
-              isInvalid={!!errors.trainingTime}
-            />
-      
-          {errors.trainingTime && (
-            <Form.Control.Feedback type="invalid">
-              {errors.trainingTime}
-            </Form.Control.Feedback>
-          )}
-          </div>
-        </Form.Group>
+  <Form.Group controlId="trainingTime">
+    <div className="it-admin-training-trainingtime-add">
+      <Form.Label>Time</Form.Label>
+      <Form.Control
+        type="time"
+        value={trainingTime}
+        onChange={(e) => setTrainingTime(e.target.value)}
+        isInvalid={!!errors.trainingTime}
+      />
+      {errors.trainingTime && (
+        <Form.Control.Feedback type="invalid">
+          {errors.trainingTime}
+        </Form.Control.Feedback>
+      )}
+    </div>
+  </Form.Group>
 
-        {/* Prerequisite Certificate Dropdown */}
-        <Form.Group controlId="prerequisiteCertificate">
-        <div className="it-admin-training-preqrequisite-add">
-          <Form.Label>Prerequisite Certificate</Form.Label>
-          <Form.Control
-            as="select"
-            value={selectedCertificate}
-            onChange={(e) => setSelectedCertificate(e.target.value)}
-          >
-            <option value="">-- Select Certificate --</option>
-            {certificates.map((certificate) => (
-              <option key={certificate.id} value={certificate.id}>
-                {certificate.certificateTitle}
-              </option>
-            ))}
-          </Form.Control>
-          </div>
-        </Form.Group>
-        </Form>
+  {/* Add End Time Field */}
+  <Form.Group controlId="trainingEndTime">
+    <div className="it-admin-training-endtime-add">
+      <Form.Label>End Time</Form.Label>
+      <Form.Control
+        type="time"
+        value={trainingEndTime}
+        onChange={(e) => setTrainingEndTime(e.target.value)}
+        isInvalid={!!errors.trainingEndTime}
+      />
+      {errors.trainingEndTime && (
+        <Form.Control.Feedback type="invalid">
+          {errors.trainingEndTime}
+        </Form.Control.Feedback>
+      )}
+    </div>
+  </Form.Group>
+
+ {/* Speaker Field */}
+<Form.Group controlId="speaker">
+  <div className="it-admin-training-speaker-add">
+    <Form.Label>Speaker</Form.Label>
+    <Form.Control
+      type="text"
+      placeholder="Enter speaker name"
+      value={speaker}
+      onChange={(e) => setSpeaker(e.target.value)}
+      isInvalid={!!errors.speaker}
+    />
+    {errors.speaker && (
+      <Form.Control.Feedback type="invalid">
+        {errors.speaker}
+      </Form.Control.Feedback>
+    )}
+  </div>
+</Form.Group>
+
+
+  {/* Prerequisite Certificate Dropdown */}
+  <Form.Group controlId="prerequisiteCertificate">
+    <div className="it-admin-training-preqrequisite-add">
+      <Form.Label>Prerequisite Certificate</Form.Label>
+      <Form.Control
+        as="select"
+        value={selectedCertificate}
+        onChange={(e) => setSelectedCertificate(e.target.value)}
+      >
+        <option value="">-- Select Certificate --</option>
+        {certificates.map((certificate) => (
+          <option key={certificate.id} value={certificate.id}>
+            {certificate.certificateTitle}
+          </option>
+        ))}
+      </Form.Control>
+    </div>
+  </Form.Group>
+
+{/* Preview */}
+{(certificateFileURL || previewURL) && (
+  <div className="admin-certificate-file-preview-box">
+    <h5>PDF Preview:</h5>
+    {file?.type === 'application/pdf' || (certificateFileURL && certificateFileURL.endsWith('.pdf')) ? (
+      <iframe
+        src={certificateFileURL || previewURL}
+        title="PDF Preview"
+        style={{ width: "100%", height: "90vh" }} // Increased height for better visibility
+      />
+    ) : (
+      <img
+        src={certificateFileURL || previewURL}
+        alt="Preview"
+        className="admin-certificate-preview-image"
+      />
+    )}
+  </div>
+)}
+
+
+
+
+</Form>
+
           </Modal.Body>
 
           <Modal.Footer className="it-admin-training-footer-modal">
